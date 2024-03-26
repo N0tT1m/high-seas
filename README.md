@@ -11,13 +11,13 @@
 
 ### Building the front of High Seas
 
-To run the frontend of High Seas you can run the command ```dockerbuild -t high-seas-frontend .```
-Then ````docker run -d -p 8889:8889 high-seas-frontend```
+To run the frontend of High Seas you can run the command: ```dockerbuild -t high-seas-frontend .```
+Then: ````docker run -d -p 8889:8889 high-seas-frontend```
 
 
 ### Environment for High Seas typescript file format
 
-#### Location to this file is ```./web/src/app/environments/```
+#### Location to this file is: ```./web/src/app/environments/```
 
 ```
 export const environment = {
@@ -37,13 +37,51 @@ export const environment = {
   
 ```
 
+### Ngnix Config File
+
+#### Location to this file is: ```./web/nginx.conf```
+
+```
+# the events block is required
+events{}
+
+http {
+    # include the default mime.types to map file extensions to MIME types
+    include /etc/nginx/mime.types;
+
+    server {
+        # set the root directory for the server (we need to copy our
+        # application files here)
+        root /usr/share/nginx/html;
+
+        # set the default index file for the server (Angular generates the
+        # index.html file for us and it will be in the above directory)
+        index index.html;
+
+        listen       6969;
+        server_name http://goose.duocore.space http://arch.duocore.space;
+
+        # specify the configuration for the '/' location
+        location / {
+            # try to serve the requested URI. if that fails then try to
+            # serve the URI with a trailing slash. if that fails, then
+            # serve the index.html file; this is needed in order to serve
+            # Angular routes--e.g.,'localhost:8080/customer' will serve
+            # the index.html file
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}
+
+```
+
 
 ## High Seas Backend
 
 ### Building the backend of High Seas
 
-To run the backend of High Seas you can run the command ```dockerbuild -t high-seas-backend .```
-Then ```docker run -d -p 8782:8782 high-seas-backend```
+To run the backend of High Seas you can run the command: ```dockerbuild -t high-seas-backend .```
+Then: ```docker run -d -p 8782:8782 high-seas-backend```
 
 ## Docker Compose
 
@@ -51,7 +89,7 @@ Then ```docker run -d -p 8782:8782 high-seas-backend```
 
 #### Linux
 
-To run docker-compose on Linux you need to run the script ```start-dedicated.sh```
+To run docker-compose on Linux you need to run the script: ```start-dedicated.sh```
 
 ## Plex Python Backend
 
