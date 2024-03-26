@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  web:
+    build: ./web/.
+    ports: 
+      - "6969:6969"
+  backend:
+    build: .
+    ports:
+      - "8782:8782"
+

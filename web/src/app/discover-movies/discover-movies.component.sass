@@ -1,0 +1,86 @@
+.gallery
+    padding: 20px
+    margin: 20px
+
+.gallery-div
+    padding: auto
+    margin: auto
+
+.titles
+    display: inline
+    padding: 10px
+    margin: 10px
+
+.results
+  display: grid
+  column-gap: 14px
+  row-gap: 14px
+  grid-template-columns: repeat(auto-fill, minmax(400px, 400px))
+  margin-top: 50px
+  justify-content: space-around
+
+
+input[type="text"]
+  border: solid 1px var(--primary-color)
+  padding: 10px
+  border-radius: 8px
+  margin-right: 4px
+  display: inline-block
+  width: 30%
+
+
+button
+  padding: 10px
+  border: solid 1px var(--primary-color)
+  background: var(--primary-color)
+  color: white
+  border-radius: 8px
+
+
+@media (min-width: 500px) and (max-width: 768px)
+  .results
+      grid-template-columns: repeat(2, 1fr)
+
+  input[type="text"]
+      width: 70%
+
+
+
+@media (max-width: 499px)
+  .results
+      grid-template-columns: 1fr
+
+.content-filter-form
+  padding: 10px
+
+.header-section
+  padding: 10px
+  margin: 10px
+
+.select-section
+  padding: 10px
+  margin: 10px
+
+.search-section
+  padding: 10px
+  margin: 10px
+
+.filters-form
+  padding: 10px
+  margin: 10px
+
+.filters-div
+  padding: 5px
+  margin: 5px
+  display: inline-block
+
+#filters
+  padding: 10px
+  margin: 10px
+
+.filter-button
+    background-color: #a15dfc
+
+.big-btn 
+    width: 95px
+    height: 35px

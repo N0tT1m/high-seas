@@ -1,0 +1,11 @@
+node_modules
+/home/timmy/workspace/web-projects/high-seas/web/dist
+.git
+/dist
+.editorconfig
+/.vscode/*
+/node_modules
+/e2e
+/docs
+.gitignore
+*.zip
