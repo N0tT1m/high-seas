@@ -1,4 +1,5 @@
 from plexapi.myplex import PlexServer
+from plexapi.client import PlexClient
 from flask import Flask
 import random
 from flask import request
@@ -98,7 +99,7 @@ def get_random_movie():
     
     devices()
     
-    device_id = 4
+    device_id = 36
     
     movies = plex.library.section('Movies').all()
     movie_type = random.choice(movies)
@@ -110,11 +111,13 @@ def get_random_movie():
         movie = random.choice(movies)
         queue.addItem(movie)
         print(queue.items)
-        
-    device = plex.systemDevice(int(device_id))
 
-    client = plex.client("Pixel-6-Pro")
-    client.playMedia(queue)
+    print(plex.devices())
+        
+    # device = plex.systemDevice(int(device_id))
+
+    # client = PlexClient(plex, baseurl="http://192.168.1.66:32400/", token="-yQYUqbbAqgBgKpgsPAm", identifier="di8mvfiy9cmfk91hfaxpnc65")
+    # client.playMedia(queue)
 
     
 get_random_movie()
