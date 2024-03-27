@@ -19,7 +19,7 @@ import { MovieService } from '../movies.service';
   <article class="earth-spirit" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
   <img class="movie-photo earth-spirit" [src]="movie!.poster_path"
     alt="Exterior photo of {{movie!.title}}"/>
-  <section class="movie-description earth-spirit>
+  <section class="movie-description earth-spirit">
     <h2 class="movie-title">{{movie!.title}}</h2>
     <p class="movie-overview">{{movie!.overview}}</p>
   </section>

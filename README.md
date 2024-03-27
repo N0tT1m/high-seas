@@ -11,8 +11,9 @@
 
 ### Building the front of High Seas
 
-To run the frontend of High Seas you can run the command: ```dockerbuild -t high-seas-frontend .```
-Then: ````docker run -d -p 8889:8889 high-seas-frontend```
+To run the frontend of High Seas you can run the command: ```cd ./web```
+After: ```dockerbuild -t high-seas-frontend .```
+Then: ````docker run -d -p 6969:6969 high-seas-frontend```
 
 
 ### Environment for High Seas typescript file format
