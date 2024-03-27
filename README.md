@@ -84,14 +84,6 @@ http {
 To run the backend of High Seas you can run the command: ```dockerbuild -t high-seas-backend .```
 Then: ```docker run -d -p 8782:8782 high-seas-backend```
 
-## Docker Compose
-
-### Running Docker Compose Yaml
-
-#### Linux
-
-To run docker-compose on Linux you need to run the script: ```start-dedicated.sh```
-
 ## Plex Python Backend
 
 ### Config File Example
@@ -106,3 +98,11 @@ DB="highseas"
 IP="192.168.1.1"
 PORT="32400"
 ```
+
+## Docker Compose
+
+### Running Docker Compose Yaml
+
+#### Linux
+
+To run docker-compose on Linux you need to run the script: ```start-dedicated.sh```
