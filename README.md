@@ -4,7 +4,7 @@
 **The High Seas app is designed to allow you to look for new or old shows / movies and allow you to download them.**
 
 
-### NOTE: This is purely for educational purposes.
+## NOTE: This is purely for educational purposes.
 
 
 ## High Seas Frontend
