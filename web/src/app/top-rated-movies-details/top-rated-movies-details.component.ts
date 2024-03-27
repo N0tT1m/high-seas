@@ -18,14 +18,14 @@ import { FormsModule } from '@angular/forms';
   ],
   providers: [MovieService],
   template: `
-  <article class="the-girls" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
-  <img class="the-girls movie-photo" [src]="movie!.poster_path"
+  <article class="earth-spirit" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
+  <img class="earth-spirit movie-photo" [src]="movie!.poster_path"
     alt="Exterior photo of {{movie!.title}}"/>
-  <section class="movie-description the-girls">
+  <section class="movie-description earth-spirit">
     <h2 class="movie-title">{{movie!.title}}</h2>
     <p class="movie-overview">{{movie!.overview}}</p>
   </section>
-  <section class="movie-details the-girls">
+  <section class="movie-details earth-spirit">
     <h2 class="section-heading">About this movie</h2>
     <ul>
       <div class="movie-div">
@@ -42,7 +42,7 @@ import { FormsModule } from '@angular/forms';
       </div>
     </ul>
 
-    <div class="download-quality the-girls">
+    <div class="download-quality earth-spirit">
       <select [(ngModel)]="quality" name="quality" id="quality">
         <option value="4k">4k</option>
         <option value="2k">2k</option>

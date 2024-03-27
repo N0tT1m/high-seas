@@ -16,15 +16,15 @@ import { TvShowService } from '../tv-service.service';
   ],
   providers: [TvShowService, NgModel],
   template: `
-    <section class="header-section the-girls">
-      <section class="header-section the-girls" *ngFor="let show of this.fetchedShow?.results; index as i;">
-        <img class="show-photo the-girls" [src]="show!.poster_path"
+    <section class="header-section earth-spirit">
+      <section class="header-section earth-spirit" *ngFor="let show of this.fetchedShow?.results; index as i;">
+        <img class="show-photo earth-spirit" [src]="show!.poster_path"
           alt="Exterior photo of {{show!.name}}"/>
-        <section class="show-description the-girls">
+        <section class="show-description earth-spirit">
           <h2 class="show-title">{{show!.name}}</h2>
           <p class="show-overview">{{show!.overview}}</p>
         </section>
-        <section class="show the-girls">
+        <section class="show earth-spirit">
           <h3 class="section-heading">About this show</h3>
           <ul>
             <div class="show-div">

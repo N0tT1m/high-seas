@@ -32,11 +32,11 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
   providers: [{ provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } }, MovieService, HttpClientModule,],
   styleUrls: ['./app.component.sass', '../styles.sass'],
   template: `
-    <main class="the-girls">
+    <main class="earth-spirit">
       <header class="brand-name">
         <div class="container-fluid">
           <a [routerLink]="['/']">
-            <img id="big-titty-waifu-svg" src="/assets/home-icon.jpg" height=150px width=150px alt="logo" aria-hidden="true">
+            <img id="the-spirits" src="/assets/home-icon.jpg" height=150px width=150px alt="logo" aria-hidden="true">
           </a>
           <button mat-button [matMenuTriggerFor]="movies" class="navbar-links big-btn">Movies</button>
           <button mat-button [matMenuTriggerFor]="shows" class="navbar-links big-btn">Shows</button>

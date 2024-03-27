@@ -16,14 +16,14 @@ import { MovieService } from '../movies.service';
   ],
   providers: [MovieService, NgModel],
   template: `
-  <article class="the-girls" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
-  <img class="movie-photo the-girls" [src]="movie!.poster_path"
+  <article class="earth-spirit" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
+  <img class="movie-photo earth-spirit" [src]="movie!.poster_path"
     alt="Exterior photo of {{movie!.title}}"/>
-  <section class="movie-description the-girls">
+  <section class="movie-description earth-spirit>
     <h2 class="movie-title">{{movie!.title}}</h2>
     <p class="movie-overview">{{movie!.overview}}</p>
   </section>
-  <section class="movie-details the-girls">
+  <section class="movie-details earth-spirit">
     <h2 class="section-heading">About this movie {{movie.id}}</h2>
     <ul>
       <div class="movie-div">
