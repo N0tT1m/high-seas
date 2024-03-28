@@ -2,7 +2,7 @@ import { Injectable, inject, NgModule, Output, EventEmitter, Component } from '@
 import { Movie, MovieResult, TvShow, TvShowResult, GenreRequest, QueryRequest, ShowDetails } from './http-service/http-service.component';
 import { Observable, map, of } from 'rxjs';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { environment } from './environments/environment.deployment';
+import { environment } from './environments/environment.prod';
 
 @Injectable({
   providedIn: 'root'
