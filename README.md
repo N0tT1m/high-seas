@@ -78,9 +78,9 @@ Download NodeJS from: https://nodejs.org/dist/v20.12.0/node-v20.12.0-x64.msi
 
 #### Running the app locally
 
-```cd web```
-```npm install```
-```npm run start-local```
+```cd web
+npm install
+npm run start-local```
 
 ### Building the frontend of High Seas
 
