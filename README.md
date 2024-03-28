@@ -7,18 +7,9 @@
 ## NOTE: This is purely for educational purposes.
 
 
-## High Seas Frontend
-
-### Building the front of High Seas
-
-To run the frontend of High Seas you can run the command: ```cd ./web```
-After: ```dockerbuild -t high-seas-frontend .```
-Then: ```docker run -d -p 6969:6969 high-seas-frontend```
-
-
 ### Environment for High Seas typescript file format
 
-#### Location to this file is: ```./web/src/app/environments/```
+#### Location to this file is: ```./web/src/app/environments/environment.ts```
 
 ```
 export const environment = {
@@ -77,12 +68,35 @@ http {
 ```
 
 
+## High Seas Frontend
+
+### Running the frontend of High Seas
+
+#### Installing NodeJS on Windows
+
+Download NodeJS from: https://nodejs.org/dist/v20.12.0/node-v20.12.0-x64.msi
+
+#### Running the app locally
+
+```cd web```
+```npm install```
+```npm run start-local```
+
+### Building the frontend of High Seas
+
+To run the frontend of High Seas you can run the command:
+First: ```cd ./web```
+After: ```dockerbuild -t high-seas-frontend .```
+Then: ```docker run -d -p 6969:6969 high-seas-frontend```
+
+
 ## High Seas Backend
 
 ### Building the backend of High Seas
 
-To run the backend of High Seas you can run the command: ```dockerbuild -t high-seas-backend .```
-Then: ```docker run -d -p 8782:8782 high-seas-backend```
+To run the backend of High Seas you can run the command:
+First: ```dockerbuild -t high-seas-backend \.```
+After: ```docker run -d -p 8782:8782 high-seas-backend```
 
 ## Plex Python Backend
 
