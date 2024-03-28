@@ -6,6 +6,13 @@
 
 ## NOTE: This is purely for educational purposes.
 
+title: High Seas
+navigation:
+  - section: High Seas
+  - document: high_seas_files
+    label: File Configuration
+
+
 
 ### Environment for High Seas typescript file format
 
