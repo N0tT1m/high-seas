@@ -78,16 +78,20 @@ Download NodeJS from: https://nodejs.org/dist/v20.12.0/node-v20.12.0-x64.msi
 
 #### Running the app locally
 
-```cd web
+```
+cd web
 npm install
-npm run start-local```
+npm run start-local
+```
 
 ### Building the frontend of High Seas
 
 To run the frontend of High Seas you can run the command:
-```cd ./web
+```
+cd ./web
 dockerbuild -t high-seas-frontend .
-docker run -d -p 6969:6969 high-seas-frontend```
+docker run -d -p 6969:6969 high-seas-frontend
+```
 
 
 ## High Seas Backend
@@ -95,8 +99,10 @@ docker run -d -p 6969:6969 high-seas-frontend```
 ### Building the backend of High Seas
 
 To run the backend of High Seas you can run the command:
-```dockerbuild -t high-seas-backend .
-docker run -d -p 8782:8782 high-seas-backend```
+```
+dockerbuild -t high-seas-backend .
+docker run -d -p 8782:8782 high-seas-backend
+```
 
 ## Plex Python Backend
 
