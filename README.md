@@ -85,9 +85,9 @@ npm run start-local```
 ### Building the frontend of High Seas
 
 To run the frontend of High Seas you can run the command:
-First: ```cd ./web```
-After: ```dockerbuild -t high-seas-frontend .```
-Then: ```docker run -d -p 6969:6969 high-seas-frontend```
+```cd ./web
+dockerbuild -t high-seas-frontend .
+docker run -d -p 6969:6969 high-seas-frontend```
 
 
 ## High Seas Backend
@@ -95,8 +95,8 @@ Then: ```docker run -d -p 6969:6969 high-seas-frontend```
 ### Building the backend of High Seas
 
 To run the backend of High Seas you can run the command:
-First: ```dockerbuild -t high-seas-backend \.```
-After: ```docker run -d -p 8782:8782 high-seas-backend```
+```dockerbuild -t high-seas-backend .
+docker run -d -p 8782:8782 high-seas-backend```
 
 ## Plex Python Backend
 
