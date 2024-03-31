@@ -11,7 +11,9 @@ import { DiscoverMovieDetailsComponent } from '../discover-movie-details/discove
   template: `
   <div>
     <section class="row listing" *ngFor="let movie of movieItem!.results; index as i;">
-      <img class="column movie-photo" [src]="movie.poster_path" alt="Exterior photo of {{movie.title}}">
+      <div class="movie-image">
+        <img [src]="movie.poster_path" alt="Movie Poster" class="poster-image">
+      </div>
       <h2 class="column movie-name">Movie title: {{ movie.title }}</h2>
       <p class="column movie-overview">{{ movie.overview}}</p>
       <p class="column movie-vote-average">The vote average for this movie is: {{movie.vote_average }} </p>

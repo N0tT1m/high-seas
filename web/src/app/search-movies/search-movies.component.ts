@@ -14,26 +14,33 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
   providers: [NgModel],
   // <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Search</button>
   template: `
-    <section class="header-section">
-      <form class="search-form" (ngSubmit)="getGenre(1)">
-        <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
-        <button class="button" class="big-btn filter-button" type="submit">Filter</button>
-      </form>
+  <!-- SearchMoviesComponent -->
+  <div class="container">
+  <section class="header-section">
+    <form class="search-form" (ngSubmit)="getGenre(1)">
+      <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
+      <button class="button big-btn filter-button" type="submit">Filter</button>
+    </form>
 
-      <div *ngIf="this.filteredMovieList.length != 0">
-        <app-search-movie-list
-          *ngFor="let movieItem of this.filteredMovieList; index as i;"
-          [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
-        </app-search-movie-list>
+    <div class="results" *ngIf="this.filteredMovieList.length != 0">
+      <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
+        <div class="movie-info">
+          <app-search-movie-list
+            [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
+          </app-search-movie-list>
+        </div>
       </div>
-    </section>
-    <footer>
-      <mat-paginator [length]=this.totalMovies
-                [pageSize]=this.moviesLength
-                aria-label="Select page"
-                (page)="onPageChange($event)">
-      </mat-paginator>
-    </footer>
+    </div>
+  </section>
+
+  <footer>
+    <mat-paginator [length]=this.totalMovies
+              [pageSize]=this.moviesLength
+              aria-label="Select page"
+              (page)="onPageChange($event)">
+    </mat-paginator>
+  </footer>
+  </div>
   `,
   styleUrls: ['./search-movies.component.sass', '../../styles.sass']
 })
@@ -175,7 +182,7 @@ export class SearchMoviesComponent {
         let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.fetchedMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-    
+
         this.pages.push(page)
         this.releaseYear.push(releaseDate)
         this.endYear.push(releaseDate)
@@ -197,7 +204,7 @@ export class SearchMoviesComponent {
   }
 
   filterResults(text: string) {
-    
+
 
     if (!text) {
       return this.filteredMovieList = this.allMovies;

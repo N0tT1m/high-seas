@@ -12,9 +12,16 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, GalleryModule, RouterModule],
   providers: [MovieService],
   template: `
-    <gallery class="gallery" id="movieGallery"></gallery>
-
-    <h3 class="titles" *ngFor="let movie of movieTitles"><a [routerLink]="['/now-playing/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a></h3>
+    <div class="container">
+      <div class="gallery-wrapper">
+        <gallery class="gallery" id="moviesGallery"></gallery>
+      </div>
+      <div class="movie-title-wrapper">
+        <h3 class="title" *ngFor="let movie of movieTitles">
+          <a [routerLink]="['/now-playing/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a>
+        </h3>
+      </div>
+    </div>
   `,
   styleUrls: ['./now-playing-movies.component.sass']
 })
@@ -46,7 +53,7 @@ export class NowPlayingMoviesComponent {
 
   ngOnInit() {
     // Get the galleryRef by id
-    this.galleryMoviesRef = this.gallery.ref('movieGallery');
+    this.galleryMoviesRef = this.gallery.ref('moviesGallery');
 
     let page = 1;
 
@@ -73,8 +80,6 @@ export class NowPlayingMoviesComponent {
         let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-
-
 
         this.pages.push(page)
         console.log('LENB', this.allMovies);
@@ -109,8 +114,6 @@ export class NowPlayingMoviesComponent {
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
 
-
-
         this.pages.push(page)
         console.log('LENB', this.allMovies);
       })
@@ -141,8 +144,6 @@ export class NowPlayingMoviesComponent {
         let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-
-
 
         this.pages.push(page)
         console.log('LENB', this.allMovies);

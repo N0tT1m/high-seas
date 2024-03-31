@@ -13,9 +13,16 @@ import { TvShowService } from '../tv-service.service';
   imports: [CommonModule, GalleryModule, RouterModule],
   providers: [TvShowService],
   template: `
+  <div class="container">
+  <div class="gallery-wrapper">
     <gallery class="gallery" id="showsGallery"></gallery>
-
-    <h3 class="name" *ngFor="let show of showNames"><a [routerLink]="['/airing-today/shows/details', show['id'], show['page']]">{{ show['name'] }}</a></h3>
+  </div>
+    <div class="show-names-wrapper">
+      <h3 class="name" *ngFor="let show of showNames">
+        <a [routerLink]="['/popular/shows/details', show['id'], show['page']]">{{ show['name'] }}</a>
+      </h3>
+    </div>
+  </div>
   `,
   styleUrls: ['./popular-tv-shows.component.sass']
 })
