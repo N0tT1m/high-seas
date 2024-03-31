@@ -44,136 +44,134 @@ export class PopularMoviesComponent {
   public movieService: MovieService = inject(MovieService)
 
   constructor(private gallery: Gallery) {
-
+    this.movieService.getInitialPopularPage().subscribe((resp) => {
+      this.moviesLength = resp['results'].length;
+      this.totalMovies = resp['total_pages'];
+      console.log(resp['total_results']);
+    })
   }
 
   ngOnInit() {
-   // Get the galleryRef by id
-   this.galleryMoviesRef = this.gallery.ref('movieGallery');
+    // Get the galleryRef by id
+    this.galleryMoviesRef = this.gallery.ref('moviesGallery');
 
-   let page = 1;
+    let page = 1;
 
-   this.movieService.getPopular(page).subscribe((resp) => {
-     resp['results'].forEach((movie) => {
-       let page = resp['page'];
-       let isAdult = movie['adult'];
-       let backdropPath = movie['backdrop_path'];
-       let genreIds = movie['genre_ids'];
-       let id = movie['id'];
-       let releaseDate = movie['release_date'];
-       let video = movie['video'];
-       let title = movie['title'];
-       let originalLanguage = movie['original_language'];
-       let originalTitle = movie['original_title'];
-       let overview = movie['overview'];
-       let popularity = movie['popularity'];
-       let posterPath = this.baseUrl + movie['poster_path'];
-       let voteAverage = movie['vote_average'];
-       let voteCount = movie['vote_count'];
-       let totalPages = resp['total_pages'];
-       let totalResult = resp['total_result'];
+    this.movieService.getPopular(page).subscribe((resp) => {
+      resp['results'].forEach((movie) => {
+        let page = resp['page'];
+        let isAdult = movie['adult'];
+        let backdropPath = movie['backdrop_path'];
+        let genreIds = movie['genre_ids'];
+        let id = movie['id'];
+        let releaseDate = movie['release_date'];
+        let video = movie['video'];
+        let title = movie['title'];
+        let originalLanguage = movie['original_language'];
+        let originalTitle = movie['original_title'];
+        let overview = movie['overview'];
+        let popularity = movie['popularity'];
+        let posterPath = this.baseUrl + movie['poster_path'];
+        let voteAverage = movie['vote_average'];
+        let voteCount = movie['vote_count'];
+        let totalPages = resp['total_pages'];
+        let totalResult = resp['total_result'];
 
-       let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
+        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
-       this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
+        this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
 
+        this.pages.push(page)
+        console.log('LENB', this.allMovies);
+      })
 
+      this.allMovies.splice(0, 1);
+    })
 
-       this.pages.push(page)
-       console.log('LENB', this.allMovies);
-     })
+    page++;
 
-     this.allMovies.splice(0, 1);
-   })
+    this.movieService.getPopular(page).subscribe((resp) => {
+      resp['results'].forEach((movie) => {
+        let page = resp['page'];
+        let isAdult = movie['adult'];
+        let backdropPath = movie['backdrop_path'];
+        let genreIds = movie['genre_ids'];
+        let id = movie['id'];
+        let releaseDate = movie['release_date'];
+        let video = movie['video'];
+        let title = movie['title'];
+        let originalLanguage = movie['original_language'];
+        let originalTitle = movie['original_title'];
+        let overview = movie['overview'];
+        let popularity = movie['popularity'];
+        let posterPath = this.baseUrl + movie['poster_path'];
+        let voteAverage = movie['vote_average'];
+        let voteCount = movie['vote_count'];
+        let totalPages = resp['total_pages'];
+        let totalResult = resp['total_result'];
 
-   page++;
+        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
-   this.movieService.getPopular(page).subscribe((resp) => {
-     resp['results'].forEach((movie) => {
-       let page = resp['page'];
-       let isAdult = movie['adult'];
-       let backdropPath = movie['backdrop_path'];
-       let genreIds = movie['genre_ids'];
-       let id = movie['id'];
-       let releaseDate = movie['release_date'];
-       let video = movie['video'];
-       let title = movie['title'];
-       let originalLanguage = movie['original_language'];
-       let originalTitle = movie['original_title'];
-       let overview = movie['overview'];
-       let popularity = movie['popularity'];
-       let posterPath = this.baseUrl + movie['poster_path'];
-       let voteAverage = movie['vote_average'];
-       let voteCount = movie['vote_count'];
-       let totalPages = resp['total_pages'];
-       let totalResult = resp['total_result'];
+        this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
 
-       let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
+        this.pages.push(page)
+        console.log('LENB', this.allMovies);
+      })
+    })
 
-       this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
+    page++;
 
+    this.movieService.getPopular(page).subscribe((resp) => {
+      resp['results'].forEach((movie) => {
+        let page = resp['page'];
+        let isAdult = movie['adult'];
+        let backdropPath = movie['backdrop_path'];
+        let genreIds = movie['genre_ids'];
+        let id = movie['id'];
+        let releaseDate = movie['release_date'];
+        let video = movie['video'];
+        let title = movie['title'];
+        let originalLanguage = movie['original_language'];
+        let originalTitle = movie['original_title'];
+        let overview = movie['overview'];
+        let popularity = movie['popularity'];
+        let posterPath = this.baseUrl + movie['poster_path'];
+        let voteAverage = movie['vote_average'];
+        let voteCount = movie['vote_count'];
+        let totalPages = resp['total_pages'];
+        let totalResult = resp['total_result'];
 
+        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
-       this.pages.push(page)
-       console.log('LENB', this.allMovies);
-     })
-   })
+        this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
 
-   page++;
+        this.pages.push(page)
+        console.log('LENB', this.allMovies);
+      })
 
-   this.movieService.getPopular(page).subscribe((resp) => {
-     resp['results'].forEach((movie) => {
-       let page = resp['page'];
-       let isAdult = movie['adult'];
-       let backdropPath = movie['backdrop_path'];
-       let genreIds = movie['genre_ids'];
-       let id = movie['id'];
-       let releaseDate = movie['release_date'];
-       let video = movie['video'];
-       let title = movie['title'];
-       let originalLanguage = movie['original_language'];
-       let originalTitle = movie['original_title'];
-       let overview = movie['overview'];
-       let popularity = movie['popularity'];
-       let posterPath = this.baseUrl + movie['poster_path'];
-       let voteAverage = movie['vote_average'];
-       let voteCount = movie['vote_count'];
-       let totalPages = resp['total_pages'];
-       let totalResult = resp['total_result'];
+      this.allMovies.splice(0, 1);
 
-       let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
+      for (var p = 0; p < this.allMovies.length; p++) {
+        for (var j = 0; j < this.allMovies[p].results.length; j++) {
+          if (this.movieTitles.includes(this.allMovies[p].results[j].title)) {
+            continue
+          } else {
+            this.galleryMoviesRef.addImage({ src: this.allMovies[p].results[j].poster_path, thumb: this.allMovies[p].results[j].poster_path })
+          }
+        }
+      }
 
-       this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
+      for (var p = 0; p < this.allMovies.length; p++) {
+        for (var j = 0; j < this.allMovies[p].results.length; j++) {
+          if (this.movieTitles.includes(this.allMovies[p].results[j].title)) {
+            continue
+          } else {
+            this.movieTitles.push({ 'title': this.allMovies[p].results[j].title, 'id': this.allMovies[p].results[j].id, 'page': this.allMovies[p].page })
+          }
+        }
+      }
+    })
 
-
-
-       this.pages.push(page)
-       console.log('LENB', this.allMovies);
-     })
-
-     this.allMovies.splice(0, 1);
-
-     for (var p = 0; p < this.allMovies.length; p++) {
-       for (var j = 0; j < this.allMovies[p].results.length; j++) {
-         if (this.movieTitles.includes(this.allMovies[p].results[j].title)) {
-           continue
-         } else {
-           this.galleryMoviesRef.addImage({ src: this.allMovies[p].results[j].poster_path, thumb: this.allMovies[p].results[j].poster_path })
-         }
-       }
-     }
-
-     for (var p = 0; p < this.allMovies.length; p++) {
-       for (var j = 0; j < this.allMovies[p].results.length; j++) {
-         if (this.movieTitles.includes(this.allMovies[p].results[j].title)) {
-           continue
-         } else {
-           this.movieTitles.push({ 'title': this.allMovies[p].results[j].title, 'id': this.allMovies[p].results[j].id, 'page': this.allMovies[p].page })
-         }
-       }
-     }
-   })
-
-   this.galleryMoviesRef.play()
+    this.galleryMoviesRef.play()
   }
 }

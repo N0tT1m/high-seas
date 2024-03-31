@@ -44,12 +44,16 @@ export class UpcomingMoviesComponent {
   public movieService: MovieService = inject(MovieService)
 
   constructor(private gallery: Gallery) {
-
+    this.movieService.getInitialUpcomingPage().subscribe((resp) => {
+      this.moviesLength = resp['results'].length;
+      this.totalMovies = resp['total_pages'];
+      console.log(resp['total_results']);
+    })
   }
 
   ngOnInit() {
     // Get the galleryRef by id
-    this.galleryMoviesRef = this.gallery.ref('movieGallery');
+    this.galleryMoviesRef = this.gallery.ref('moviesGallery');
 
     let page = 1;
 
@@ -76,8 +80,6 @@ export class UpcomingMoviesComponent {
         let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-
-
 
         this.pages.push(page)
         console.log('LENB', this.allMovies);
@@ -112,8 +114,6 @@ export class UpcomingMoviesComponent {
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
 
-
-
         this.pages.push(page)
         console.log('LENB', this.allMovies);
       })
@@ -144,8 +144,6 @@ export class UpcomingMoviesComponent {
         let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-
-
 
         this.pages.push(page)
         console.log('LENB', this.allMovies);
