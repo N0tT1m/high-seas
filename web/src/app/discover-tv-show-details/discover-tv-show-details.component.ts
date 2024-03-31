@@ -16,71 +16,118 @@ import { TvShowService } from '../tv-service.service';
   ],
   providers: [TvShowService, NgModel],
   template: `
-    <section class="header-section earth-spirit">
-      <section class="header-section earth-spirit" *ngFor="let show of this.fetchedShow?.results; index as i;">
-        <img class="show-photo earth-spirit" [src]="show!.poster_path"
-          alt="Exterior photo of {{show!.name}}"/>
-        <section class="show-description earth-spirit">
-          <h2 class="show-title">{{show!.name}}</h2>
-          <p class="show-overview">{{show!.overview}}</p>
-        </section>
-        <section class="show earth-spirit">
-          <h3 class="section-heading">About this show</h3>
-          <ul>
-            <div class="show-div">
-              <li class="show-details">Original Language: {{show!.original_language}}</li>
-              <li class="show-details">Original Title: {{show!.original_name}}</li>
-              <li class="show-details">Popularity: {{show!.popularity}}</li>
-              <li class="show-details">First Air Date: {{show!.first_air_date}}</li>
-              <li class="show-details">Number of Seasons: {{this.seasonEpisodeNumbers.length}}</li>
-              <li class="show-details">Number of Episodes: {{this.episodes}}</li>
-              <li class="show-details">Status of this Show: {{this.status}}</li>
+  <article class="show-details" *ngFor="let show of this.fetchedShow?.results; index as i;">
+    <div class="show-header">
+      <img class="show-poster" [src]="show!.poster_path" alt="Poster of {{show!.name}}"/>
+      <div class="show-info">
+        <h2 class="show-title">{{show!.name}}</h2>
+        <p class="show-overview">{{show!.overview}}</p>
+      </div>
+    </div>
+    <section class="show-details-section">
+      <h3 class="section-heading">About this show</h3>
+      <div class="show-meta">
+        <div class="show-meta-item">
+          <span class="show-meta-label">Original Language:</span>
+          <span class="show-meta-value">{{show!.original_language}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">Original Title:</span>
+          <span class="show-meta-value">{{show!.original_name}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">Popularity:</span>
+          <span class="show-meta-value">{{show!.popularity}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">First Air Date:</span>
+          <span class="show-meta-value">{{show!.first_air_date}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">Number of Seasons:</span>
+          <span class="show-meta-value">{{this.seasonEpisodeNumbers.length}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">Number of Episodes:</span>
+          <span class="show-meta-value">{{this.episodes}}</span>
+        </div>
+        <div class="show-meta-item">
+          <span class="show-meta-label">Status of this Show:</span>
+          <span class="show-meta-value">{{this.status}}</span>
+        </div>
+      </div>
+      <div class="show-creators">
+        <h4 class="show-creators-heading">Created By:</h4>
+        <ul class="show-creators-list">
+          <li class="show-creator" *ngFor="let createdBy of this.createdBy; index as j;">{{createdBy['name']}}</li>
+        </ul>
+      </div>
+      <div class="show-dates">
+        <div class="show-date-item">
+          <span class="show-date-label">First Air Date:</span>
+          <span class="show-date-value">{{this.firstAirDate}}</span>
+        </div>
+        <div class="show-date-item">
+          <span class="show-date-label">Last Air Date:</span>
+          <span class="show-date-value">{{this.lastAirDate}}</span>
+        </div>
+      </div>
+      <div class="show-last-episode">
+        <h4 class="show-last-episode-heading">Last Episode to Air:</h4>
+        <div class="show-last-episode-details">
+          <img class="show-last-episode-image" src="{{this.baseUrl + this.lastEpisodeToAir['still_path']}}" alt="Still from last episode"/>
+          <div class="show-last-episode-info">
+            <div class="show-last-episode-item">
+              <span class="show-last-episode-label">Name:</span>
+              <span class="show-last-episode-value">{{this.lastEpisodeToAir['name']}}</span>
             </div>
-            <div class="show-div">
-              <p class="created-by">Created By:</p>
-              <li class="created-by" *ngFor="let createdBy of this.createdBy; index as j;">{{createdBy['name']}}</li>
+            <div class="show-last-episode-item">
+              <span class="show-last-episode-label">Overview:</span>
+              <span class="show-last-episode-value">{{this.lastEpisodeToAir['overview']}}</span>
             </div>
-            <div class="show-div">
-              <li class="air-date">First Air Date: {{this.firstAirDate}}</li>
-              <li class="air-date">Last Air Date: {{this.lastAirDate}}</li>
+            <div class="show-last-episode-item">
+              <span class="show-last-episode-label">Air Date:</span>
+              <span class="show-last-episode-value">{{this.lastEpisodeToAir['air_date']}}</span>
             </div>
-            <div class="show-div">
-              <p class="last-episode">Last Episode to Air:</p>
-              <img class="last-episode" src="{{this.baseUrl + this.lastEpisodeToAir['still_path']}}" />
-              <li class="last-episode">Last Episode Name: {{this.lastEpisodeToAir['name']}}</li>
-              <li class="last-episode">Last Episode Overview: {{this.lastEpisodeToAir['overview']}}</li>
-              <li class="last-episode">Last Episode Air Date: {{this.lastEpisodeToAir['air_date']}}</li>
-              <li class="last-episode">Last Episode Season: {{this.lastEpisodeToAir['season_number']}}</li>
+            <div class="show-last-episode-item">
+              <span class="show-last-episode-label">Season:</span>
+              <span class="show-last-episode-value">{{this.lastEpisodeToAir['season_number']}}</span>
             </div>
-            <div class="show-div">
-              <li class="homepage">Homepage: <a href={{this.homepage}}>{{this.homepage}}</a>
-            </div>
-            <div class="show-div">
-              <li class="in-production" *ngIf="this.inProduction != 'false'">Is this Show in Production: Yes</li>
-            </div>
-            <div class="show-div">
-              <li class="tagline">Tagline for {{show.name}}: {{this.tageline}}</li>
-            </div>
-            <div *ngIf="show!.video != undefined"a class="show-div">
-              <li class="video">Is a video: {{show!.video}}</li>
-            </div>
-          </ul>
-
-          <div class="download-quality">
-            <select [(ngModel)]="quality" name="quality" id="quality">
-              <option value="4k">4k</option>
-              <option value="2k">2k</option>
-              <option value="1080p">1080p</option>
-              <option value="720p">720p</option>
-              <option value="480p">480p</option>
-              <option value="240p">240p</option>
-            </select>
           </div>
-
-          <button class="download-button" (click)="downloadShow(show.name, this.quality)">Download Show</button>
-        </section>
-      </section>
+        </div>
+      </div>
+      <div class="show-homepage">
+        <span class="show-homepage-label">Homepage:</span>
+        <a class="show-homepage-link" href="{{this.homepage}}" target="_blank">{{this.homepage}}</a>
+      </div>
+      <div class="show-production" *ngIf="this.inProduction != 'false'">
+        <span class="show-production-label">Is this Show in Production:</span>
+        <span class="show-production-value">Yes</span>
+      </div>
+      <div class="show-tagline">
+        <span class="show-tagline-label">Tagline for {{show.name}}:</span>
+        <span class="show-tagline-value">{{this.tageline}}</span>
+      </div>
+      <div class="show-video" *ngIf="show!.video != undefined">
+        <span class="show-video-label">Is a video:</span>
+        <span class="show-video-value">{{show!.video}}</span>
+      </div>
     </section>
+    <div class="show-actions">
+      <div class="show-download-quality">
+        <label for="quality" class="show-download-quality-label">Download Quality:</label>
+        <select [(ngModel)]="quality" name="quality" id="quality" class="show-download-quality-select">
+          <option value="4k">4k</option>
+          <option value="2k">2k</option>
+          <option value="1080p">1080p</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="240p">240p</option>
+        </select>
+      </div>
+      <button class="show-download-button" (click)="downloadShow(show.name, show.original_language, this.quality)">Download Show</button>
+    </div>
+  </article>
     `,
   styleUrls: ['./discover-tv-show-details.component.sass', '../../styles.sass'],
 })
@@ -199,7 +246,14 @@ export class TvShowDetailsComponent {
     })
   }
 
-  downloadShow(title: string, quality: string) {
-    this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId).subscribe(request => console.log(request));
+  downloadShow(title: string, lang: string, quality: string) {
+    if (lang === 'ja') {
+      console.log('ANIME');
+      console.log(this.episodes);
+      this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+    } else {
+      console.log('TV');
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId).subscribe(request => console.log(request));
+    }
   }
 }

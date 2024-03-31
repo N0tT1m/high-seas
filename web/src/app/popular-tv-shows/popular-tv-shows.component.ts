@@ -14,9 +14,9 @@ import { TvShowService } from '../tv-service.service';
   providers: [TvShowService],
   template: `
   <div class="container">
-  <div class="gallery-wrapper">
-    <gallery class="gallery" id="showsGallery"></gallery>
-  </div>
+    <div class="gallery-wrapper">
+      <gallery class="gallery" id="showsGallery"></gallery>
+    </div>
     <div class="show-names-wrapper">
       <h3 class="name" *ngFor="let show of showNames">
         <a [routerLink]="['/popular/shows/details', show['id'], show['page']]">{{ show['name'] }}</a>

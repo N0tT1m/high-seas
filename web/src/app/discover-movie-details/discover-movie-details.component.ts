@@ -17,45 +17,45 @@ import { MovieService } from '../movies.service';
   providers: [MovieService, NgModel],
   template: `
   <article class="earth-spirit" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
-  <img class="movie-photo earth-spirit" [src]="movie!.poster_path"
-    alt="Exterior photo of {{movie!.title}}"/>
-  <section class="movie-description earth-spirit">
-    <h2 class="movie-title">{{movie!.title}}</h2>
-    <p class="movie-overview">{{movie!.overview}}</p>
-  </section>
-  <section class="movie-details earth-spirit">
-    <h2 class="section-heading">About this movie {{movie.id}}</h2>
-    <ul>
-      <div class="movie-div">
-        <li>Original Language: {{movie!.original_language}}</li>
-        <li>Original Title: {{movie!.original_title}}</li>
-        <li>popularity: {{movie!.popularity}}</li>
-        <li>Release Date: {{movie!.release_date}}</li>
+    <img class="movie-photo earth-spirit" [src]="movie!.poster_path"
+      alt="Exterior photo of {{movie!.title}}"/>
+    <section class="movie-description earth-spirit">
+      <h2 class="movie-title">{{movie!.title}}</h2>
+      <p class="movie-overview">{{movie!.overview}}</p>
+    </section>
+    <section class="movie-details earth-spirit">
+      <h2 class="section-heading">About this movie {{movie.id}}</h2>
+      <ul>
+        <div class="movie-div">
+          <li>Original Language: {{movie!.original_language}}</li>
+          <li>Original Title: {{movie!.original_title}}</li>
+          <li>popularity: {{movie!.popularity}}</li>
+          <li>Release Date: {{movie!.release_date}}</li>
+        </div>
+        <div class="movie-div">
+          <li>IMDB ID: {{this.imdbId}}</li>
+          <li>Budget for {{movie!.title}}: {{this.budget}}</li>
+          <li>Homepage for {{movie!.title}}: {{this.homepage}}</li>
+          <li>Tagline for {{movie!.title}}: {{this.tagline}}</li>
+        </div>
+      </ul>
+
+      <label for="quality">Download Quality:</label>
+
+      <div class="download-quality">
+        <select [(ngModel)]="quality" name="quality" id="quality">
+          <option value="4k">4k</option>
+          <option value="2k">2k</option>
+          <option value="1080p">1080p</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="240p">240p</option>
+        </select>
       </div>
-      <div class="movie-div">
-        <li>IMDB ID: {{this.imdbId}}</li>
-        <li>Budget for {{movie!.title}}: {{this.budget}}</li>
-        <li>Homepage for {{movie!.title}}: {{this.homepage}}</li>
-        <li>Tagline for {{movie!.title}}: {{this.tagline}}</li>
-      </div>
-    </ul>
 
-    <label for="quality">Download Quality:</label>
-
-    <div class="download-quality">
-      <select [(ngModel)]="quality" name="quality" id="quality">
-        <option value="4k">4k</option>
-        <option value="2k">2k</option>
-        <option value="1080p">1080p</option>
-        <option value="720p">720p</option>
-        <option value="480p">480p</option>
-        <option value="240p">240p</option>
-      </select>
-    </div>
-
-    <button (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality)">Download Movie</button>
-  </section>
-</article>
+      <button (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality)">Download Movie</button>
+    </section>
+  </article>
     `,
   styleUrls: ['./discover-movie-details.component.sass', '../../styles.sass'],
 })

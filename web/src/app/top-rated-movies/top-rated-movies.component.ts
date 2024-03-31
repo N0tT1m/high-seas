@@ -12,9 +12,16 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, GalleryModule, RouterModule],
   providers: [MovieService],
   template: `
-    <gallery class="gallery" id="movieGallery"></gallery>
-
-    <h3 class="titles" *ngFor="let movie of movieTitles"><a [routerLink]="['/top-rated/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a></h3>
+  <div class="container">
+    <div class="gallery-wrapper">
+      <gallery class="gallery" id="moviesGallery"></gallery>
+    </div>
+    <div class="movie-title-wrapper">
+      <h3 class="title" *ngFor="let movie of movieTitles">
+        <a [routerLink]="['/popular/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a>
+      </h3>
+    </div>
+  </div>
   `,
   styleUrls: ['./top-rated-movies.component.sass']
 })

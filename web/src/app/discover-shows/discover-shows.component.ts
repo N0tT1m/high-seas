@@ -16,46 +16,51 @@ import { MatPaginator } from '@angular/material/paginator';
   imports: [GalleryModule, CommonModule, RouterModule, ShowListComponent, FormsModule, MatPaginatorModule],
   providers: [MovieService, TvShowService, NgModel],
   template: `
-    <body>
-      <section class="header-section">
-        <form class="search-form">
-          <input type="text" placeholder="Filter Show by Name" #filter>
-          <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
+  <div class="container">
+    <section class="header-section">
+      <form class="search-form">
+        <input type="text" placeholder="Filter Movie by Title" #filter>
+        <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
+      </form>
+
+      <div id="filters">
+        <label for="filters" id='filter-label'>Filters for Movies:</label>
+        <form class='filters-form' (ngSubmit)="getGenre(1)">
+          <div class="filters-div">
+            <label for="genre">Genre:</label>
+            <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
+              <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
+            </select>
+          </div>
+
+          <div class="filters-div">
+            <label for="releaseYear">AirDate:</label>
+            <input type='text' [(ngModel)]="airDate" name="airDate" id="airDate" class='select-section' />
+          </div>
+
+          <button class="button big-btn filter-button" type="submit">Filter</button>
         </form>
-
-        <div id="filters">
-          <label for="filters" id='filter-label'>Filters for Shows:</label>
-          <form class='filters-form' (ngSubmit)="getGenre(1)">
-            <div class="filters-div">
-              <label for="genre">Genre:</label>
-              <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
-                <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
-              </select>
-            </div>
-
-            <div class="filters-div">
-              <label for="releaseYear">Air Date:</label>
-              <input type='text' [(ngModel)]="airDate" name="airDate" id="airDate" class='select-section' />
-            </div>
-
-            <button class="button" class="big-btn filter-button" type="submit">Filter</button>
-          </form>
-        </div>
-      </section>
-      <div *ngIf="genre != 0">
-        <app-show-list
-          *ngFor="let show of filteredShowsList"
-          [tvShow]="show" [genre]="this.genre" [airDate]="this.airDate" [page]="this.page">
-        </app-show-list>
       </div>
-    </body>
+    </section>
+
+    <div class="results" *ngIf="genre != 0">
+      <div class="movie-item" *ngFor="let showItem of filteredShowsList">
+        <div class="movie-info">
+          <app-show-list
+            [tvShow]="showItem" [page]="this.page" [airDate]="this.airDate" [genre]="this.genre">
+          </app-show-list>
+        </div>
+      </div>
+    </div>
+
     <footer>
-    <mat-paginator [length]=this.totalShows
-              [pageSize]=this.showsLength
-              aria-label="Select page"
-              (page)="onPageChange($event)">
+      <mat-paginator [length]=this.totalShows
+                [pageSize]=this.showsLength
+                aria-label="Select page"
+                (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
+  </div>
   `,
   styleUrls: ['./discover-shows.component.sass', '../../styles.sass'],
 })

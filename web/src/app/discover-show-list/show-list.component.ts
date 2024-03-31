@@ -10,7 +10,9 @@ import { TvShow } from '../http-service/http-service.component';
   template: `
   <div>
     <section class="listing" *ngFor="let show of tvShow?.results; index as i;">
-      <img class="show-photo" [src]="show.poster_path" alt="Exterior photo of {{show.name}}">
+      <div class="show-image">
+        <img [src]="show.poster_path" alt="Movie Poster" class="poster-image">
+      </div>
       <h2 class="show-name">Show name: {{ show.name }}</h2>
       <p class="show-overview">{{ show.overview}}</p>
       <p class="show-vote-average">The vote average for this show is: {{show.vote_average }} </p>

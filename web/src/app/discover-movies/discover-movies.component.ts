@@ -20,57 +20,54 @@ import {MatPaginatorModule, PageEvent } from '@angular/material/paginator';
   template: `
   <!-- DiscoverMoviesComponent -->
   <div class="container">
-  <section class="header-section">
-    <form class="search-form">
-      <input type="text" placeholder="Filter Movie by Title" #filter>
-      <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
-    </form>
-
-    <div id="filters">
-      <label for="filters" id='filter-label'>Filters for Movies:</label>
-      <form class='filters-form' (ngSubmit)="getGenre(1)">
-        <div class="filters-div">
-          <label for="genre">Genre:</label>
-          <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
-            <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
-          </select>
-        </div>
-
-        <div class="filters-div">
-          <label for="releaseYear">Release Year:</label>
-          <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" class='select-section' />
-        </div>
-
-        <div class="filters-div">
-          <label for="endYear">End Year:</label>
-          <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" class='select-section' />
-        </div>
-
-        <button class="button big-btn filter-button" type="submit">Filter</button>
+    <section class="header-section">
+      <form class="search-form">
+        <input type="text" placeholder="Filter Movie by Title" #filter>
+        <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
       </form>
-    </div>
-  </section>
 
-  <div class="results" *ngIf="genre != 0">
-    <div class="movie-item" *ngFor="let movieItem of filteredMovieList">
-      <div class="movie-image">
-        <img [src]="movieItem.results[0].poster_path" alt="Movie Poster" class="poster-image">
+      <div id="filters">
+        <label for="filters" id='filter-label'>Filters for Movies:</label>
+        <form class='filters-form' (ngSubmit)="getGenre(1)">
+          <div class="filters-div">
+            <label for="genre">Genre:</label>
+            <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
+              <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
+            </select>
+          </div>
+
+          <div class="filters-div">
+            <label for="releaseYear">Release Year:</label>
+            <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" class='select-section' />
+          </div>
+
+          <div class="filters-div">
+            <label for="endYear">End Year:</label>
+            <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" class='select-section' />
+          </div>
+
+          <button class="button big-btn filter-button" type="submit">Filter</button>
+        </form>
       </div>
-      <div class="movie-info">
-        <app-movie-list
-          [movieItem]="movieItem" [page]="this.page" [releaseYear]="this.releaseYear" [endYear]="this.endYear" [genre]="this.genre">
-        </app-movie-list>
+    </section>
+
+    <div class="results" *ngIf="genre != 0">
+      <div class="movie-item" *ngFor="let movieItem of filteredMovieList">
+        <div class="movie-info">
+          <app-movie-list
+            [movieItem]="movieItem" [page]="this.page" [releaseYear]="this.releaseYear" [endYear]="this.endYear" [genre]="this.genre">
+          </app-movie-list>
+        </div>
       </div>
     </div>
-  </div>
 
-  <footer>
-    <mat-paginator [length]=this.totalMovies
-              [pageSize]=this.moviesLength
-              aria-label="Select page"
-              (page)="onPageChange($event)">
-    </mat-paginator>
-  </footer>
+    <footer>
+      <mat-paginator [length]=this.totalMovies
+                [pageSize]=this.moviesLength
+                aria-label="Select page"
+                (page)="onPageChange($event)">
+      </mat-paginator>
+    </footer>
   </div>
   `,
   styleUrls: ['./discover-movies.component.sass', '../../styles.sass']
