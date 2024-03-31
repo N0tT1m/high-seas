@@ -69,7 +69,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
                     <a class="dropdown-toggle">Discover & Search Shows</a>
                     <div class="dropdown-menu">
                       <a [routerLink]="['discover/shows']">Discover Shows</a>
-                      <a [routerLink]="['popular/movies']">Popular Movies</a>
+                      <a [routerLink]="['search/shows']">Search Shows</a>
                     </div>
                   </div>
                 </div>

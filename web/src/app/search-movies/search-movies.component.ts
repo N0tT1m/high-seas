@@ -16,30 +16,30 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
   template: `
   <!-- SearchMoviesComponent -->
   <div class="container">
-  <section class="header-section">
-    <form class="search-form" (ngSubmit)="getGenre(1)">
-      <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
-      <button class="button big-btn filter-button" type="submit">Filter</button>
-    </form>
+    <section class="header-section">
+      <form class="search-form" (ngSubmit)="getGenre(1)">
+        <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
+        <button class="button big-btn filter-button" type="submit">Filter</button>
+      </form>
 
-    <div class="results" *ngIf="this.filteredMovieList.length != 0">
-      <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
-        <div class="movie-info">
-          <app-search-movie-list
-            [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
-          </app-search-movie-list>
+      <div class="results" *ngIf="this.filteredMovieList.length != 0">
+        <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
+          <div class="movie-info">
+            <app-search-movie-list
+              [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
+            </app-search-movie-list>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <footer>
-    <mat-paginator [length]=this.totalMovies
-              [pageSize]=this.moviesLength
-              aria-label="Select page"
-              (page)="onPageChange($event)">
-    </mat-paginator>
-  </footer>
+    <footer>
+      <mat-paginator [length]=this.totalMovies
+                [pageSize]=this.moviesLength
+                aria-label="Select page"
+                (page)="onPageChange($event)">
+      </mat-paginator>
+    </footer>
   </div>
   `,
   styleUrls: ['./search-movies.component.sass', '../../styles.sass']

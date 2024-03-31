@@ -19,26 +19,32 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
   providers: [TvShowService, NgModel],
 
   template: `
+  <div class="container">
     <section class="header-section">
-    <form class="search-form" (ngSubmit)="getGenre(1)">
-      <input type="text" [(ngModel)]="showSearch" name="showSearch" id="showSearch" placeholder="Find Show by Name" #filter />
-      <button class="button" class="big-btn filter-button" type="submit">Filter</button>
-    </form>
+      <form class="search-form" (ngSubmit)="getGenre(1)">
+        <input type="text" [(ngModel)]="showSearch" name="showSearch" id="showSearch" placeholder="Find Show by Name" #filter />
+        <button class="button big-btn filter-button" type="submit">Filter</button>
+      </form>
 
-      <div *ngIf="this.filteredShowsList.length != 0">
-        <app-search-show-list
-          *ngFor="let showItem of this.filteredShowsList; index as i;"
-          [tvShow]="showItem" [page]="showItem.page" [query]="filter.value">
-        </app-search-show-list>
+      <div class="results" *ngIf="this.filteredShowsList.length != 0">
+        <div class="show-item" *ngFor="let showItem of this.filteredShowsList; index as i;">
+          <div class="show-info">
+            <app-search-show-list
+              [tvShow]="showItem" [page]="showItem.page" [query]="filter.value">
+            </app-search-show-list>
+          </div>
+        </div>
       </div>
     </section>
+
     <footer>
-    <mat-paginator [length]=this.totalShows
-              [pageSize]=this.showsLength
-              aria-label="Select page"
-              (page)="onPageChange($event)">
+      <mat-paginator [length]=this.totalShows
+                [pageSize]=this.showsLength
+                aria-label="Select page"
+                (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
+  </div>
   `,
   styleUrls: ['./search-shows.component.sass', '../../styles.sass']
 })
@@ -120,7 +126,7 @@ export class SearchShowsComponent {
         let result: TvShowResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
 
         this.fetchedShows.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-    
+
         this.pages.push(page)
         this.releaseYear.push(firstAirDate)
         this.genre = genreIds[0]
