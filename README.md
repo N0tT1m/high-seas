@@ -67,6 +67,19 @@ http {
 
 ```
 
+## Install script
+
+Location: `./install-scripts`
+
+The scripts come in two forms:
+
+A Go script:
+  - Setup.go
+
+A Python script:
+  - Setup.py
+
+The Go script works, currently the Python script isn't refactored.
 
 ## High Seas Frontend
 
@@ -102,6 +115,22 @@ To run the backend of High Seas you can run the command:
 ```
 dockerbuild -t high-seas-backend .
 docker run -d -p 8782:8782 high-seas-backend
+```
+
+##### Default file name **.env** in the root directory
+
+```
+DB_USER=DB_USER
+DB_PASSWORD=DB_PASSWORD
+DB_IP=DB_IP
+DB_PORT=DB_PORT
+DELUGE_IP=DELUGE_IP
+DELUGE_PORT=DELUGE_PORT
+DELUGE_USER=DELUGE_USER
+DELUGE_PASSWORD=DELUGE_PASSWORD
+JACKETT_IP=JACKETT_IP_HERE
+JACKETT_PORT=JACKETT_PORT_HERE
+JACKETT_API_KEY=YOUR_KEY_HERE
 ```
 
 ## Plex Python Backend

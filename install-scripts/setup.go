@@ -121,7 +121,8 @@ http {
 		return
 	}
 
-	// ... (rest of the code remains the same)
+	// Start Docker
+	startDocker()
 
 	// Pass the password to the runCommand function
 
@@ -246,28 +247,121 @@ func installDockerComposeWindows() {
 
 func buildDockerfileWeb() {
 	// Build the Dockerfile
-	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-frontend", "./web")
+	osName := runtime.GOOS
+	var buildCmd *exec.Cmd
+
+	if osName == "linux" {
+		distro := detectLinuxDistro()
+		switch distro {
+		case "ubuntu", "debian":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-frontend", "./web")
+		case "arch":
+			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-frontend", "./web")
+		case "fedora", "gentoo", "slackware":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-frontend", "./web")
+		default:
+			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
+			return
+		}
+	} else if osName == "darwin" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-frontend", "./web")
+	} else if osName == "windows" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-frontend", "./web")
+	} else {
+		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+		return
+	}
+
 	runCommand(buildCmd)
 	fmt.Println("Dockerfile for High Seas frontend built successfully.")
 }
 
 func buildDockerfileBackendGo() {
-	// Build the Dockerfile
-	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-golang", ".")
+	osName := runtime.GOOS
+	var buildCmd *exec.Cmd
+
+	if osName == "linux" {
+		distro := detectLinuxDistro()
+		switch distro {
+		case "ubuntu", "debian":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-golang", ".")
+		case "arch":
+			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-golang", ".")
+		case "fedora", "gentoo", "slackware":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-golang", ".")
+		default:
+			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
+			return
+		}
+	} else if osName == "darwin" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-golang", ".")
+	} else if osName == "windows" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-golang", ".")
+	} else {
+		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+		return
+	}
+
 	runCommand(buildCmd)
 	fmt.Println("Dockerfile for High Seas backend in Golang built successfully.")
 }
 
 func buildDockerfileBackendPython() {
-	// Build the Dockerfile
-	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-python", ".")
+	osName := runtime.GOOS
+	var buildCmd *exec.Cmd
+
+	if osName == "linux" {
+		distro := detectLinuxDistro()
+		switch distro {
+		case "ubuntu", "debian":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-python", ".")
+		case "arch":
+			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-python", ".")
+		case "fedora", "gentoo", "slackware":
+			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-python", ".")
+		default:
+			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
+			return
+		}
+	} else if osName == "darwin" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-python", ".")
+	} else if osName == "windows" {
+		buildCmd = exec.Command("docker", "build", "-t", "high-seas-python", ".")
+	} else {
+		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+		return
+	}
+
 	runCommand(buildCmd)
 	fmt.Println("Dockerfile for High Seas backend in Python built successfully.")
 }
 
 func runDockerCompose() {
-	// Run the application using Docker Compose
-	runCmd := exec.Command("sudo", "-S", "docker-compose", "up", "-d")
+	osName := runtime.GOOS
+	var runCmd *exec.Cmd
+
+	if osName == "linux" {
+		distro := detectLinuxDistro()
+		switch distro {
+		case "ubuntu", "debian":
+			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
+		case "arch":
+			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
+		case "fedora", "gentoo", "slackware":
+			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
+		default:
+			fmt.Println("Unsupported Linux distribution for running Docker Compose:", distro)
+			return
+		}
+	} else if osName == "darwin" {
+		runCmd = exec.Command("docker-compose", "up", "-d")
+	} else if osName == "windows" {
+		runCmd = exec.Command("docker-compose", "up", "-d")
+	} else {
+		fmt.Println("Unsupported operating system for running Docker Compose:", osName)
+		return
+	}
+
 	runCommand(runCmd)
 	fmt.Println("Application is running with Docker Compose.")
 }
@@ -328,4 +422,53 @@ func runCommand(cmd *exec.Cmd) {
 	} else {
 		fmt.Printf("Command executed successfully\n")
 	}
+}
+
+func startDocker() {
+	osName := runtime.GOOS
+
+	if osName == "linux" {
+		if isSystemdUsed() {
+			startDockerSystemd()
+		} else {
+			startDockerRcd()
+		}
+	} else if osName == "darwin" {
+		startDockerMac()
+	} else if osName == "windows" {
+		startDockerWindows()
+	} else {
+		fmt.Println("Unsupported operating system for starting Docker:", osName)
+		return
+	}
+}
+
+func isSystemdUsed() bool {
+	// Check if systemd is used as the init system
+	_, err := os.Stat("/run/systemd/system")
+	return err == nil
+}
+
+func startDockerSystemd() {
+	startCmd := exec.Command("sudo", "systemctl", "start", "docker")
+	runCommand(startCmd)
+	fmt.Println("Docker started successfully using systemd.")
+}
+
+func startDockerRcd() {
+	startCmd := exec.Command("sudo", "service", "docker", "start")
+	runCommand(startCmd)
+	fmt.Println("Docker started successfully using rc.d.")
+}
+
+func startDockerMac() {
+	startCmd := exec.Command("open", "/Applications/Docker.app")
+	runCommand(startCmd)
+	fmt.Println("Docker started successfully on macOS.")
+}
+
+func startDockerWindows() {
+	startCmd := exec.Command("C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe")
+	runCommand(startCmd)
+	fmt.Println("Docker started successfully on Windows.")
 }
