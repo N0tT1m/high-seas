@@ -3,7 +3,7 @@ services:
   web:
     build: ./web/.
     ports: 
-      - "6969:6969"
+      - "80:80"
   backend:
     build: .
     ports:
