@@ -9,19 +9,24 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
-    "noImplicitAny": false,
     "noFallthroughCasesInSwitch": true,
-    "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
     "importHelpers": true,
-    "target": "ES2022",
-    "module": "ES2022",
     "useDefineForClassFields": false,
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "noImplicitAny": false,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
     "lib": [
-      "ES2022",
+      "es2017",
       "dom"
     ]
   },

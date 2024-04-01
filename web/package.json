@@ -14,7 +14,9 @@
     "run-container": "docker run --name high-seas-frontend -d -p 8080:80 high-seas-frontend",
     "remove-container": "docker rm -f high-seas-frontend",
     "containerize": "npm run build-image && npm run run-container",
-    "recontainerize": "npm run remove-container && npm run build-image && npm run run-container"
+    "recontainerize": "npm run remove-container && npm run build-image && npm run run-container",
+    "start-webpack": "webpack-dev-server --mode development",
+    "build-webpack": "webpack --mode production"
   },
   "repository": {
     "type": "git",
@@ -41,7 +43,17 @@
     "@angular/router": "^17.2.2",
     "ng-gallery": "^11.0.0",
     "ng-process-env": "^16.0.6",
-    "tslib": "^2.6.2",
-    "typescript": "^5.3.3"
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/mocha": "^10.0.6",
+    "html-loader": "^5.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
   }
 }
