@@ -10,7 +10,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build-webpack
+RUN npm run build
 
 # Final stage
 FROM nginx:latest

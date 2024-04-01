@@ -20,6 +20,85 @@ func main() {
 		installChocolatey()
 	}
 
+	// Create the './plex/config.py' file
+	os.MkdirAll("./plex", os.ModePerm)
+	file, err := os.Create("./plex/config.py")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+	file.WriteString(`HOST="192.168.1.1"
+USER="root"
+PASSWD="ThisIsAPassword"
+DB="highseas"
+IP="192.168.1.1"
+PORT="32400"
+`)
+
+	// Create the environment files
+	os.MkdirAll("./web/src/app/environments", os.ModePerm)
+	environmentFiles := []string{"environment.prod.ts", "environment.ts", "environment.deployment.ts"}
+	for _, fileName := range environmentFiles {
+		file, err := os.Create("./web/src/app/environments/" + fileName)
+		if err != nil {
+			fmt.Println("Error creating file:", err)
+			continue
+		}
+		defer file.Close()
+		file.WriteString(`export const environment = {
+    production: true,
+    baseUrl: 'http://www.example.com:8080',
+    envVar: {
+      /**
+       * Add environment variables you want to retriev from process
+       * PORT:4200,
+       * VAR_NAME: defaultValue
+       */
+      authorization: "THE BEARER TOKEN FOR TMDb API",
+      port: "THE PORT YOUR GOLANG API IS RUNNING ON",
+      ip: "THE IP YOUR GOLANG API IS RUNNING ON",
+    },
+  };
+`)
+	}
+
+	// Create the './web/nginx.conf' file
+
+	os.MkdirAll("./web", os.ModePerm)
+	file, err = os.Create("./web/nginx.conf")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+	file.WriteString(`# the events block is required
+events{}
+http {
+    # include the default mime.types to map file extensions to MIME types
+    include /etc/nginx/mime.types;
+    server {
+        # set the root directory for the server (we need to copy our
+        # application files here)
+        root /usr/share/nginx/html;
+        # set the default index file for the server (Angular generates the
+        # index.html file for us and it will be in the above directory)
+        index index.html;
+        listen       6969;
+        server_name http://goose.duocore.space http://arch.duocore.space;
+        # specify the configuration for the '/' location
+        location / {
+            # try to serve the requested URI. if that fails then try to
+            # serve the URI with a trailing slash. if that fails, then
+            # serve the index.html file; this is needed in order to serve
+            # Angular routes--e.g.,'localhost:8080/customer' will serve
+            # the index.html file
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}
+`)
+
 	// Install Docker and Docker Compose based on the operating system
 	if osName == "linux" {
 		// Detect the Linux distribution
@@ -42,8 +121,14 @@ func main() {
 		return
 	}
 
+	// ... (rest of the code remains the same)
+
+	// Pass the password to the runCommand function
+
 	// Build the Dockerfile
-	buildDockerfile()
+	buildDockerfileWeb()
+	buildDockerfileBackendGo()
+	buildDockerfileBackendPython()
 
 	// Run the application using Docker Compose
 	runDockerCompose()
@@ -79,6 +164,7 @@ func detectLinuxDistro() string {
 
 func installDockerLinux(distro string) {
 	var installCmd *exec.Cmd
+	var installBuildx *exec.Cmd
 
 	switch distro {
 	case "ubuntu", "debian":
@@ -86,7 +172,8 @@ func installDockerLinux(distro string) {
 		runCommand(installCmd)
 		installCmd = exec.Command("sudo", "apt-get", "install", "-y", "docker.io")
 	case "arch":
-		installCmd = exec.Command("sudo", "pacman", "-Syu", "--noconfirm", "docker")
+		installCmd = exec.Command("yay", "-S", "--noconfirm", "docker")
+		installBuildx = exec.Command("sudo", "pacman", "-S", "--noconfirm", "docker-buildx")
 	case "fedora":
 		installCmd = exec.Command("sudo", "dnf", "install", "-y", "docker")
 	case "gentoo":
@@ -99,6 +186,7 @@ func installDockerLinux(distro string) {
 	}
 
 	runCommand(installCmd)
+	runCommand(installBuildx)
 	fmt.Println("Docker installed successfully.")
 }
 
@@ -109,7 +197,7 @@ func installDockerComposeLinux(distro string) {
 	case "ubuntu", "debian":
 		installCmd = exec.Command("sudo", "apt-get", "install", "-y", "docker-compose")
 	case "arch":
-		installCmd = exec.Command("sudo", "pacman", "-Syu", "--noconfirm", "docker-compose")
+		installCmd = exec.Command("sudo", "pacman", "-S", "--noconfirm", "docker-compose")
 	case "fedora":
 		installCmd = exec.Command("sudo", "dnf", "install", "-y", "docker-compose")
 	case "gentoo":
@@ -139,9 +227,16 @@ func installDockerComposeMac() {
 
 func installDockerWindows() {
 	// Install Docker Desktop for Windows using Chocolatey
-	installCmd := exec.Command("choco", "install", "docker-desktop", "-y")
-	runCommand(installCmd)
-	fmt.Println("Docker Desktop installed successfully.")
+	_, err := exec.LookPath("docker-desktop")
+	if err != nil {
+		// Install Chocolatey
+		installCmd := exec.Command("choco", "install", "-y", "docker-desktop")
+		runCommand(installCmd)
+		fmt.Println("Docker Desktop installed successfully.")
+	} else {
+		fmt.Println("Docker Desktop is already installed.")
+	}
+
 }
 
 func installDockerComposeWindows() {
@@ -149,28 +244,32 @@ func installDockerComposeWindows() {
 	fmt.Println("Docker Compose is already installed with Docker Desktop.")
 }
 
-func buildDockerfile() {
+func buildDockerfileWeb() {
 	// Build the Dockerfile
-	buildCmd := exec.Command("docker", "build", "-t", "myapp", ".")
+	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-frontend", "./web")
 	runCommand(buildCmd)
-	fmt.Println("Dockerfile built successfully.")
+	fmt.Println("Dockerfile for High Seas frontend built successfully.")
+}
+
+func buildDockerfileBackendGo() {
+	// Build the Dockerfile
+	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-golang", ".")
+	runCommand(buildCmd)
+	fmt.Println("Dockerfile for High Seas backend in Golang built successfully.")
+}
+
+func buildDockerfileBackendPython() {
+	// Build the Dockerfile
+	buildCmd := exec.Command("sudo", "-S", "docker", "build", "-t", "high-seas-python", ".")
+	runCommand(buildCmd)
+	fmt.Println("Dockerfile for High Seas backend in Python built successfully.")
 }
 
 func runDockerCompose() {
 	// Run the application using Docker Compose
-	runCmd := exec.Command("docker-compose", "up", "-d")
+	runCmd := exec.Command("sudo", "-S", "docker-compose", "up", "-d")
 	runCommand(runCmd)
 	fmt.Println("Application is running with Docker Compose.")
-}
-
-func runCommand(cmd *exec.Cmd) {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Error running command:", err)
-		os.Exit(1)
-	}
 }
 
 func installHomebrew() {
@@ -196,5 +295,37 @@ func installChocolatey() {
 		fmt.Println("Chocolatey installed successfully.")
 	} else {
 		fmt.Println("Chocolatey is already installed.")
+	}
+}
+
+// ... (rest of the functions remain the same)
+
+func runCommand(cmd *exec.Cmd) {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Create a pipe to pass the password to sudo via stdin
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		fmt.Println("Error creating stdin pipe:", err)
+		os.Exit(1)
+	}
+
+	// Start the command
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println("Error starting command:", err)
+		os.Exit(1)
+	}
+
+	stdin.Close()
+
+	// Wait for the command to finish
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println("Error running command:", err)
+		os.Exit(1)
+	} else {
+		fmt.Printf("Command executed successfully\n")
 	}
 }
