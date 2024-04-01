@@ -16,10 +16,10 @@ var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
 var ip = utils.EnvVar("JACKETT_IP", "")
 var port = utils.EnvVar("JACKETT_PORT", "")
 
-func MakeMovieQuery(query string, name string, year string, Imdb uint) {
+func MakeMovieQuery(query string, title string, year string, Imdb uint) {
 	var sizeOfTorrent []uint
 
-	name = strings.Replace(name, ":", "", -1)
+	title = strings.Replace(title, ":", "", -1)
 	years := strings.Split(year, "-")
 
 	ctx := context.Background()
@@ -41,17 +41,13 @@ func MakeMovieQuery(query string, name string, year string, Imdb uint) {
 	}
 
 	for _, r := range resp.Results {
-		if strings.Contains(r.Title, name) && strings.Contains(r.Title, years[0]) {
-
+		if isCorrectMovie(r, title, years[0], Imdb) {
 			logger.WriteInfo(fmt.Sprintf("This is the Jackett Imdb ID ==> %d. This is the TMDb ID ==> %d", r.Imdb, Imdb))
 
 			if r.Imdb == Imdb {
 				if r.Seeders == slices.Max(sizeOfTorrent) {
-
 					link := r.Link
-
 					logger.WriteInfo(link)
-
 					// deluge.AddTorrent(link)
 				}
 			}
@@ -113,14 +109,12 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if strings.Contains(r.Title, name) {
+					if isCorrectShow(r, name, year) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
 							link := r.Link
-
 							logger.WriteInfo(link)
-
 							deluge.AddTorrent(link)
 						}
 					}
@@ -128,14 +122,12 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp2.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if strings.Contains(r.Title, name) {
+					if isCorrectShow(r, name, year) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
 							link := r.Link
-
 							logger.WriteInfo(link)
-
 							deluge.AddTorrent(link)
 						}
 					}
@@ -176,14 +168,12 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if strings.Contains(r.Title, name) {
+					if isCorrectShow(r, name, year) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
 							link := r.Link
-
 							logger.WriteInfo(link)
-
 							deluge.AddTorrent(link)
 						}
 					}
@@ -191,14 +181,12 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp2.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if strings.Contains(r.Title, name) {
+					if isCorrectShow(r, name, year) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
 							link := r.Link
-
 							logger.WriteInfo(link)
-
 							deluge.AddTorrent(link)
 						}
 					}
@@ -247,27 +235,14 @@ func MakeAnimeQuery(query string, episodes int, name string, year string) {
 			}
 
 			for _, r := range resp.Results {
-				if strings.Contains(r.Title, name) {
+				if isCorrectAnime(r, name, year) {
 					if strings.Contains(query, "One Piece") {
 						if !strings.Contains(query, fmt.Sprintf("%d", 2023)) {
-							// link := r.Link
-
-							// logger.WriteInfo(link)
-
-							// links = append(links, link)
-
-							// deluge.AddTorrent(link)
-
 							logger.WriteInfo(r.Title)
 						}
 					} else {
 						link := r.Link
-
 						logger.WriteInfo(link)
-
-						// links = append(links, link)
-
-						// deluge.AddTorrent(link)
 					}
 				}
 			}
@@ -275,4 +250,172 @@ func MakeAnimeQuery(query string, episodes int, name string, year string) {
 			count++
 		}
 	}
+}
+
+func isCorrectShow(r jackett.Result, name, year string) bool {
+	// Check if the name and year match
+	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
+		return false
+	}
+
+	// Compare plot summaries and descriptions
+	if !compareDescriptions(r.Description, name, year) {
+		return false
+	}
+
+	// Check episode titles and descriptions
+	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
+		return false
+	}
+
+	// Check air date
+	if !checkAirDate(r.PublishDate, year) {
+		return false
+	}
+
+	// Check TMDb, TVDB, or IMDb ID
+	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
+		return false
+	}
+
+	// Check production company and country of origin
+	if !checkProductionInfo(r.Publisher, r.Categories) {
+		return false
+	}
+
+	// Match the genre
+	if !matchGenre(r.Categories) {
+		return false
+	}
+
+	return true
+}
+
+func isCorrectMovie(r jackett.Result, title, year string, imdbID uint) bool {
+	// Check if the title and year match
+	if !strings.Contains(r.Title, title) || !strings.Contains(r.Title, year) {
+		return false
+	}
+
+	// Compare plot summaries and descriptions
+	if !compareDescriptions(r.Description, title, year) {
+		return false
+	}
+
+	// Check rating
+	if !checkRating(r.Rating) {
+		return false
+	}
+
+	// Check cast
+	if !checkCast(r.Actors) {
+		return false
+	}
+
+	// Check release date
+	if !checkReleaseDate(r.PublishDate, year) {
+		return false
+	}
+
+	// Check TMDb, TVDB, or IMDb ID
+	if !checkExternalIDs(r.Tvdbid, r.Imdb) || r.Imdb != imdbID {
+		return false
+	}
+
+	// Check production company and country of origin
+	if !checkProductionInfo(r.Publisher, r.Categories) {
+		return false
+	}
+
+	// Match the genre
+	if !matchGenre(r.Categories) {
+		return false
+	}
+
+	return true
+}
+
+func isCorrectAnime(r jackett.Result, name, year string) bool {
+	// Check if the name and year match
+	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
+		return false
+	}
+
+	// Compare plot summaries and descriptions
+	if !compareDescriptions(r.Description, name, year) {
+		return false
+	}
+
+	// Check episode titles and descriptions
+	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
+		return false
+	}
+
+	// Check air date
+	if !checkAirDate(r.PublishDate, year) {
+		return false
+	}
+
+	// Check TMDb, TVDB, or IMDb ID
+	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
+		return false
+	}
+
+	// Check production company and country of origin
+	if !checkProductionInfo(r.Publisher, r.Categories) {
+		return false
+	}
+
+	// Match the genre
+	if !matchGenre(r.Categories) {
+		return false
+	}
+
+	return true
+}
+
+// Helper functions for matching criteria (not implemented in this example)
+func compareDescriptions(description, title, year string) bool {
+	// Implement logic to compare plot summaries and descriptions
+	return true
+}
+
+func checkEpisodeTitlesAndDescriptions(title, name string) bool {
+	// Implement logic to check episode titles and descriptions
+	return true
+}
+
+func checkAirDate(publishDate, year string) bool {
+	// Implement logic to check air date
+	return true
+}
+
+func checkRating(rating float64) bool {
+	// Implement logic to check rating
+	return true
+}
+
+func checkCast(actors string) bool {
+	// Implement logic to check cast
+	return true
+}
+
+func checkReleaseDate(publishDate, year string) bool {
+	// Implement logic to check release date
+	return true
+}
+
+func checkExternalIDs(tvdbID, imdbID uint) bool {
+	// Implement logic to check TMDb, TVDB, or IMDb ID
+	return true
+}
+
+func checkProductionInfo(publisher string, categories []int) bool {
+	// Implement logic to check production company and country of origin
+	return true
+}
+
+func matchGenre(categories []int) bool {
+	// Implement logic to match genre
+	return true
 }
