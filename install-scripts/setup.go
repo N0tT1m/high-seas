@@ -99,6 +99,29 @@ http {
 }
 `)
 
+	// Create the './.env' file
+
+	os.MkdirAll("./", os.ModePerm)
+	file, err = os.Create("./.env")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+	file.WriteString(`
+		DB_USER=DB_USER
+		DB_PASSWORD=DB_PASSWORD
+		DB_IP=DB_IP
+		DB_PORT=DB_PORT
+		DELUGE_IP=DELUGE_IP
+		DELUGE_PORT=DELUGE_PORT
+		DELUGE_USER=DELUGE_USER
+		DELUGE_PASSWORD=DELUGE_PASSWORD
+		JACKETT_IP=JACKETT_IP_HERE
+		JACKETT_PORT=JACKETT_PORT_HERE
+		JACKETT_API_KEY=YOUR_KEY_HERE
+	`)
+
 	// Install Docker and Docker Compose based on the operating system
 	if osName == "linux" {
 		// Detect the Linux distribution
