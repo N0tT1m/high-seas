@@ -268,25 +268,25 @@ func isCorrectShow(r jackett.Result, name, year string) bool {
 		return false
 	}
 
-	// Check air date
-	if !checkAirDate(r.PublishDate, year) {
-		return false
-	}
+	// // Check air date
+	// if !checkAirDate(r.PublishDate, year) {
+	// 	return false
+	// }
 
-	// Check TMDb, TVDB, or IMDb ID
-	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-		return false
-	}
+	// // Check TMDb, TVDB, or IMDb ID
+	// if !checkExternalIDs(r.Tvdbid, r.Imdb) {
+	// 	return false
+	// }
 
-	// Check production company and country of origin
-	if !checkProductionInfo(r.Publisher, r.Categories) {
-		return false
-	}
+	// // Check production company and country of origin
+	// if !checkProductionInfo(r.Publisher, r.Categories) {
+	// 	return false
+	// }
 
-	// Match the genre
-	if !matchGenre(r.Categories) {
-		return false
-	}
+	// // Match the genre
+	// if !matchGenre(r.Categories) {
+	// 	return false
+	// }
 
 	return true
 }
@@ -302,35 +302,35 @@ func isCorrectMovie(r jackett.Result, title, year string, imdbID uint) bool {
 		return false
 	}
 
-	// Check rating
-	if !checkRating(r.Rating) {
-		return false
-	}
+	// // Check rating
+	// if !checkRating(r.Rating) {
+	// 	return false
+	// }
 
-	// Check cast
-	if !checkCast(r.Actors) {
-		return false
-	}
+	// // Check cast
+	// if !checkCast(r.Actors) {
+	// 	return false
+	// }
 
-	// Check release date
-	if !checkReleaseDate(r.PublishDate, year) {
-		return false
-	}
+	// // Check release date
+	// if !checkReleaseDate(r.PublishDate, year) {
+	// 	return false
+	// }
 
-	// Check TMDb, TVDB, or IMDb ID
-	if !checkExternalIDs(r.Tvdbid, r.Imdb) || r.Imdb != imdbID {
-		return false
-	}
+	// // Check TMDb, TVDB, or IMDb ID
+	// if !checkExternalIDs(r.Tvdbid, r.Imdb) || r.Imdb != imdbID {
+	// 	return false
+	// }
 
-	// Check production company and country of origin
-	if !checkProductionInfo(r.Publisher, r.Categories) {
-		return false
-	}
+	// // Check production company and country of origin
+	// if !checkProductionInfo(r.Publisher, r.Categories) {
+	// 	return false
+	// }
 
-	// Match the genre
-	if !matchGenre(r.Categories) {
-		return false
-	}
+	// // Match the genre
+	// if !matchGenre(r.Categories) {
+	// 	return false
+	// }
 
 	return true
 }
@@ -351,25 +351,25 @@ func isCorrectAnime(r jackett.Result, name, year string) bool {
 		return false
 	}
 
-	// Check air date
-	if !checkAirDate(r.PublishDate, year) {
-		return false
-	}
+	// // Check air date
+	// if !checkAirDate(r.PublishDate, year) {
+	// 	return false
+	// }
 
-	// Check TMDb, TVDB, or IMDb ID
-	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-		return false
-	}
+	// // Check TMDb, TVDB, or IMDb ID
+	// if !checkExternalIDs(r.Tvdbid, r.Imdb) {
+	// 	return false
+	// }
 
-	// Check production company and country of origin
-	if !checkProductionInfo(r.Publisher, r.Categories) {
-		return false
-	}
+	// // Check production company and country of origin
+	// if !checkProductionInfo(r.Publisher, r.Categories) {
+	// 	return false
+	// }
 
-	// Match the genre
-	if !matchGenre(r.Categories) {
-		return false
-	}
+	// // Match the genre
+	// if !matchGenre(r.Categories) {
+	// 	return false
+	// }
 
 	return true
 }
