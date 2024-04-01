@@ -151,7 +151,7 @@ export class SearchTvShowDetailsComponent {
   public lastAirDate = "";
   public lastEpisodeToAir = {};
   public tageline = "";
-  public quality: string;
+  public quality = '1080p'; // Default download quality
   public tmdbId: number = 0;
 
   constructor() {

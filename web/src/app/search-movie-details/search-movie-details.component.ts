@@ -16,44 +16,70 @@ import { MovieService } from '../movies.service';
   ],
   providers: [MovieService, NgModel],
   template: `
-  <article class="earth-spirit" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
-  <img class="movie-photo earth-spirit" [src]="movie!.poster_path"
-    alt="Exterior photo of {{movie!.title}}"/>
-  <section class="movie-description earth-spirit">
-    <h2 class="movie-title">{{movie!.title}}</h2>
-    <p class="movie-overview">{{movie!.overview}}</p>
-  </section>
-  <section class="movie-details earth-spirit">
-    <h2 class="section-heading">About this movie</h2>
-    <ul>
-      <div class="movie-div">
-        <li>Original Language: {{movie!.original_language}}</li>
-        <li>Original Title: {{movie!.original_title}}</li>
-        <li>popularity: {{movie!.popularity}}</li>
-        <li>Release Date: {{movie!.release_date}}</li>
+  <article class="movie-details" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
+    <div class="movie-header">
+      <img *ngIf="movie!.poster_path" class="movie-poster" [src]="movie!.poster_path" alt="Poster of {{movie!.title}}" />
+      <div class="movie-info">
+        <h2 class="movie-title">{{movie!.title}}</h2>
+        <p class="movie-overview">{{movie!.overview}}</p>
       </div>
-      <div class="movie-div">
-        <li>IMDB ID: {{this.imdbId}}</li>
-        <li>Budget for {{movie!.title}}: {{this.budget}}</li>
-        <li>Homepage for {{movie!.title}}: {{this.homepage}}</li>
-        <li>Tagline for {{movie!.title}}: {{this.tagline}}</li>
-      </div>
-    </ul>
-
-    <div class="download-quality">
-      <select [(ngModel)]="quality" name="quality" id="quality">
-        <option value="4k">4k</option>
-        <option value="2k">2k</option>
-        <option value="1080p">1080p</option>
-        <option value="720p">720p</option>
-        <option value="480p">480p</option>
-        <option value="240p">240p</option>
-      </select>
     </div>
-
-    <button (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality)">Download Movie</button>
-  </section>
-</article>
+    <section class="movie-details-section">
+      <h3 class="section-heading">About this movie:</h3>
+      <div class="movie-meta">
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">Original Language:</div>
+          <div class="movie-meta-value">{{movie!.original_language}}</div>
+        </div>
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">Original Title:</div>
+          <div class="movie-meta-value">{{movie!.original_title}}</div>
+        </div>
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">Popularity:</div>
+          <div class="movie-meta-value">{{movie!.popularity}}</div>
+        </div>
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">Release Date:</div>
+          <div class="movie-meta-value">{{movie!.release_date}}</div>
+        </div>
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">IMDb ID:</div>
+          <div class="movie-meta-value">{{this.imdbId}}</div>
+        </div>
+        <div class="movie-meta-item">
+          <div class="movie-meta-label">Budget for {{ movie.title }}:</div>
+          <div class="movie-meta-value">{{ this.budget }}</div>
+        </div>
+      </div>
+      <div class="movie-homepage">
+        <span class="movie-homepage-label">Homepage:</span>
+        <a class="movie-homepage-link" href="{{this.homepage}}" target="_blank">{{this.homepage}}</a>
+      </div>
+      <div class="movie-tagline">
+        <span class="movie-tagline-label">Tagline for {{movie.title}}:</span>
+        <span class="movie-tagline-value">{{this.tagline}}</span>
+      </div>
+      <div class="movie-video" *ngIf="movie!.video != undefined">
+        <span class="movie-video-label">Is a video:</span>
+        <span class="movie-video-value">{{movie!.video}}</span>
+      </div>
+    </section>
+    <div class="movie-actions">
+      <div class="movie-download-quality">
+        <label for="quality" class="movie-download-quality-label">Download Quality:</label>
+        <select [(ngModel)]="quality" name="quality" id="quality" class="movie-download-quality-select">
+          <option value="4k">4k</option>
+          <option value="2k">2k</option>
+          <option value="1080p" selected>1080p</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="240p">240p</option>
+        </select>
+      </div>
+      <button (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality, movie.original_language)">Download Movie</button>
+    </div>
+  </article>
     `,
   styleUrls: ['./search-movie-details.component.sass', '../../styles.sass'],
 })
@@ -72,7 +98,7 @@ export class SearchMovieDetailsComponent {
   public budget: number = 0;
   public belongsToCollection: boolean = false;
   public overview: string = "";
-  public quality: string;
+  public quality = '1080p'; // Default download quality
 
   constructor() {
 
@@ -129,7 +155,14 @@ export class SearchMovieDetailsComponent {
     })
   }
 
-  downloadMovie(title: string, name: string, year: string, quality: string) {
-    this.movieService.makeDownloadRequest(title, name, year, quality, Number(this.imdbId)).subscribe(request => console.log(request));
+  downloadMovie(title: string, name: string, year: string, quality: string, lang: string) {
+    if (lang === 'ja') {
+      console.log('ANIME');
+      // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+    } else {
+      console.log('Movie');
+      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId)).subscribe(request => console.log(request));
+
+    }
   }
 }

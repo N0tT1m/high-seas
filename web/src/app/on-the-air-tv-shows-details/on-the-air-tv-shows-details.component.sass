@@ -1,156 +1,211 @@
+// Show details styles
 .show-details
+  color: #ffffff
+  padding: 20px
   margin-bottom: 40px
 
-.show-header
-  display: flex
-  align-items: flex-start
-  margin-bottom: 20px
+  .show-header
+    display: flex
+    align-items: flex-start
+    margin-bottom: 20px
 
-.show-poster
-  width: 300px
-  height: auto
-  margin-right: 20px
+    .show-poster
+      width: 300px
+      height: auto
+      margin-right: 20px
 
-.show-info
-  flex: 1
 
-.show-title
-  font-size: 24px
-  font-weight: bold
-  margin-bottom: 10px
+    .show-info
+      flex: 1
+      perspective: 800px
+      transform-style: preserve-3d
 
-.show-overview
-  margin-bottom: 20px
 
-.show-details-section
-  margin-bottom: 30px
+      .show-title
+        font-size: 48px
+        font-weight: bold
+        margin-bottom: 20px
+        text-align: center
+        text-transform: uppercase
+        letter-spacing: 4px
+        color: #ffe81f
+        animation: intro-title 5s ease-out forwards
 
-.section-heading
-  font-size: 20px
-  font-weight: bold
-  margin-bottom: 15px
+      .show-overview
+        font-size: 24px
+        margin-bottom: 40px
+        text-align: justify
+        line-height: 1.5
+        color: #ffffff
+        animation: intro-overview 5s ease-out forwards
 
-.show-meta
-  display: grid
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
-  gap: 10px
-  margin-bottom: 20px
+  .show-details-section
+    margin-bottom: 30px
 
-.show-meta-item
-  display: flex
-  align-items: center
+    .section-heading
+      font-size: 28px
+      font-weight: bold
+      margin-bottom: 15px
 
-.show-meta-label
-  font-weight: bold
-  margin-right: 5px
 
-.show-creators
-  margin-bottom: 20px
+    .show-meta
+      display: flex
+      flex-direction: column
+      margin-bottom: 20px
 
-.show-creators-heading
-  font-size: 18px
-  font-weight: bold
-  margin-bottom: 10px
 
-.show-creators-list
-  list-style-type: disc
-  margin-left: 20px
+      .show-meta-item
+        display: flex
+        flex-direction: column
+        font-size: 18px
+        margin-bottom: 15px
 
-.show-dates
-  margin-bottom: 20px
 
-.show-date-item
-  margin-bottom: 10px
+        .show-meta-label
+          font-weight: bold
+          margin-bottom: 5px
+          margin-left: 25px
 
-.show-date-label
-  font-weight: bold
-  margin-right: 5px
 
-.show-last-episode
-  margin-bottom: 20px
+        .show-meta-value
+          margin-left: 50px
 
-.show-last-episode-heading
-  font-size: 18px
-  font-weight: bold
-  margin-bottom: 10px
 
-.show-last-episode-details
-  display: flex
-  align-items: flex-start
+    .show-last-episode
+      margin-bottom: 20px
 
-.show-last-episode-image
-  width: 200px
-  height: auto
-  margin-right: 20px
 
-.show-last-episode-info
-  flex: 1
+      .show-last-episode-heading
+        font-size: 24px
+        font-weight: bold
+        margin-bottom: 10px
 
-.show-last-episode-item
-  margin-bottom: 10px
 
-.show-last-episode-label
-  font-weight: bold
-  margin-right: 5px
+      .show-last-episode-details
+        display: flex
+        align-items: flex-start
 
-.show-homepage
-  margin-bottom: 10px
 
-.show-homepage-label
-  font-weight: bold
-  margin-right: 5px
+        .show-last-episode-image
+          width: 200px
+          height: auto
+          margin-right: 20px
 
-.show-homepage-link
-  color: blue
-  text-decoration: underline
-  &:hover
-    text-decoration: none
 
-.show-production
-  margin-bottom: 10px
+        .show-last-episode-info
+          flex: 1
+          font-size: 18px
 
-.show-production-label
-  font-weight: bold
-  margin-right: 5px
 
-.show-tagline
-  margin-bottom: 10px
+          .show-last-episode-item
+            margin-bottom: 10px
+            margin-left: 25px
 
-.show-tagline-label
-  font-weight: bold
-  margin-right: 5px
 
-.show-video
-  margin-bottom: 10px
+            .show-last-episode-label
+              font-weight: bold
+              margin-right: 5px
 
-.show-video-label
-  font-weight: bold
-  margin-right: 5px
 
-.show-actions
-  display: flex
-  align-items: center
-  justify-content: space-between
-  margin-top: 30px
+    .show-homepage
+      margin-bottom: 10px
+      font-size: 18px
 
-.show-download-quality
-  display: flex
-  align-items: center
 
-.show-download-quality-label
-  margin-right: 10px
+      .show-homepage-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
 
-.show-download-quality-select
-  padding: 5px 10px
-  font-size: 16px
 
-.show-download-button
-  padding: 10px 20px
-  font-size: 16px
-  background-color: #007bff
-  color: #fff
-  border: none
-  border-radius: 4px
-  cursor: pointer
-  &:hover
-    background-color: #0056b3
+      .show-homepage-link
+        color: #0077ff
+        text-decoration: underline
+
+
+        &:hover
+          text-decoration: none
+
+    .show-production
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .show-production-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+    .show-tagline
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .show-tagline-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+    .show-video
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .show-video-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+  .show-actions
+    display: flex
+    align-items: center
+    justify-content: space-between
+    margin-top: 30px
+
+
+    .show-download-quality
+      display: flex
+      align-items: center
+
+
+      .show-download-quality-label
+        margin-right: 10px
+        font-size: 18px
+
+
+      .show-download-quality-select
+        padding: 5px 10px
+        font-size: 18px
+
+
+    .show-download-button
+      padding: 10px 20px
+      font-size: 18px
+      background-color: #0077ff
+      color: white
+      border: none
+      border-radius: 4px
+      cursor: pointer
+
+
+      &:hover
+        background-color: #005ae6
+
+@keyframes intro-title
+  0%
+    opacity: 0
+    transform: scale(1.5) translateZ(400px)
+  100%
+    opacity: 1
+    transform: scale(1) translateZ(0)
+
+@keyframes intro-overview
+  0%
+    opacity: 0
+    transform: translateY(100px)
+  100%
+    opacity: 1
+    transform: translateY(0)

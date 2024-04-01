@@ -1,82 +1,211 @@
-.movie-photo
-  height: 25%
-  width: 25%
-  object-fit: cover
-  border-radius: 30px
-  float: left
-  padding: 25px
-
-.movie-div
-  border-style: solid
-  padding: 10pt
-  margin: 10pt
-
-
-.movie-description
-  font-size: 26pt
-  font-weight: bold
-  margin-bottom: 15px
-  float: left
-  padding: 25px
-
-
-.listing-location::before
-  content: url('/assets/location-pin.svg') / ''
-
-
+// Show details styles
 .movie-details
-  font-size: 22pt
-  margin-bottom: 15px
-  float: left
-  padding: 25px
+  color: #ffffff
+  padding: 20px
+  margin-bottom: 40px
 
-.download-quality
-  padding: 2pt
-  margin: 2pt
+  .movie-header
+    display: flex
+    align-items: flex-start
+    margin-bottom: 20px
 
-.listing-features > .section-heading
-  color: var(--secondary-color)
-  font-size: 22pt
-  margin-bottom: 15px
-
-
-.listing-features
-  margin-bottom: 20px
+    .movie-poster
+      width: 300px
+      height: auto
+      margin-right: 20px
 
 
-.listing-features li
-  font-size: 12pt
+    .movie-info
+      flex: 1
+      perspective: 800px
+      transform-style: preserve-3d
 
 
-li
-  list-style-type: none
+      .movie-title
+        font-size: 48px
+        font-weight: bold
+        margin-bottom: 20px
+        text-align: center
+        text-transform: uppercase
+        letter-spacing: 4px
+        color: #ffe81f
+        animation: intro-title 5s ease-out forwards
+
+      .movie-overview
+        font-size: 24px
+        margin-bottom: 40px
+        text-align: justify
+        line-height: 1.5
+        color: #ffffff
+        animation: intro-overview 5s ease-out forwards
+
+  .movie-details-section
+    margin-bottom: 30px
+
+    .section-heading
+      font-size: 28px
+      font-weight: bold
+      margin-bottom: 15px
 
 
-.listing-apply .section-heading
-  font-size: 18pt
-  margin-bottom: 15px
+    .movie-meta
+      display: flex
+      flex-direction: column
+      margin-bottom: 20px
 
 
-label, input
-  display: block
+      .movie-meta-item
+        display: flex
+        flex-direction: column
+        font-size: 18px
+        margin-bottom: 15px
 
-label
-  color: var(--secondary-color)
-  font-weight: bold
-  text-transform: uppercase
-  font-size: 12pt
 
-input
-  font-size: 16pt
-  margin-bottom: 15px
-  padding: 10px
-  width: 400px
-  border-top: none
-  border-right: none
-  border-left: none
-  border-bottom: solid .3px
+        .movie-meta-label
+          font-weight: bold
+          margin-bottom: 5px
+          margin-left: 25px
 
-@media (max-width: 1024px)
-  .listing-photo
-    width: 100%
-    height: 400px
+
+        .movie-meta-value
+          margin-left: 50px
+
+
+    .movie-last-episode
+      margin-bottom: 20px
+
+
+      .movie-last-episode-heading
+        font-size: 24px
+        font-weight: bold
+        margin-bottom: 10px
+
+
+      .movie-last-episode-details
+        display: flex
+        align-items: flex-start
+
+
+        .movie-last-episode-image
+          width: 200px
+          height: auto
+          margin-right: 20px
+
+
+        .movie-last-episode-info
+          flex: 1
+          font-size: 18px
+
+
+          .movie-last-episode-item
+            margin-bottom: 10px
+            margin-left: 25px
+
+
+            .movie-last-episode-label
+              font-weight: bold
+              margin-right: 5px
+
+
+    .movie-homepage
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .movie-homepage-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+      .movie-homepage-link
+        color: #0077ff
+        text-decoration: underline
+
+
+        &:hover
+          text-decoration: none
+
+    .movie-production
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .movie-production-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+    .movie-tagline
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .movie-tagline-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+    .movie-video
+      margin-bottom: 10px
+      font-size: 18px
+
+
+      .movie-video-label
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 25px
+
+
+  .movie-actions
+    display: flex
+    align-items: center
+    justify-content: space-between
+    margin-top: 30px
+
+
+    .movie-download-quality
+      display: flex
+      align-items: center
+
+
+      .movie-download-quality-label
+        margin-right: 10px
+        font-size: 18px
+
+
+      .movie-download-quality-select
+        padding: 5px 10px
+        font-size: 18px
+
+
+    .movie-download-button
+      padding: 10px 20px
+      font-size: 18px
+      background-color: #0077ff
+      color: white
+      border: none
+      border-radius: 4px
+      cursor: pointer
+
+
+      &:hover
+        background-color: #005ae6
+
+@keyframes intro-title
+  0%
+    opacity: 0
+    transform: scale(1.5) translateZ(400px)
+  100%
+    opacity: 1
+    transform: scale(1) translateZ(0)
+
+@keyframes intro-overview
+  0%
+    opacity: 0
+    transform: translateY(100px)
+  100%
+    opacity: 1
+    transform: translateY(0)

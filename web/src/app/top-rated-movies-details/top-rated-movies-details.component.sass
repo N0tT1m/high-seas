@@ -1,82 +1,82 @@
-.movie-photo
-  height: 25%
-  width: 25%
+.listing
+  padding: 50px
+  margin: 50px
+  display: flex
+  flex-wrap: wrap
+  justify-content: space-between
+
+input[type="text"]
+  border: solid 1px var(--primary-color)
+  padding: 10px
+  border-radius: 8px
+  margin-right: 4px
+  display: inline-block
+  width: 30%
+
+.movie-item
+  display: flex
+  flex-direction: column
+  align-items: center
+  margin-bottom: 30px
+  width: 100%
+
+.movie-image
+  margin-bottom: 10px
+
+.poster-image
+  width: 100%
+  height: auto
+  max-width: 300px
   object-fit: cover
   border-radius: 30px
-  float: left
-  padding: 25px
 
+.movie-info
+  text-align: center
 
-.movie-description
-  font-size: 26pt
+.movie-name
+  font-size: 1.5rem
   font-weight: bold
-  margin-bottom: 15px
-  float: left
-  padding: 25px
+  margin-bottom: 10px
 
+.movie-overview
+  font-size: 1rem
+  margin-bottom: 10px
+
+.movie-vote-average
+  font-size: 1rem
+  font-weight: bold
+  margin-bottom: 10px
 
 .listing-location::before
   content: url('/assets/location-pin.svg') / ''
 
-
 .movie-details
-  font-size: 22pt
-  margin-bottom: 15px
-  float: left
-  padding: 25px
+  font-size: 1rem
+  margin-bottom: 10px
 
-.movie-div
-  border-style: solid
-  padding: 10pt
-  margin: 10pt
+@media (min-width: 768px)
+  .movie-item
+    width: calc(50% - 15px)
 
-.download-quality
-  padding: 2pt
-  margin: 2pt
+  .movie-item:nth-child(odd)
+    margin-right: 30px
 
-.listing-features > .section-heading
-  color: var(--secondary-color)
-  font-size: 22pt
-  margin-bottom: 15px
+  .movie-image
+    flex: 0 0 auto
+    margin-right: 20px
 
+  .movie-info
+    flex: 1 1 auto
+    text-align: left
 
-.listing-features
-  margin-bottom: 20px
+  .movie-name
+    font-size: 1.8rem
 
+  .movie-overview
+    font-size: 1.2rem
 
-.listing-features li
-  font-size: 12pt
+  .movie-vote-average
+    font-size: 1.2rem
 
-
-li
-  list-style-type: none
-
-
-.listing-apply .section-heading
-  font-size: 18pt
-  margin-bottom: 15px
-
-
-label, input
-  display: block
-
-label
-  color: var(--secondary-color)
-  font-weight: bold
-  text-transform: uppercase
-  font-size: 12pt
-
-input
-  font-size: 16pt
-  margin-bottom: 15px
-  padding: 10px
-  width: 400px
-  border-top: none
-  border-right: none
-  border-left: none
-  border-bottom: solid .3px
-
-@media (max-width: 1024px)
-  .listing-photo
-    width: 100%
-    height: 400px
+  .movie-details
+    font-size: 1.2rem

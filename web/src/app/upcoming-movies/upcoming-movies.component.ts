@@ -18,7 +18,7 @@ import { RouterModule } from '@angular/router';
     </div>
     <div class="movie-title-wrapper">
       <h3 class="title" *ngFor="let movie of movieTitles">
-        <a [routerLink]="['/popular/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a>
+        <a [routerLink]="['/upcoming/movies/details', movie['id'], movie['page']]">{{ movie['title'] }}</a>
       </h3>
     </div>
   </div>

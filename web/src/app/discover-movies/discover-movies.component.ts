@@ -20,35 +20,37 @@ import {MatPaginatorModule, PageEvent } from '@angular/material/paginator';
   template: `
   <!-- DiscoverMoviesComponent -->
   <div class="container">
+    <div id="filters">
+      <label for="filters" id='filter-label'>Search for Movies:</label>
+
+      <form class='filters-form' (ngSubmit)="getGenre(1)">
+        <div class="filters-div">
+          <label for="genre">Genre:</label>
+          <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
+            <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
+          </select>
+        </div>
+
+        <div class="filters-div">
+          <label for="releaseYear">Release Year:</label>
+          <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" class='select-section' />
+        </div>
+
+        <div class="filters-div">
+          <label for="endYear">End Year:</label>
+          <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" class='select-section' />
+        </div>
+
+        <button class="button big-btn filter-button" type="submit">Search</button>
+      </form>
+    </div>
+
+    <label for="filters" id='filter-label'>Filters for Movies:</label>
     <section class="header-section">
       <form class="search-form">
         <input type="text" placeholder="Filter Movie by Title" #filter>
         <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
       </form>
-
-      <div id="filters">
-        <label for="filters" id='filter-label'>Filters for Movies:</label>
-        <form class='filters-form' (ngSubmit)="getGenre(1)">
-          <div class="filters-div">
-            <label for="genre">Genre:</label>
-            <select [(ngModel)]="genre" name="genres" id="genres" (ngModelChange)="getGenre(1)" class='select-section'>
-              <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
-            </select>
-          </div>
-
-          <div class="filters-div">
-            <label for="releaseYear">Release Year:</label>
-            <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" class='select-section' />
-          </div>
-
-          <div class="filters-div">
-            <label for="endYear">End Year:</label>
-            <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" class='select-section' />
-          </div>
-
-          <button class="button big-btn filter-button" type="submit">Filter</button>
-        </form>
-      </div>
     </section>
 
     <div class="results" *ngIf="genre != 0">

@@ -18,13 +18,8 @@ import { MatPaginator } from '@angular/material/paginator';
   template: `
   <div class="container">
     <section class="header-section">
-      <form class="search-form">
-        <input type="text" placeholder="Filter Movie by Title" #filter>
-        <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
-      </form>
-
       <div id="filters">
-        <label for="filters" id='filter-label'>Filters for Movies:</label>
+        <label for="filters" id='filter-label'>Search for Shows:</label>
         <form class='filters-form' (ngSubmit)="getGenre(1)">
           <div class="filters-div">
             <label for="genre">Genre:</label>
@@ -38,9 +33,15 @@ import { MatPaginator } from '@angular/material/paginator';
             <input type='text' [(ngModel)]="airDate" name="airDate" id="airDate" class='select-section' />
           </div>
 
-          <button class="button big-btn filter-button" type="submit">Filter</button>
+          <button class="button big-btn filter-button" type="submit">Search</button>
         </form>
       </div>
+
+      <label for="filters" id='filter-label'>Filter Shows:</label>
+      <form class="search-form">
+        <input type="text" placeholder="Filter Show by Name" #filter>
+        <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
+      </form>
     </section>
 
     <div class="results" *ngIf="genre != 0">
