@@ -1,7 +1,7 @@
-LABEL maintainer="Nathan Moritz"
-
 # Build stage
 FROM node:18.18-alpine3.18 AS build
+
+LABEL maintainer="Nathan Moritz"
 
 WORKDIR /app
 
