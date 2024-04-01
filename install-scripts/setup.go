@@ -79,7 +79,6 @@ func detectLinuxDistro() string {
 
 func installDockerLinux(distro string) {
 	var installCmd *exec.Cmd
-	var installBuildx *exec.Cmd
 
 	switch distro {
 	case "ubuntu", "debian":
@@ -87,8 +86,7 @@ func installDockerLinux(distro string) {
 		runCommand(installCmd)
 		installCmd = exec.Command("sudo", "apt-get", "install", "-y", "docker.io")
 	case "arch":
-		installCmd = exec.Command("yay", "-S", "--noconfirm", "docker")
-		installBuildx = exec.Command("sudo", "pacman", "-S", "--noconfirm", "docker-buildx")
+		installCmd = exec.Command("sudo", "pacman", "-Syu", "--noconfirm", "docker")
 	case "fedora":
 		installCmd = exec.Command("sudo", "dnf", "install", "-y", "docker")
 	case "gentoo":
@@ -101,7 +99,6 @@ func installDockerLinux(distro string) {
 	}
 
 	runCommand(installCmd)
-	runCommand(installBuildx)
 	fmt.Println("Docker installed successfully.")
 }
 

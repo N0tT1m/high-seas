@@ -1,7 +1,7 @@
-LABEL maintainer="Nathan Moritz"
-
 # Build stage
 FROM node:18.18-alpine3.18 AS build
+
+LABEL maintainer="Nathan Moritz"
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build
+RUN npm run build-webpack
 
 # Final stage
 FROM nginx:latest
