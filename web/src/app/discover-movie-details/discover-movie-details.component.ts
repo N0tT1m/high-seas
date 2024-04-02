@@ -81,7 +81,7 @@ import { MovieService } from '../movies.service';
           <option value="240p">240p</option>
         </select>
       </div>
-      <button (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality, movie.original_language)">Download Movie</button>
+      <button class="movie-download-button"  (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality, movie.original_language)">Download Movie</button>
     </div>
   </article>
     `,
