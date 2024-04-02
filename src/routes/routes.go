@@ -35,7 +35,7 @@ func CORS(c *gin.Context) {
 func SetupRouter() {
 
 	r := gin.Default()
-	
+
 	r.Use(CORS)
 
 	r.POST("/movie/query", api.QueryMovieRequest)
@@ -44,5 +44,9 @@ func SetupRouter() {
 
 	r.POST("/anime/query", api.QueryAnimeRequest)
 
-	r.Run(":8782")
+	// Load the SSL/TLS certificate and key
+	err := r.RunTLS(":8782", "./server.crt", "./server.key")
+	if err != nil {
+		panic(err)
+	}
 }

@@ -3,6 +3,7 @@ services:
   web:
     build: ./web/.
     ports: 
+      - "443:443"
       - "80:80"
   backend:
     build: .

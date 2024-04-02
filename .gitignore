@@ -21,6 +21,11 @@ plex/__pycache__
 plex/pyvenv.cfg
 plex/config.py
 
+*.crt
+*.csr
+*.key
+*.pem
+
 # Created by https://www.toptal.com/developers/gitignore/api/go,dotenv,angular,vs
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,dotenv,angular,vs
 
