@@ -143,7 +143,7 @@ export class MovieService {
     return this.http.get<Movie>(movieUrl, { headers: this.headers });
   }
 
-  makeMovieDownloadRequest(query: string, name: string, year: string, quality: string, tmdb: number) {
+  makeMovieDownloadRequest(query: string, name: string, year: string, quality: string, tmdb: number, description: string) {
     var queryApiHeaders = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -154,7 +154,7 @@ export class MovieService {
 
     var movieUrl = 'http://' + environment.envVar.ip + ':' + environment.envVar.port + '/movie/query';
 
-    return this.http.post<QueryRequest>(movieUrl, { "query": query, 'name': name, 'year': year, 'quality': quality, 'Imdb': tmdb }, { headers: queryApiHeaders });
+    return this.http.post<QueryRequest>(movieUrl, { "query": query, 'name': name, 'year': year, 'quality': quality, 'Imdb': tmdb, 'description': description }, { headers: queryApiHeaders });
   }
 
   getMovieDetails(id) {

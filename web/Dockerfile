@@ -17,5 +17,7 @@ FROM nginx:latest
 
 COPY --from=build /app/dist/high-seas-frontend /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY ./fullchain.pem /etc/letsencrypt/live/goose.cinemacloud.tv/fullchain.pem
+COPY ./privkey.pem /etc/letsencrypt/live/goose.cinemacloud.tv/privkey.pem 
 
-EXPOSE 80
+EXPOSE 80 443

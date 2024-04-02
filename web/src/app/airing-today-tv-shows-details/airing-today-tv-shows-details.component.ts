@@ -132,6 +132,7 @@ export class AiringTodayTvShowsDetailsComponent {
   public tageline = "";
   public quality = '1080p'; // Default download quality
   public tmdbId: number = 0;
+  public overview: string = "";
 
   constructor() {
 
@@ -214,6 +215,7 @@ export class AiringTodayTvShowsDetailsComponent {
         this.lastEpisodeToAir = show.last_episode_to_air;
         this.tageline = show.tagline;
         this.tmdbId = show.id;
+        this.overview = show.overview;
       }
 
       this.seasonEpisodeNumbers.splice(0, 1);
@@ -234,7 +236,7 @@ export class AiringTodayTvShowsDetailsComponent {
       this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
       console.log('TV');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId).subscribe(request => console.log(request));
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request));
     }
   }
 }

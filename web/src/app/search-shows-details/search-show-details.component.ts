@@ -153,6 +153,7 @@ export class SearchTvShowDetailsComponent {
   public tageline = "";
   public quality = '1080p'; // Default download quality
   public tmdbId: number = 0;
+  public overview: string = "";
 
   constructor() {
 
@@ -228,7 +229,7 @@ export class SearchTvShowDetailsComponent {
       this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
       console.log('TV');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId).subscribe(request => console.log(request));
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request));
     }
   }
 }

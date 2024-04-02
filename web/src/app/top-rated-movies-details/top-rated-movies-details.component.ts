@@ -163,7 +163,7 @@ export class TopRatedMoviesDetailsComponent {
       // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
-      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId)).subscribe(request => console.log(request));
+      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request));
 
     }
   }

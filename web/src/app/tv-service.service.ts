@@ -124,7 +124,7 @@ export class TvShowService {
     return this.http.get<Movie>(tvShowUrl, { headers: this.headers });
   }
 
-  makeTvShowDownloadRequest(query: string, seasons: Array<number>, quality: string, TMDb: number) {
+  makeTvShowDownloadRequest(query: string, seasons: Array<number>, quality: string, TMDb: number, description: string) {
     var queryApiHeaders = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -135,7 +135,7 @@ export class TvShowService {
 
     var tvShowUrl = 'http://' + environment.envVar.ip + ':' + environment.envVar.port + '/show/query';
 
-    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb }, { headers: queryApiHeaders });
+    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb, 'description': description }, { headers: queryApiHeaders });
   }
 
   makeAnimeDownloadRequest(query: string, episodes: number) {
