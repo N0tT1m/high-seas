@@ -258,7 +258,7 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
 	versions := createStringVersions(name)
 
-	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) || !checkEpisodeTitlesAndDescriptions(r.Title, name) || !checkExternalIDs(r.TVDBId, r.Imdb) || !checkProductionInfo(r.Category) || !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
 		return false
 	}
 
@@ -300,7 +300,7 @@ func isCorrectAnime(r jackett.Result, name, year, description string) bool {
 	// Compare plot summaries and descriptions
 	versions := createStringVersions(name)
 
-	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) || !checkEpisodeTitlesAndDescriptions(r.Title, name) || !checkExternalIDs(r.TVDBId, r.Imdb) || !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !matchGenre(r.Category) {
 		return false
 	}
 
@@ -368,6 +368,11 @@ func createStringVersions(str string) []string {
 
 func containsAnyPart(str string, parts []string) bool {
 	for _, part := range parts {
+		// Check if the string contains ':'
+		if strings.Contains(str, ":") {
+			continue
+		}
+
 		// Remove numbers from the part if they are not present in the original part
 		origPart := part
 		hasNumber := containsNumber(part)
@@ -376,9 +381,9 @@ func containsAnyPart(str string, parts []string) bool {
 		if hasNumber {
 			if containsNumber(str) && strings.Contains(str, part) {
 				return true
-			} else if strings.Contains(str, part) {
-				return true
 			}
+		} else if strings.Contains(str, part) {
+			return true
 		}
 	}
 	return false
@@ -393,7 +398,6 @@ func removeNumbersIfNotPresent(part, origPart string) string {
 		regex := regexp.MustCompile(`\d`)
 		part = regex.ReplaceAllString(part, "")
 	}
-
 	return part
 }
 
