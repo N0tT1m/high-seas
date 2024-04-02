@@ -135,7 +135,12 @@ export class TvShowService {
 
     var tvShowUrl = 'https://' + environment.envVar.ip + ':' + environment.envVar.port + '/show/query';
 
-    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb, 'description': description }, { headers: queryApiHeaders });
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
+    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb, 'description': description }, options);
   }
 
   makeAnimeDownloadRequest(query: string, episodes: number) {

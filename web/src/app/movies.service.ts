@@ -154,7 +154,12 @@ export class MovieService {
 
     var movieUrl = 'https://' + environment.envVar.ip + ':' + environment.envVar.port + '/movie/query';
 
-    return this.http.post<QueryRequest>(movieUrl, { "query": query, 'name': name, 'year': year, 'quality': quality, 'Imdb': tmdb, 'description': description }, { headers: queryApiHeaders });
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
+    return this.http.post<QueryRequest>(movieUrl, { "query": query, 'name': name, 'year': year, 'quality': quality, 'Imdb': tmdb, 'description': description }, options);
   }
 
   getMovieDetails(id) {
