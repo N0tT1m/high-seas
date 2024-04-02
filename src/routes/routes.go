@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"crypto/tls"
+
 	"github.com/gin-gonic/gin"
 
 	"high-seas/src/api"
@@ -45,7 +47,29 @@ func SetupRouter() {
 	r.POST("/anime/query", api.QueryAnimeRequest)
 
 	// Load the SSL/TLS certificate and key
-	err := r.RunTLS(":443", "server.crt", "server.key")
+	// TODO: FIX THE CERT ISSUE. A LetsEncrypt CERT.
+
+	// Load the SSL/TLS certificate and key
+	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a custom TLS configuration
+	tlsConfig := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true, // Allow self-signed or untrusted certificates
+	}
+
+	// Create a custom HTTP server with the TLS configuration
+	server := &http.Server{
+		Addr:      ":443",
+		Handler:   r,
+		TLSConfig: tlsConfig,
+	}
+
+	// Start the server with TLS
+	err = server.ListenAndServeTLS("", "")
 	if err != nil {
 		panic(err)
 	}

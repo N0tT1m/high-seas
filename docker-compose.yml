@@ -5,8 +5,8 @@ services:
     ports: 
       - "443:443"
       - "80:80"
-  backend:
-    build: .
-    ports:
-      - "8782:8782"
+  # backend:
+  #   build: .
+  #   ports:
+  #     - "443:443"
 
