@@ -27,6 +27,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app/server/
 COPY --from=build /tmp/api /app/server/
 
-EXPOSE 8782
+EXPOSE 443
 
 CMD ["./api"]

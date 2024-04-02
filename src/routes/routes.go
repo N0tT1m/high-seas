@@ -45,7 +45,7 @@ func SetupRouter() {
 	r.POST("/anime/query", api.QueryAnimeRequest)
 
 	// Load the SSL/TLS certificate and key
-	err := r.RunTLS(":8782", "./server.crt", "./server.key")
+	err := r.RunTLS(":443", "server.crt", "server.key")
 	if err != nil {
 		panic(err)
 	}
