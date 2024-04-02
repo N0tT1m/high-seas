@@ -76,8 +76,10 @@ The scripts come in two forms:
 A Go script:
   - Setup.go
     -> Build instructions: 
-      - go build -o ./bin/setup.exe
-      - go build -o ./bin/setup
+      -> Windows:
+        - go build -o ./bin/setup.exe
+      -> Linux:
+        - go build -o ./bin/setup
 
 A Python script:
   - Setup.py

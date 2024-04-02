@@ -6,6 +6,7 @@ import (
 	"high-seas/src/deluge"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -16,11 +17,14 @@ var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
 var ip = utils.EnvVar("JACKETT_IP", "")
 var port = utils.EnvVar("JACKETT_PORT", "")
 
-func MakeMovieQuery(query string, title string, year string, Imdb uint) {
+func MakeMovieQuery(query string, title string, year string, Imdb uint, description string) {
 	var sizeOfTorrent []uint
 
 	title = strings.Replace(title, ":", "", -1)
 	years := strings.Split(year, "-")
+
+	logger.WriteInfo(title)
+	logger.WriteInfo(years)
 
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
@@ -41,21 +45,19 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint) {
 	}
 
 	for _, r := range resp.Results {
-		if isCorrectMovie(r, title, years[0], Imdb) {
+		if isCorrectMovie(r, title, description, years[0], Imdb) {
 			logger.WriteInfo(fmt.Sprintf("This is the Jackett Imdb ID ==> %d. This is the TMDb ID ==> %d", r.Imdb, Imdb))
 
-			if r.Imdb == Imdb {
-				if r.Seeders == slices.Max(sizeOfTorrent) {
-					link := r.Link
-					logger.WriteInfo(link)
-					// deluge.AddTorrent(link)
-				}
+			if r.Seeders == slices.Max(sizeOfTorrent) {
+				link := r.Link
+				logger.WriteInfo(link)
+				deluge.AddTorrent(link)
 			}
 		}
 	}
 }
 
-func MakeShowQuery(query string, seasons []int, name string, year string) {
+func MakeShowQuery(query string, seasons []int, name string, year string, description string) {
 	name = strings.Replace(name, ":", "", -1)
 
 	ctx := context.Background()
@@ -109,7 +111,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year) {
+					if isCorrectShow(r, name, year, description) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
@@ -122,7 +124,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp2.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year) {
+					if isCorrectShow(r, name, year, description) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
@@ -168,7 +170,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year) {
+					if isCorrectShow(r, name, year, description) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
@@ -181,7 +183,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 				for _, r := range resp2.Results {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year) {
+					if isCorrectShow(r, name, year, description) {
 						fmt.Println(r.Title)
 
 						if r.Seeders == slices.Max(sizeOfTorrent) {
@@ -198,7 +200,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string) {
 	}
 }
 
-func MakeAnimeQuery(query string, episodes int, name string, year string) {
+func MakeAnimeQuery(query string, episodes int, name string, year string, description string) {
 	name = strings.Replace(name, ":", "", -1)
 
 	ctx := context.Background()
@@ -235,7 +237,7 @@ func MakeAnimeQuery(query string, episodes int, name string, year string) {
 			}
 
 			for _, r := range resp.Results {
-				if isCorrectAnime(r, name, year) {
+				if isCorrectAnime(r, name, year, description) {
 					if strings.Contains(query, "One Piece") {
 						if !strings.Contains(query, fmt.Sprintf("%d", 2023)) {
 							logger.WriteInfo(r.Title)
@@ -252,19 +254,11 @@ func MakeAnimeQuery(query string, episodes int, name string, year string) {
 	}
 }
 
-func isCorrectShow(r jackett.Result, name, year string) bool {
+func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
-	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
-		return false
-	}
+	versions := createStringVersions(name)
 
-	// Compare plot summaries and descriptions
-	if !compareDescriptions(r.Description, name, year) {
-		return false
-	}
-
-	// Check episode titles and descriptions
-	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
+	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) || !checkEpisodeTitlesAndDescriptions(r.Title, name) || !checkExternalIDs(r.TVDBId, r.Imdb) || !checkProductionInfo(r.Category) || !matchGenre(r.Category) {
 		return false
 	}
 
@@ -273,149 +267,184 @@ func isCorrectShow(r jackett.Result, name, year string) bool {
 	// 	return false
 	// }
 
-	// // Check TMDb, TVDB, or IMDb ID
-	// if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-	// 	return false
-	// }
-
-	// // Check production company and country of origin
-	// if !checkProductionInfo(r.Publisher, r.Categories) {
-	// 	return false
-	// }
-
-	// // Match the genre
-	// if !matchGenre(r.Categories) {
-	// 	return false
-	// }
-
 	return true
 }
 
-func isCorrectMovie(r jackett.Result, title, year string, imdbID uint) bool {
+func isCorrectMovie(r jackett.Result, title, description, year string, imdbID uint) bool {
 	// Check if the title and year match
-	if !strings.Contains(r.Title, title) || !strings.Contains(r.Title, year) {
-		return false
-	}
+	// if !strings.Contains(r.Title, title) || !strings.Contains(r.Title, year) {
+	// 	return false
+	// }
 
 	// Compare plot summaries and descriptions
-	if !compareDescriptions(r.Description, title, year) {
+	versions := createStringVersions(title)
+
+	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
 		return false
 	}
-
-	// // Check rating
-	// if !checkRating(r.Rating) {
-	// 	return false
-	// }
-
-	// // Check cast
-	// if !checkCast(r.Actors) {
-	// 	return false
-	// }
 
 	// // Check release date
 	// if !checkReleaseDate(r.PublishDate, year) {
 	// 	return false
 	// }
 
-	// // Check TMDb, TVDB, or IMDb ID
-	// if !checkExternalIDs(r.Tvdbid, r.Imdb) || r.Imdb != imdbID {
-	// 	return false
-	// }
-
-	// // Check production company and country of origin
-	// if !checkProductionInfo(r.Publisher, r.Categories) {
-	// 	return false
-	// }
-
-	// // Match the genre
-	// if !matchGenre(r.Categories) {
-	// 	return false
-	// }
-
 	return true
 }
 
-func isCorrectAnime(r jackett.Result, name, year string) bool {
+func isCorrectAnime(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
-	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
-		return false
-	}
+	// if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
+	// 	return false
+	// }
 
 	// Compare plot summaries and descriptions
-	if !compareDescriptions(r.Description, name, year) {
+	versions := createStringVersions(name)
+
+	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) || !checkEpisodeTitlesAndDescriptions(r.Title, name) || !checkExternalIDs(r.TVDBId, r.Imdb) || !matchGenre(r.Category) {
 		return false
 	}
-
-	// Check episode titles and descriptions
-	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
-		return false
-	}
-
-	// // Check air date
-	// if !checkAirDate(r.PublishDate, year) {
-	// 	return false
-	// }
-
-	// // Check TMDb, TVDB, or IMDb ID
-	// if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-	// 	return false
-	// }
-
-	// // Check production company and country of origin
-	// if !checkProductionInfo(r.Publisher, r.Categories) {
-	// 	return false
-	// }
-
-	// // Match the genre
-	// if !matchGenre(r.Categories) {
-	// 	return false
-	// }
 
 	return true
 }
 
-// Helper functions for matching criteria (not implemented in this example)
-func compareDescriptions(description, title, year string) bool {
-	// Implement logic to compare plot summaries and descriptions
-	return true
+// Helper functions for matching criteria
+func compareDescriptions(resultDescription, description string) bool {
+	// Basic implementation: return true if the description contains the title and year
+	logger.WriteInfo(description)
+	logger.WriteInfo(resultDescription)
+
+	return strings.Contains(resultDescription, description)
 }
 
 func checkEpisodeTitlesAndDescriptions(title, name string) bool {
-	// Implement logic to check episode titles and descriptions
-	return true
-}
+	// Basic implementation: return true if the title contains the name
+	logger.WriteInfo(title)
+	logger.WriteInfo(name)
 
-func checkAirDate(publishDate, year string) bool {
-	// Implement logic to check air date
-	return true
-}
-
-func checkRating(rating float64) bool {
-	// Implement logic to check rating
-	return true
-}
-
-func checkCast(actors string) bool {
-	// Implement logic to check cast
-	return true
-}
-
-func checkReleaseDate(publishDate, year string) bool {
-	// Implement logic to check release date
-	return true
+	return strings.Contains(title, name)
 }
 
 func checkExternalIDs(tvdbID, imdbID uint) bool {
-	// Implement logic to check TMDb, TVDB, or IMDb ID
+	// Basic implementation: return true if either tvdbID or imdbID is non-zero
+	logger.WriteInfo(tvdbID)
+	logger.WriteInfo(imdbID)
+
+	return tvdbID != 0 || imdbID != 0
+}
+
+func checkProductionInfo(categories []uint) bool {
+	// Basic implementation: always return true
+	logger.WriteInfo(categories)
+
 	return true
 }
 
-func checkProductionInfo(publisher string, categories []int) bool {
-	// Implement logic to check production company and country of origin
+func matchGenre(categories []uint) bool {
+	// Basic implementation: always return true
+	logger.WriteInfo(categories)
+
 	return true
 }
 
-func matchGenre(categories []int) bool {
-	// Implement logic to match genre
-	return true
+func createStringVersions(str string) []string {
+	// Create a slice to store the different versions
+	versions := []string{str}
+
+	// Generate versions with different combinations of '.', '-', and ' '
+	separators := []string{".", "-", " "}
+	for _, sep1 := range separators {
+		for _, sep2 := range separators {
+			for _, sep3 := range separators {
+				version := strings.ReplaceAll(str, " ", sep1)
+				version = strings.ReplaceAll(version, " ", sep2)
+				version = strings.ReplaceAll(version, " ", sep3)
+				versions = append(versions, version)
+			}
+		}
+	}
+
+	return versions
 }
+
+func containsAnyPart(str string, parts []string) bool {
+	for _, part := range parts {
+		// Remove numbers from the part if they are not present in the original part
+		origPart := part
+		hasNumber := containsNumber(part)
+		part = removeNumbersIfNotPresent(part, origPart)
+
+		if hasNumber {
+			if containsNumber(str) && strings.Contains(str, part) {
+				return true
+			} else if strings.Contains(str, part) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func removeNumbersIfNotPresent(part, origPart string) string {
+	// Check if the original part contains any numbers
+	hasNumbers, _ := regexp.MatchString(`\d`, origPart)
+
+	if !hasNumbers {
+		// Remove numbers from the part using regular expression
+		regex := regexp.MustCompile(`\d`)
+		part = regex.ReplaceAllString(part, "")
+	}
+
+	return part
+}
+
+func containsNumber(str string) bool {
+	// Check if the string contains any numbers using a regular expression
+	hasNumber, _ := regexp.MatchString(`\d`, str)
+	return hasNumber
+}
+
+// // Helper functions for matching criteria (not implemented in this example)
+// func compareDescriptions(description, title, year string) bool {
+// 	// Implement logic to compare plot summaries and descriptions
+// 	return true
+// }
+
+// func checkEpisodeTitlesAndDescriptions(title, name string) bool {
+// 	// Implement logic to check episode titles and descriptions
+// 	return true
+// }
+
+// func checkAirDate(publishDate time.Time, year string) bool {
+// 	// Implement logic to check air date
+// 	return true
+// }
+
+// func checkRating(rating float64) bool {
+// 	// Implement logic to check rating
+// 	return true
+// }
+
+// func checkCast(actors string) bool {
+// 	// Implement logic to check cast
+// 	return true
+// }
+
+// func checkReleaseDate(publishDate, year string) bool {
+// 	// Implement logic to check release date
+// 	return true
+// }
+
+// func checkExternalIDs(tvdbID, imdbID uint) bool {
+// 	// Implement logic to check TMDb, TVDB, or IMDb ID
+// 	return true
+// }
+
+// func checkProductionInfo(categories []uint) bool {
+// 	// Implement logic to check production company and country of origin
+// 	return true
+// }
+
+// func matchGenre(categories []uint) bool {
+// 	// Implement logic to match genre
+// 	return true
+// }

@@ -147,7 +147,7 @@ export class TvShowService {
       'Access-Control-Allow-Methods': 'POST,DELETE',
     };
 
-    var tvShowUrl = 'http://192.168.1.88:8782/anime/query';
+    var tvShowUrl = 'http://127.0.0.1:8782/anime/query';
 
     return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "episodes": episodes }, { headers: queryApiHeaders });
   }

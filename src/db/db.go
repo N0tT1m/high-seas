@@ -9,27 +9,30 @@ import (
 )
 
 type MovieRequest struct {
-	ID    uint   `gorm:"primaryKey"`
-	Query string `json:"query"`
-	Name  string `json:"name"`
-	Year  string `json:"year"`
-	TMDb  uint   `json:"TMDb"`
+	ID          uint   `gorm:"primaryKey"`
+	Query       string `json:"query"`
+	Name        string `json:"name"`
+	Year        string `json:"year"`
+	TMDb        uint   `json:"TMDb"`
+	Description string `json:"description"`
 }
 
 type ShowRequest struct {
-	ID      uint   `gorm:"primaryKey"`
-	Query   string `json:"query"`
-	Seasons []int  `json:"seasons"`
-	Name    string `json:"name"`
-	Year    string `json:"year"`
+	ID          uint   `gorm:"primaryKey"`
+	Query       string `json:"query"`
+	Seasons     []int  `json:"seasons"`
+	Name        string `json:"name"`
+	Year        string `json:"year"`
+	Description string `json:"description"`
 }
 
 type AnimeRequest struct {
-	ID       uint   `gorm:"primaryKey"`
-	Query    string `json:"query"`
-	Episodes int    `json:"episodes"`
-	Name     string `json:"name"`
-	Year     string `json:"year"`
+	ID          uint   `gorm:"primaryKey"`
+	Query       string `json:"query"`
+	Episodes    int    `json:"episodes"`
+	Name        string `json:"name"`
+	Year        string `json:"year"`
+	Description string `json:"description"`
 }
 
 var user = utils.EnvVar("DB_USER", "")

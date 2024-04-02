@@ -27,7 +27,7 @@ func QueryMovieRequest(c *gin.Context) {
 		logger.WriteError("Failed to Unmarshal JSON.", err)
 	}
 
-	jackett.MakeMovieQuery(request.Query, request.Name, request.Year, request.TMDb)
+	jackett.MakeMovieQuery(request.Query, request.Name, request.Year, request.TMDb, request.Description)
 
 	logger.WriteCMDInfo("Read body complete.", "Success")
 
@@ -51,7 +51,7 @@ func QueryShowRequest(c *gin.Context) {
 		logger.WriteError("Failed to Unmarshal JSON.", err)
 	}
 
-	jackett.MakeShowQuery(request.Query, request.Seasons, request.Name, request.Year)
+	jackett.MakeShowQuery(request.Query, request.Seasons, request.Name, request.Year, request.Description)
 
 	logger.WriteCMDInfo("Read body complete.", "Success")
 
@@ -75,7 +75,7 @@ func QueryAnimeRequest(c *gin.Context) {
 		logger.WriteError("Failed to Unmarshal JSON.", err)
 	}
 
-	jackett.MakeAnimeQuery(request.Query, request.Episodes, request.Name, request.Year)
+	jackett.MakeAnimeQuery(request.Query, request.Episodes, request.Name, request.Year, request.Description)
 
 	logger.WriteCMDInfo("Read body complete.", "Success")
 
