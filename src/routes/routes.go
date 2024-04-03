@@ -35,30 +35,23 @@ func CORS(c *gin.Context) {
 }
 
 func SetupRouter() {
-
 	r := gin.Default()
-
 	r.Use(CORS)
-
 	r.POST("/movie/query", api.QueryMovieRequest)
-
 	r.POST("/show/query", api.QueryShowRequest)
-
 	r.POST("/anime/query", api.QueryAnimeRequest)
 
-	// Load the SSL/TLS certificate and key
-	// TODO: FIX THE CERT ISSUE. A LetsEncrypt CERT.
-
-	// Load the SSL/TLS certificate and key
-	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	// Load the Let's Encrypt certificate and key
+	certFile := "./fullchain.pem"
+	keyFile := "./privkey.pem"
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a custom TLS configuration
 	tlsConfig := &tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true, // Allow self-signed or untrusted certificates
+		Certificates: []tls.Certificate{cert},
 	}
 
 	// Create a custom HTTP server with the TLS configuration
