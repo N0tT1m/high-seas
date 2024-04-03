@@ -40,9 +40,34 @@ func SetupRouter() {
 	gin.SetMode(gin.ReleaseMode)
 
 	r.Use(CORS)
-	r.POST("/movie/query", api.QueryMovieRequest)
-	r.POST("/show/query", api.QueryShowRequest)
-	r.POST("/anime/query", api.QueryAnimeRequest)
+
+	// Define routes based on the domain name
+	r.POST("/movie/query", func(c *gin.Context) {
+		host := c.Request.Host
+		if host == "api.cinemacloud.tv" {
+			api.QueryMovieRequest(c)
+		} else {
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+	})
+
+	r.POST("/show/query", func(c *gin.Context) {
+		host := c.Request.Host
+		if host == "api.show.yourdomain.com" {
+			api.QueryShowRequest(c)
+		} else {
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+	})
+
+	r.POST("/anime/query", func(c *gin.Context) {
+		host := c.Request.Host
+		if host == "api.anime.yourdomain.com" {
+			api.QueryAnimeRequest(c)
+		} else {
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+	})
 
 	// Load the Let's Encrypt certificate and key
 	certFile := "./fullchain.pem"
