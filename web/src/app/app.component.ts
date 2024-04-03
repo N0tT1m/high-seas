@@ -29,7 +29,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
   providers: [{ provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } }, MovieService, HttpClientModule,],
   styleUrls: ['./app.component.sass', '../styles.sass'],
   template: `
-    <div class="background-image"></div>
+    <div class="background-placeholder"></div>
     <main class="earth-spirit">
       <header class="brand-name">
         <div class="container-fluid">

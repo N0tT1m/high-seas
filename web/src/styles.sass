@@ -2,6 +2,9 @@
 @import "../node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"
 
 $primary-color: #76b5c5
+$background-color: #25026d // Light gray background color
+$link-color: #1ac4e5 // Blue text color
+$text-color: #ffffff // White text color
 
 body
   font-family: 'Be Vietnam Pro', sans-serif
@@ -22,21 +25,17 @@ button.primary
 body
   color: $primary-color
 
-.background-image
+.background-placeholder
   position: fixed
   top: 0
   left: 0
   width: 100%
   height: 100%
-  background-image: url("./assets/me.jpg")
-  background-position: center
-  background-repeat: no-repeat
-  background-attachment: fixed
-  background-size: cover
+  background-color: $background-color
   z-index: -1
 
 .earth-spirit
-  color: #fff
+  color: $text-color
   padding: 25px
   margin: 10px
   min-height: 100vh
@@ -49,3 +48,10 @@ footer
   right: 0
   width: 100%
   z-index: 999
+
+a
+  color: $link-color
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
