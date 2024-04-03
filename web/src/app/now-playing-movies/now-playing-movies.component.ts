@@ -23,7 +23,7 @@ import { RouterModule } from '@angular/router';
       </div>
     </div>
   `,
-  styleUrls: ['./now-playing-movies.component.sass']
+  styleUrls: ['./now-playing-movies.component.sass', '../../styles.sass']
 })
 export class NowPlayingMoviesComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';

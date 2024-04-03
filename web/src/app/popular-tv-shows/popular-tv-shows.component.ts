@@ -24,7 +24,7 @@ import { TvShowService } from '../tv-service.service';
     </div>
   </div>
   `,
-  styleUrls: ['./popular-tv-shows.component.sass']
+  styleUrls: ['./popular-tv-shows.component.sass', '../../styles.sass']
 })
 export class PopularTvShowsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';

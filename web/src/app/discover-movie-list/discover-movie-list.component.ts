@@ -21,7 +21,7 @@ import { DiscoverMovieDetailsComponent } from '../discover-movie-details/discove
     </section>
   </div>
   `,
-  styleUrls: ['./discover-movie-list.component.sass']
+  styleUrls: ['./discover-movie-list.component.sass', '../../styles.sass']
 })
 export class MovieListComponent {
 

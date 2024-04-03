@@ -20,7 +20,7 @@ import { TvShow } from '../http-service/http-service.component';
     </section>
   </div>
   `,
-  styleUrls: ['./show-list.component.sass']
+  styleUrls: ['./show-list.component.sass', '../../styles.sass']
 })
 export class ShowListComponent {
 
