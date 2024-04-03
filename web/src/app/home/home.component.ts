@@ -6,11 +6,8 @@ import { MovieService } from '../movies.service';
 import { TvShowService } from '../tv-service.service';
 
 @Component({
+  selector: 'app-home',
   template: `
-    <head>
-      <link rel="stylesheet" href="home.component.sass">
-      <link href="https://fonts.googleapis.com/css2?family=Star+Wars&display=swap" rel="stylesheet">
-    </head>
     <body>
       <div class="movie-poster">
         <img src="/assets/the-spirits.jpg" alt="Movie Poster" (animationend)="onAnimationEnd()">

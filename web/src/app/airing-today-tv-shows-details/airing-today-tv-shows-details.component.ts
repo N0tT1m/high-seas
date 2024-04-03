@@ -6,7 +6,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, FormsModule, NgModel } fro
 import { TvShowService } from '../tv-service.service';
 
 @Component({
-  selector: 'app-now-playing-details',
+  selector: 'app-airing-today-shows-details',
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
   providers: [TvShowService, NgModel],

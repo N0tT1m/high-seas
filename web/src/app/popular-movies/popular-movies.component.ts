@@ -7,7 +7,7 @@ import { GalleryModule, Gallery, GalleryRef, ImageItem } from 'ng-gallery';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-popular',
+  selector: 'app-popular-movies',
   standalone: true,
   imports: [CommonModule, GalleryModule, RouterModule],
   providers: [MovieService],

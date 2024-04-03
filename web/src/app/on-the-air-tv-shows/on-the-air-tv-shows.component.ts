@@ -8,7 +8,7 @@ import { RouterModule } from '@angular/router';
 import { TvShowService } from '../tv-service.service';
 
 @Component({
-  selector: 'app-now-playing',
+  selector: 'app-on-the-air-shows-details',
   standalone: true,
   imports: [CommonModule, GalleryModule, RouterModule],
   providers: [TvShowService],

@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 
 
 @Component({
-  selector: 'app-now-playing-details',
+  selector: 'app-top-rated-movies-details',
   standalone: true,
   imports: [
     CommonModule,

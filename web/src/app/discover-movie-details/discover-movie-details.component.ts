@@ -6,7 +6,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, NgModel } fro
 import { MovieService } from '../movies.service';
 
 @Component({
-  selector: 'app-movie-details',
+  selector: 'app-discover-movie-details',
   standalone: true,
   imports: [
     CommonModule,

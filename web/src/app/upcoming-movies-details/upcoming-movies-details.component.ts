@@ -7,7 +7,7 @@ import { MovieService } from '../movies.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-now-playing-details',
+  selector: 'app-upcoming-movies-details',
   standalone: true,
   imports: [
     CommonModule,

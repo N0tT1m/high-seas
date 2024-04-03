@@ -6,7 +6,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, NgModel } fro
 import { TvShowService } from '../tv-service.service';
 
 @Component({
-  selector: 'on-the-air-tv-show-details',
+  selector: 'app-on-the-air-shows-details',
   standalone: true,
   imports: [
     CommonModule,

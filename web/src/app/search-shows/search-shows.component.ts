@@ -13,7 +13,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 // TODO: FIX THE BOYS NOT BEING ABLE TO BE DOWNLOADED.
 
 @Component({
-  selector: 'app-search-movies',
+  selector: 'app-search-shows',
   standalone: true,
   imports: [GalleryModule, CommonModule, RouterModule, SearchShowListComponent, FormsModule, MatPaginatorModule],
   providers: [TvShowService, NgModel],
