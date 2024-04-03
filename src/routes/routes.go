@@ -36,6 +36,9 @@ func CORS(c *gin.Context) {
 
 func SetupRouter() {
 	r := gin.Default()
+
+	gin.SetMode(gin.ReleaseMode)
+
 	r.Use(CORS)
 	r.POST("/movie/query", api.QueryMovieRequest)
 	r.POST("/show/query", api.QueryShowRequest)
