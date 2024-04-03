@@ -54,11 +54,12 @@ import { MatPaginator } from '@angular/material/paginator';
       </div>
     </div>
 
-    <footer>
-      <mat-paginator [length]=this.totalShows
-                [pageSize]=this.showsLength
-                aria-label="Select page"
-                (page)="onPageChange($event)">
+    <footer class="paginator-container">
+      <mat-paginator 
+        [length]="this.totalShows"
+        [pageSize]="this.showsLength"
+        aria-label="Select page"
+        (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
   </div>

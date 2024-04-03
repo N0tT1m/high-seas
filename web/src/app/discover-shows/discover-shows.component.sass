@@ -102,3 +102,44 @@ button
 .big-btn
   width: 95px
   height: 35px
+
+footer.paginator-container
+  display: flex
+  justify-content: center
+  align-items: center
+  padding: 20px
+  background-color: #f5f5f5
+
+  @media screen and (max-width: 600px)
+    padding: 10px
+
+  mat-paginator
+    font-size: 14px
+
+    @media screen and (max-width: 600px)
+      font-size: 12px
+
+    .mat-paginator-container
+      justify-content: center
+
+      @media screen and (max-width: 600px)
+        flex-wrap: wrap
+
+    .mat-paginator-page-size
+      margin-right: 10px
+
+      @media screen and (max-width: 600px)
+        margin-right: 5px
+
+    .mat-paginator-range-label
+      margin: 0 10px
+
+      @media screen and (max-width: 600px)
+        margin: 5px 0
+
+    .mat-paginator-navigation-previous,
+    .mat-paginator-navigation-next
+      padding: 0 10px
+
+      @media screen and (max-width: 600px)
+        padding: 0 5px

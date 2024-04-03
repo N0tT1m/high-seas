@@ -1,65 +1,81 @@
-#discover-div
-  display: table
+body
+  margin: 0
+  padding: 0
+  overflow: hidden
+
+.movie-poster
+  position: relative
   width: 100%
-  table-layout: fixed
-  border-spacing: 10px
-  text-align: center
+  height: 80vh
+  display: flex
+  justify-content: center
+  align-items: center
+  overflow: hidden
 
-#discover-movies
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+  img
+    max-width: 100%
+    max-height: 100%
+    object-fit: contain
 
-#discover-shows
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+  &.hidden
+    display: none
 
-#search-div
-  display: table
+.star-wars-text
+  position: absolute
+  bottom: 5%
+  left: 50%
+  transform: translateX(-50%)
   width: 100%
-  table-layout: fixed
-  border-spacing: 10px
+  height: 100%
+  perspective: 400px
+  font-family: 'Star Wars', sans-serif
+  font-size: 3rem
+  color: #FFE81F
   text-align: center
+  overflow: hidden
+  animation: fadeOut 10s forwards
 
-#search-movies
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+  p
+    position: absolute
+    bottom: 0
+    animation: scroll 30s linear forwards
 
-#search-shows
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
-.text
-  padding: 5pt
-  margin: 10pt
-
-.movie-lists-div
-  display: table
+.application-text
+  position: absolute
+  bottom: 5% // Adjusted position
+  left: 50%
+  transform: translateX(-50%)
   width: 100%
-  table-layout: fixed
-  border-spacing: 10px
+  height: 100%
+  perspective: 400px
+  font-family: 'Star Wars', sans-serif
+  font-size: 3rem
+  color: #FFE81F
   text-align: center
+  overflow: hidden
+  opacity: 0
+  animation: fadeIn 30s forwards
 
-#now-playing
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+  p
+    position: absolute
+    bottom: 0
 
-#popular
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+@keyframes scroll
+  0%
+    bottom: 0
+    transform: rotateX(20deg) translateZ(0)
+  100%
+    bottom: 100%
+    transform: rotateX(25deg) translateZ(-2500px)
 
-#top-rated
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+@keyframes fadeOut
+  0%
+    opacity: 1
+  100%
+    opacity: 0
 
-#upcoming
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
+@keyframes fadeIn
+  0%
+    opacity: 0
+  100%
+    opacity: 1
