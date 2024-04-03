@@ -56,7 +56,7 @@ import { TvShowService } from '../tv-service.service';
           <span class="show-meta-value">{{this.status}}</span>
         </div>
       </div>
-      <div class="show-creators">
+      <div class="show-creators show-meta-item" *ngIf="this.createdBy.length > 0">
         <h4 class="show-creators-heading">Created By:</h4>
         <ul class="show-creators-list">
           <li class="show-creator" *ngFor="let createdBy of this.createdBy; index as j;">{{createdBy['name']}}</li>
@@ -165,36 +165,60 @@ export class SearchTvShowDetailsComponent {
     const query = this.route.snapshot.params['query'];
 
     this.tvShowService.getAllShows(page, query).subscribe((resp) => {
-      resp['results'].forEach((show) => {
-        let page = resp['page'];
-        let isAdult = show['adult'];
-        let backdropPath = show['backdrop_path'];
-        let genreIds = show['genre_ids'];
-        let id = show['id'];
-        let firstAirDate = show['first_air_date'];
-        let video = show['video'];
-        let name = show['name'];
-        let originalLanguage = show['original_language'];
-        let originalName = show['original_name'];
-        let overview = show['overview'];
-        let popularity = show['popularity'];
-        let posterPath = this.baseUrl + show['poster_path'];
-        let voteAverage = show['vote_average'];
-        let voteCount = show['vote_count'];
-        let totalPages = resp['total_pages'];
-        let totalResult = resp['total_result'];
+      if (resp && resp['results']) {
+        resp['results'].forEach((show) => {
+          let page = resp['page'];
+          let isAdult = show['adult'];
+          let backdropPath = show['backdrop_path'];
+          let genreIds = show['genre_ids'];
+          let id = show['id'];
+          let firstAirDate = show['first_air_date'];
+          let video = show['video'];
+          let name = show['name'];
+          let originalLanguage = show['original_language'];
+          let originalName = show['original_name'];
+          let overview = show['overview'];
+          let popularity = show['popularity'];
+          let posterPath = this.baseUrl + show['poster_path'];
+          let voteAverage = show['vote_average'];
+          let voteCount = show['vote_count'];
+          let totalPages = resp['total_pages'];
+          let totalResult = resp['total_results'];
 
-        let result: TvShowResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
+          let result: TvShowResult[] = [{
+            adult: isAdult,
+            backdrop_path: backdropPath,
+            genre_ids: genreIds,
+            id: id,
+            name: name,
+            first_air_date: firstAirDate,
+            original_language: originalLanguage,
+            original_name: originalName,
+            overview: overview,
+            popularity: popularity,
+            poster_path: posterPath,
+            vote_average: voteAverage,
+            vote_count: voteCount,
+            video: video
+          }];
 
-        this.tvShowList.push({ page: page, results: result,  total_pages: totalPages, total_result: totalResult });
-      })
+          this.tvShowList.push({
+            page: page,
+            results: result,
+            total_pages: totalPages,
+            total_result: totalResult
+          });
+        });
 
-      this.tvShowList.splice(0, 1);
+        this.tvShowList.splice(0, 1);
 
-      for (var i = 0; i < this.tvShowList.length; i++) {
-        this.fetchedShow = this.tvShowList.find(showResult => showResult.results[i]!.id === tvShowId);
+        for (var i = 0; i < this.tvShowList.length; i++) {
+          this.fetchedShow = this.tvShowList.find(movieResult => movieResult.results[i]!.id === tvShowId);
+        }
+      } else {
+        console.error('Invalid response format. "results" property not found.');
       }
-    })
+    });
 
     this.tvShowService.getShowDetails(tvShowId).subscribe(show => {
       this.showsLength = show.seasons.length;
@@ -202,7 +226,9 @@ export class SearchTvShowDetailsComponent {
         this.seasonEpisodeNumbers.push(show.seasons[i]['episode_count'])
         this.totalSeason.push(show.seasons[i]['season_number'])
         this.status = show.status
-        this.createdBy.push(show.created_by[i])
+        if (show.created_by[i] && Object.keys(show.created_by[i]).length > 0) {
+          this.createdBy.push(show.created_by[i])
+        }
         this.firstAirDate = show.first_air_date;
         this.homepage = show.homepage;
         this.inProduction = show.in_production;
@@ -210,6 +236,7 @@ export class SearchTvShowDetailsComponent {
         this.lastEpisodeToAir = show.last_episode_to_air;
         this.tageline = show.tagline;
         this.tmdbId = show.id;
+        this.overview = show.overview;
       }
 
       this.seasonEpisodeNumbers.splice(0, 1);

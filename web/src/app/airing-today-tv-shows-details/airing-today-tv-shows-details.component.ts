@@ -50,6 +50,12 @@ import { TvShowService } from '../tv-service.service';
             <div class="show-meta-label">Status of this Show:</div>
             <div class="show-meta-value">{{this.status}}</div>
           </div>
+          <div class="show-creators show-meta-item" *ngIf="this.createdBy.length > 0">
+            <h4 class="show-creators-heading">Created By:</h4>
+            <ul class="show-creators-list">
+              <li class="show-creator" *ngFor="let createdBy of this.createdBy; index as j;">{{createdBy['name']}}</li>
+            </ul>
+          </div>
         </div>
         <div class="show-last-episode" *ngIf="this.lastEpisodeToAir['still_path']">
           <h4 class="show-last-episode-heading">Last Episode to Air:</h4>
