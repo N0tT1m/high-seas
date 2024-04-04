@@ -40,7 +40,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
-</footer>
+    </footer>
   </div>
   `,
   styleUrls: ['./search-movies.component.sass', '../../styles.sass']
