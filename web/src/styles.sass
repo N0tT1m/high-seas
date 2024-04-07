@@ -1,13 +1,14 @@
-/* You can add global styles to this file, and also import other style files */
-@import "../node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"
-
+// Variables
 $primary-color: #76b5c5
-$background-color: #25026d // Light gray background color
-$link-color: #1ac4e5 // Blue text color
-$text-color: #ffffff // White text color
+$background-color: #25026d
+$link-color: #1ac4e5
+$text-color: #ffffff
 
+// Global styles
 body
   font-family: 'Be Vietnam Pro', sans-serif
+  color: $primary-color
+  overflow-x: hidden
 
 root
   --primary-color: #605DC8
@@ -21,9 +22,6 @@ button.primary
   background: var(--primary-color)
   color: white
   border-radius: 8px
-
-body
-  color: $primary-color
 
 .background-placeholder
   position: fixed
@@ -52,6 +50,100 @@ footer
 a
   color: $link-color
   text-decoration: none
-
   &:hover
     text-decoration: underline
+
+// Navbar styles
+.dota-navbar
+  background-color: #111
+  padding: 10px
+
+.navbar-content
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.menu-wrapper
+  display: flex
+  justify-content: center
+  flex-grow: 1
+
+.left-menu
+  display: flex
+
+.dropdown
+  position: relative
+  display: inline-block
+
+.dropdown-toggle
+  color: #ddd
+  text-decoration: none
+  margin: 0 15px
+  text-transform: uppercase
+  font-family: 'Pixel Font', sans-serif
+  font-size: 16px
+  cursor: pointer
+
+.dropdown-menu
+  display: none
+  position: absolute
+  background-color: #222
+  min-width: 160px
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2)
+  padding: 12px 16px
+  z-index: 1
+
+  a
+    color: #ddd
+    text-decoration: none
+    display: block
+    margin: 5px 0
+    text-transform: uppercase
+    font-family: 'Pixel Font', sans-serif
+    font-size: 14px
+
+.dropdown:hover .dropdown-menu
+  display: block
+
+.right-menu
+  margin-left: auto
+
+  a
+    color: #ff6046
+
+#big-titty-waifu-svg
+  display: block
+
+// Content styles
+.content
+  padding: 20px
+
+// Media queries
+@media screen and (max-width: 1200px)
+  // Styles for desktop
+
+@media screen and (max-width: 1024px)
+  // Styles for iPad
+
+@media screen and (max-width: 768px)
+  // Styles for tablet
+  .left-menu
+    flex-direction: column
+
+  .dropdown
+    margin-bottom: 10px
+
+@media screen and (max-width: 480px)
+  // Styles for phone and iPhone
+  .navbar-content
+    flex-direction: column
+    align-items: flex-start
+
+  .left-menu
+    margin-top: 10px
+
+@media screen and (max-width: 320px)
+  // Styles for small screens
+
+@media screen and (min-width: 1600px)
+  // Styles for big screens

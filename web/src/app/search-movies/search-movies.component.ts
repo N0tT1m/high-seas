@@ -33,11 +33,12 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
       </div>
     </section>
 
-    <footer>
-      <mat-paginator [length]=this.totalMovies
-                [pageSize]=this.moviesLength
-                aria-label="Select page"
-                (page)="onPageChange($event)">
+    <footer class="paginator-container">
+      <mat-paginator 
+        [length]="this.totalMovies"
+        [pageSize]="this.moviesLength"
+        aria-label="Select page"
+        (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
   </div>

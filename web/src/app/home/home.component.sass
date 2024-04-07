@@ -1,65 +1,71 @@
-#discover-div
-  display: table
+body
+  margin: 0
+  padding: 0
+  overflow: hidden
+
+.movie-poster
+  position: relative
   width: 100%
-  table-layout: fixed
-  border-spacing: 10px
+  height: 80vh
+  display: flex
+  justify-content: center
+  align-items: center
+  overflow: hidden
+
+  img
+    max-width: 100%
+    max-height: 100%
+    object-fit: contain
+
+  &.hidden
+    display: none
+
+.star-wars-text
+  font-family: 'Star Wars', sans-serif
+  font-size: 3rem
+  color: #FFE81F
   text-align: center
-
-#discover-movies
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
-#discover-shows
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
-#search-div
-  display: table
+  position: absolute
+  bottom: 20%
   width: 100%
-  table-layout: fixed
-  border-spacing: 10px
-  text-align: center
+  perspective: 400px
+  overflow: hidden
+  animation: fadeOut 40s forwards
 
-#search-movies
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+  p
+    margin-bottom: 0
+    animation: scroll 40s linear forwards
 
-#search-shows
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+.application-text
+  position: fixed
+  bottom: 20px
+  left: 20px
+  font-family: 'Star Wars', sans-serif
+  font-size: 3rem
+  color: #FFE81F
+  text-align: left
+  opacity: 0
+  animation: fadeIn 30s forwards
 
-.text
-  padding: 5pt
-  margin: 10pt
+  p
+    margin-bottom: 0
 
-.movie-lists-div
-  display: table
-  width: 100%
-  table-layout: fixed
-  border-spacing: 10px
-  text-align: center
+@keyframes scroll
+  0%
+    transform: rotateX(20deg) translateZ(-500px) scale(1)
+    opacity: 1
+  100%
+    transform: rotateX(25deg) translateY(-5000px) scale(0.5)
+    opacity: 0
 
-#now-playing
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
+@keyframes fadeOut
+  0%
+    opacity: 1
+  100%
+    opacity: 0
 
-#popular
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
-#top-rated
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
-#upcoming
-  margin: 15pt
-  padding: 5pt
-  display: table-cell
-
+@keyframes fadeIn
+  0%
+    opacity: 0
+  100%
+    opacity: 1

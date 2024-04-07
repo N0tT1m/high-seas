@@ -5,7 +5,7 @@ import { Movie } from '../http-service/http-service.component';
 import { DiscoverMovieDetailsComponent } from '../discover-movie-details/discover-movie-details.component';
 
 @Component({
-  selector: 'app-movie-list',
+  selector: 'app-discover-movie-list',
   standalone: true,
   imports: [RouterModule, NgFor, DiscoverMovieDetailsComponent],
   template: `
@@ -21,7 +21,7 @@ import { DiscoverMovieDetailsComponent } from '../discover-movie-details/discove
     </section>
   </div>
   `,
-  styleUrls: ['./discover-movie-list.component.sass']
+  styleUrls: ['./discover-movie-list.component.sass', '../../styles.sass']
 })
 export class MovieListComponent {
 

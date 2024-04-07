@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router'
 import { TvShow } from '../http-service/http-service.component';
 
 @Component({
-  selector: 'app-show-list',
+  selector: 'app-discover-show-list',
   standalone: true,
   imports: [RouterModule, NgFor],
   template: `
@@ -20,7 +20,7 @@ import { TvShow } from '../http-service/http-service.component';
     </section>
   </div>
   `,
-  styleUrls: ['./show-list.component.sass']
+  styleUrls: ['./show-list.component.sass', '../../styles.sass']
 })
 export class ShowListComponent {
 

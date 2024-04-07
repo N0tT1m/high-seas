@@ -32,6 +32,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
     <div class="background-placeholder"></div>
     <main class="earth-spirit">
       <header class="brand-name">
+      <link href="https://fonts.googleapis.com/css2?family=Star+Wars&display=swap" rel="stylesheet">
         <div class="container-fluid">
           <nav class="dota-navbar">
             <div class="navbar-content">
@@ -41,8 +42,8 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
               <div class="menu-wrapper">
                 <div class="left-menu">
                   <div class="dropdown">
-                    <a class="dropdown-toggle">Now Playing / Popular / Top Rated / Upcoming Movies</a>
-                    <div class="dropdown-menu">
+                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'movies')">Now Playing / Popular / Top Rated / Upcoming Movies</a>
+                    <div class="dropdown-menu" [class.show]="moviesDropdownOpen">
                       <a [routerLink]="['now-playing/movies']">Now Playing Movies</a>
                       <a [routerLink]="['popular/movies']">Popular Movies</a>
                       <a [routerLink]="['top-rated/movies']">Top Rated Movies</a>
@@ -50,15 +51,15 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
                     </div>
                   </div>
                   <div class="dropdown">
-                    <a class="dropdown-toggle">Discover & Search Movies</a>
-                    <div class="dropdown-menu">
+                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-movies')">Discover & Search Movies</a>
+                    <div class="dropdown-menu" [class.show]="searchMoviesDropdownOpen">
                       <a [routerLink]="['discover/movies']">Discover Movies</a>
                       <a [routerLink]="['search/movies']">Search Movies</a>
                     </div>
                   </div>
                   <div class="dropdown">
-                    <a class="dropdown-toggle">Airing Today / Popular / Top Rated / On The Air Shows</a>
-                    <div class="dropdown-menu">
+                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'shows')">Airing Today / Popular / Top Rated / On The Air Shows</a>
+                    <div class="dropdown-menu" [class.show]="showsDropdownOpen">
                       <a [routerLink]="['airing-today/shows']">Airing Today Shows</a>
                       <a [routerLink]="['popular/shows']">Popular Shows</a>
                       <a [routerLink]="['top-rated/shows']">Top Rated Shows</a>
@@ -66,8 +67,8 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
                     </div>
                   </div>
                   <div class="dropdown">
-                    <a class="dropdown-toggle">Discover & Search Shows</a>
-                    <div class="dropdown-menu">
+                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-shows')">Discover & Search Shows</a>
+                    <div class="dropdown-menu" [class.show]="searchShowsDropdownOpen">
                       <a [routerLink]="['discover/shows']">Discover Shows</a>
                       <a [routerLink]="['search/shows']">Search Shows</a>
                     </div>
@@ -84,17 +85,36 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
     </main>
   `
 })
-
 export class AppComponent {
   public movies$: Observable<MovieResult[]>;
+  public moviesDropdownOpen = false;
+  public searchMoviesDropdownOpen = false;
+  public showsDropdownOpen = false;
+  public searchShowsDropdownOpen = false;
 
-  constructor(private movieService: MovieService) {
-
-  }
+  constructor(private movieService: MovieService) {}
 
   title = 'High Seas';
 
-  ngOnInit() {
+  ngOnInit() {}
 
+  toggleDropdown(event: Event, dropdown: string) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    switch (dropdown) {
+      case 'movies':
+        this.moviesDropdownOpen = !this.moviesDropdownOpen;
+        break;
+      case 'search-movies':
+        this.searchMoviesDropdownOpen = !this.searchMoviesDropdownOpen;
+        break;
+      case 'shows':
+        this.showsDropdownOpen = !this.showsDropdownOpen;
+        break;
+      case 'search-shows':
+        this.searchShowsDropdownOpen = !this.searchShowsDropdownOpen;
+        break;
+    }
   }
 }

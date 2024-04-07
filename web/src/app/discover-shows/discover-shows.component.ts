@@ -47,18 +47,19 @@ import { MatPaginator } from '@angular/material/paginator';
     <div class="results" *ngIf="genre != 0">
       <div class="movie-item" *ngFor="let showItem of filteredShowsList">
         <div class="movie-info">
-          <app-show-list
+          <app-discover-show-list
             [tvShow]="showItem" [page]="this.page" [airDate]="this.airDate" [genre]="this.genre">
-          </app-show-list>
+          </app-discover-show-list>
         </div>
       </div>
     </div>
 
-    <footer>
-      <mat-paginator [length]=this.totalShows
-                [pageSize]=this.showsLength
-                aria-label="Select page"
-                (page)="onPageChange($event)">
+    <footer class="paginator-container">
+      <mat-paginator 
+        [length]="this.totalShows"
+        [pageSize]="this.showsLength"
+        aria-label="Select page"
+        (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
   </div>

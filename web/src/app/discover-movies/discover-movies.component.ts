@@ -56,18 +56,19 @@ import {MatPaginatorModule, PageEvent } from '@angular/material/paginator';
     <div class="results" *ngIf="genre != 0">
       <div class="movie-item" *ngFor="let movieItem of filteredMovieList">
         <div class="movie-info">
-          <app-movie-list
+          <app-discover-movie-list
             [movieItem]="movieItem" [page]="this.page" [releaseYear]="this.releaseYear" [endYear]="this.endYear" [genre]="this.genre">
-          </app-movie-list>
+          </app-discover-movie-list>
         </div>
       </div>
     </div>
 
-    <footer>
-      <mat-paginator [length]=this.totalMovies
-                [pageSize]=this.moviesLength
-                aria-label="Select page"
-                (page)="onPageChange($event)">
+    <footer class="paginator-container">
+      <mat-paginator 
+        [length]="this.totalMovies"
+        [pageSize]="this.moviesLength"
+        aria-label="Select page"
+        (page)="onPageChange($event)">
       </mat-paginator>
     </footer>
   </div>
