@@ -7,6 +7,7 @@ import { Component } from '@angular/core';
   templateUrl: './top-rated-movies-details.component.html',
   styleUrl: './top-rated-movies-details.component.sass'
 })
+
 export class TopRatedMoviesDetailsComponent {
 
 }

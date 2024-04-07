@@ -86,7 +86,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./top-rated-gallery-movies-details.component.sass', '../../styles.sass'],
 })
 
-export class TopRatedMoviesDetailsComponent {
+export class TopRatedGalleryMoviesDetailsComponent {
   private baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public movieService = inject(MovieService);

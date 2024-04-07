@@ -1,21 +1,62 @@
-<div>
-  <main>
-      <header class="brand-name">
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet">
-        <img class="brand-logo" src="/assets/logo.svg" alt="logo" aria-hidden="true">
-      </header>
-      <section class="content">
-        <app-home></app-home>
-      </section>
-  </main>
-</div>
-
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content above * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced. * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * End of Placeholder * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-
-<router-outlet></router-outlet>
+<div class="background-placeholder"></div>
+<main class="earth-spirit">
+  <header class="brand-name">
+  <link href="https://fonts.googleapis.com/css2?family=Star+Wars&display=swap" rel="stylesheet">
+    <div class="container-fluid">
+      <nav class="dota-navbar">
+        <div class="navbar-content">
+          <a [routerLink]="['/']">
+            <img id="big-titty-waifu-svg" src="/assets/home-icon.jpg" height="50" width="50" alt="logo" aria-hidden="true">
+          </a>
+          <div class="menu-wrapper">
+            <div class="left-menu">
+              <div class="dropdown">
+                <a class="dropdown-toggle" (click)="toggleDropdown($event, 'movies')">Now Playing / Popular / Top Rated / Upcoming Movies</a>
+                <div class="dropdown-menu" [class.show]="moviesDropdownOpen">
+                  <a [routerLink]="['now-playing/movies']">Now Playing Movies</a>
+                  <a [routerLink]="['popular/movies']">Popular Movies</a>
+                  <a [routerLink]="['top-rated/movies']">Top Rated Movies</a>
+                  <a [routerLink]="['upcoming/movies']">Upcoming Movies</a>
+                  <a [routerLink]="['now-playing/movies/gallery']">Now Playing Movies Gallery</a>
+                  <a [routerLink]="['popular/movies/gallery']">Popular Movies Gallery</a>
+                  <a [routerLink]="['top-rated/movies/gallery']">Top Rated Movies Gallery</a>
+                  <a [routerLink]="['upcoming/movies/gallery']">Upcoming Movies Gallery</a>
+                </div>
+              </div>
+              <div class="dropdown">
+                <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-movies')">Discover & Search Movies</a>
+                <div class="dropdown-menu" [class.show]="searchMoviesDropdownOpen">
+                  <a [routerLink]="['discover/movies']">Discover Movies</a>
+                  <a [routerLink]="['search/movies']">Search Movies</a>
+                </div>
+              </div>
+              <div class="dropdown">
+                <a class="dropdown-toggle" (click)="toggleDropdown($event, 'shows')">Airing Today / Popular / Top Rated / On The Air Shows</a>
+                <div class="dropdown-menu" [class.show]="showsDropdownOpen">
+                  <a [routerLink]="['airing-today/shows']">Airing Today Shows</a>
+                  <a [routerLink]="['popular/shows']">Popular Shows</a>
+                  <a [routerLink]="['top-rated/shows']">Top Rated Shows</a>
+                  <a [routerLink]="['on-the-air/shows']">On The Air Shows</a>
+                  <a [routerLink]="['airing-today/shows/gallery']">Airing Today Shows Gallery</a>
+                  <a [routerLink]="['popular/shows/gallery']">Popular Shows Gallery</a>
+                  <a [routerLink]="['top-rated/shows/gallery']">Top Rated Shows Gallery</a>
+                  <a [routerLink]="['on-the-air/shows/gallery']">On The Air Shows Gallery</a>
+                </div>
+              </div>
+              <div class="dropdown">
+                <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-shows')">Discover & Search Shows</a>
+                <div class="dropdown-menu" [class.show]="searchShowsDropdownOpen">
+                  <a [routerLink]="['discover/shows']">Discover Shows</a>
+                  <a [routerLink]="['search/shows']">Search Shows</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+  <section class="content the-girls">
+    <router-outlet></router-outlet>
+  </section>
+</main>

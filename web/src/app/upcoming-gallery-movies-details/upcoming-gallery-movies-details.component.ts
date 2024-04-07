@@ -82,10 +82,10 @@ import { FormsModule } from '@angular/forms';
     </div>
   </article>
     `,
-  styleUrls: ['./upcoming-movies-details.component.sass', '../../styles.sass'],
+  styleUrls: ['./upcoming-gallery-movies-details.component.sass', '../../styles.sass'],
 })
 
-export class UpcomingMoviesDetailsComponent {
+export class UpcomingGalleryMoviesDetailsComponent {
   private baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public movieService = inject(MovieService);

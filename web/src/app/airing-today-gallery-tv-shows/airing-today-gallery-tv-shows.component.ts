@@ -26,7 +26,7 @@ import { TvShowService } from '../tv-service.service';
     `,
   styleUrls: ['./airing-today-gallery-tv-shows.component.sass']
 })
-export class AiringTodayTvShowsComponent {
+export class AiringTodayGalleryTvShowsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
 
   public fetchedShows: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]

@@ -6,7 +6,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, NgModel } fro
 import { TvShowService } from '../tv-service.service';
 
 @Component({
-  selector: 'on-the-air-tv-show-details',
+  selector: 'app-top-rated-tv-show-details',
   standalone: true,
   imports: [
     CommonModule,
@@ -129,10 +129,10 @@ import { TvShowService } from '../tv-service.service';
     </div>
   </article>
     `,
-  styleUrls: ['./on-the-air-gallery-tv-shows-details.component.sass', '../../styles.sass'],
+  styleUrls: ['./top-rated-gallery-tv-shows-details.component.sass', '../../styles.sass'],
 })
 
-export class OnTheAirGalleryTvShowsDetailsComponent {
+export class TopRatedGalleryTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);
@@ -151,7 +151,7 @@ export class OnTheAirGalleryTvShowsDetailsComponent {
   public lastAirDate = "";
   public lastEpisodeToAir = {};
   public tageline = "";
-  public quality: string;
+  public quality = '1080p'; // Default download quality
   public tmdbId: number = 0;
   public overview: string = "";
 
@@ -163,7 +163,7 @@ export class OnTheAirGalleryTvShowsDetailsComponent {
     const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.tvShowService.getOnTheAir(page).subscribe((resp) => {
+    this.tvShowService.getTopRated(page).subscribe((resp) => {
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
           let page = resp['page'];
@@ -255,7 +255,7 @@ export class OnTheAirGalleryTvShowsDetailsComponent {
       this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
       console.log('TV');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request));
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request));
     }
   }
 }

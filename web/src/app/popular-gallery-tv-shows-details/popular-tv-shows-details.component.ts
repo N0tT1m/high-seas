@@ -132,7 +132,7 @@ import { TvShowService } from '../tv-service.service';
   styleUrls: ['./popular-tv-shows-details.component.sass', '../../styles.sass'],
 })
 
-export class PopularTvShowsDetailsComponent {
+export class PopularGalleryTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);

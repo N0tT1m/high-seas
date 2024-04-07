@@ -38,7 +38,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
     </section>
 
     <footer class="paginator-container">
-      <mat-paginator 
+      <mat-paginator
         [length]="this.totalShows"
         [pageSize]="this.showsLength"
         aria-label="Select page"
@@ -67,7 +67,7 @@ export class SearchShowsComponent {
   public showSearch: string;
   public genreDetails: Genre[] = [{ id: 0, name: "None" }];
   public genre: number = this.genreDetails[0]['id'];
-  public pages: number[] = [0]
+  public pages: number[] = [0];
   public page: number = 1;
 
   public tvShowService: TvShowService = inject(TvShowService)
@@ -100,8 +100,6 @@ export class SearchShowsComponent {
     }
 
     this.tvShowService.getAllShows(page, this.showSearch).subscribe((resp) => {
-      console.log(resp['results']);
-
       this.showsLength = resp['results'].length;
       this.totalShows = resp['total_results'];
 

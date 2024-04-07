@@ -28,62 +28,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
   ],
   providers: [{ provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } }, MovieService, HttpClientModule,],
   styleUrls: ['./app.component.sass', '../styles.sass'],
-  template: `
-    <div class="background-placeholder"></div>
-    <main class="earth-spirit">
-      <header class="brand-name">
-      <link href="https://fonts.googleapis.com/css2?family=Star+Wars&display=swap" rel="stylesheet">
-        <div class="container-fluid">
-          <nav class="dota-navbar">
-            <div class="navbar-content">
-              <a [routerLink]="['/']">
-                <img id="big-titty-waifu-svg" src="/assets/home-icon.jpg" height="50" width="50" alt="logo" aria-hidden="true">
-              </a>
-              <div class="menu-wrapper">
-                <div class="left-menu">
-                  <div class="dropdown">
-                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'movies')">Now Playing / Popular / Top Rated / Upcoming Movies</a>
-                    <div class="dropdown-menu" [class.show]="moviesDropdownOpen">
-                      <a [routerLink]="['now-playing/movies']">Now Playing Movies</a>
-                      <a [routerLink]="['popular/movies']">Popular Movies</a>
-                      <a [routerLink]="['top-rated/movies']">Top Rated Movies</a>
-                      <a [routerLink]="['upcoming/movies']">Upcoming Movies</a>
-                    </div>
-                  </div>
-                  <div class="dropdown">
-                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-movies')">Discover & Search Movies</a>
-                    <div class="dropdown-menu" [class.show]="searchMoviesDropdownOpen">
-                      <a [routerLink]="['discover/movies']">Discover Movies</a>
-                      <a [routerLink]="['search/movies']">Search Movies</a>
-                    </div>
-                  </div>
-                  <div class="dropdown">
-                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'shows')">Airing Today / Popular / Top Rated / On The Air Shows</a>
-                    <div class="dropdown-menu" [class.show]="showsDropdownOpen">
-                      <a [routerLink]="['airing-today/shows']">Airing Today Shows</a>
-                      <a [routerLink]="['popular/shows']">Popular Shows</a>
-                      <a [routerLink]="['top-rated/shows']">Top Rated Shows</a>
-                      <a [routerLink]="['on-the-air/shows']">On The Air Shows</a>
-                    </div>
-                  </div>
-                  <div class="dropdown">
-                    <a class="dropdown-toggle" (click)="toggleDropdown($event, 'search-shows')">Discover & Search Shows</a>
-                    <div class="dropdown-menu" [class.show]="searchShowsDropdownOpen">
-                      <a [routerLink]="['discover/shows']">Discover Shows</a>
-                      <a [routerLink]="['search/shows']">Search Shows</a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </nav>
-        </div>
-      </header>
-      <section class="content the-girls">
-        <router-outlet></router-outlet>
-      </section>
-    </main>
-  `
+  templateUrl: './app.component.html',
 })
 export class AppComponent {
   public movies$: Observable<MovieResult[]>;

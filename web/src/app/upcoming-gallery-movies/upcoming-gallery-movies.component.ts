@@ -23,9 +23,9 @@ import { RouterModule } from '@angular/router';
     </div>
   </div>
   `,
-  styleUrls: ['./upcoming-movies.component.sass']
+  styleUrls: ['./upcoming-gallery-movies.component.sass']
 })
-export class UpcomingMoviesComponent {
+export class UpcomingGalleryMoviesComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
 
   public fetchedMovies: Movie[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]
