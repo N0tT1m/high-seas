@@ -1,0 +1,82 @@
+.listing
+  padding: 50px
+  margin: 50px
+  display: flex
+  flex-wrap: wrap
+  justify-content: space-between
+
+input[type="text"]
+  border: solid 1px var(--primary-color)
+  padding: 10px
+  border-radius: 8px
+  margin-right: 4px
+  display: inline-block
+  width: 30%
+
+.movie-item
+  display: flex
+  flex-direction: column
+  align-items: center
+  margin-bottom: 30px
+  width: 100%
+
+.movie-image
+  margin-bottom: 10px
+
+.poster-image
+  width: 100%
+  height: auto
+  max-width: 300px
+  object-fit: cover
+  border-radius: 30px
+
+.movie-info
+  text-align: center
+
+.movie-name
+  font-size: 1.5rem
+  font-weight: bold
+  margin-bottom: 10px
+
+.movie-overview
+  font-size: 1rem
+  margin-bottom: 10px
+
+.movie-vote-average
+  font-size: 1rem
+  font-weight: bold
+  margin-bottom: 10px
+
+.listing-location::before
+  content: url('/assets/location-pin.svg') / ''
+
+.movie-details
+  font-size: 1rem
+  margin-bottom: 10px
+
+@media (min-width: 768px)
+  .movie-item
+    width: calc(50% - 15px)
+
+  .movie-item:nth-child(odd)
+    margin-right: 30px
+
+  .movie-image
+    flex: 0 0 auto
+    margin-right: 20px
+
+  .movie-info
+    flex: 1 1 auto
+    text-align: left
+
+  .movie-name
+    font-size: 1.8rem
+
+  .movie-overview
+    font-size: 1.2rem
+
+  .movie-vote-average
+    font-size: 1.2rem
+
+  .movie-details
+    font-size: 1.2rem
