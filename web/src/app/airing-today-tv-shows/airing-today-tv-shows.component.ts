@@ -11,7 +11,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatPaginator } from '@angular/material/paginator';
 
 @Component({
-  selector: 'app-discover-shows',
+  selector: 'app-airing-today-tv-shows',
   standalone: true,
   imports: [GalleryModule, CommonModule, RouterModule, AiringTodayTvShowsListComponent, FormsModule, MatPaginatorModule],
   providers: [MovieService, TvShowService, NgModel],
@@ -21,18 +21,13 @@ import { MatPaginator } from '@angular/material/paginator';
         <div class="results" *ngIf="this.allShows.length != 0">
           <div class="show-item" *ngFor="let showItem of this.allShows; index as i;">
             <div class="show-info">
-              <app-airing-today-tv-shows-list
-                [tvShow]="showItem" [page]="showItem.page">
+              <app-airing-today-tv-shows-list [tvShow]="showItem" [page]="showItem.page">
               </app-airing-today-tv-shows-list>
             </div>
           </div>
         </div>
-
         <footer class="paginator-container">
-          <mat-paginator
-            [length]="this.totalShows"
-            [pageSize]="this.pageSize"
-            (page)="onPageChange($event)">
+          <mat-paginator [length]="this.totalShows" [pageSize]="this.pageSize" (page)="onPageChange($event)">
           </mat-paginator>
         </footer>
       </section>
@@ -40,6 +35,7 @@ import { MatPaginator } from '@angular/material/paginator';
   `,
   styleUrls: ['./airing-today-tv-shows.component.sass', '../../styles.sass'],
 })
+
 export class AiringTodayTvShowsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
 
@@ -48,7 +44,6 @@ export class AiringTodayTvShowsComponent {
   public show: TvShow;
   public showNames = [{}];
   public allShows: TvShow[] = [];
-  filteredShowsList: TvShow[] = [];
   public galleryShowsRef: GalleryRef;
   public genreDetails: Genre[] = [{ id: 0, name: "None" }];
   public genre: number = this.genreDetails[0]['id'];
@@ -62,10 +57,10 @@ export class AiringTodayTvShowsComponent {
   constructor() {}
 
   ngOnInit() {
-    this.getShows(this.currentPage, this.pageSize);
+    this.getShows(this.currentPage);
   }
 
-  getShows(page: number, pageSize: number) {
+  getShows(page: number) {
     this.tvShowService.getAiringToday(page).subscribe((resp) => {
       this.allShows = resp['results'].map((show) => ({
         page: resp['page'],
@@ -95,7 +90,6 @@ export class AiringTodayTvShowsComponent {
 
   onPageChange(event: PageEvent) {
     this.currentPage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
-    this.getShows(this.currentPage, this.pageSize);
+    this.getShows(this.currentPage);
   }
 }

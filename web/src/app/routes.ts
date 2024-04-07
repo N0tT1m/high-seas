@@ -13,7 +13,7 @@ import { PopularGalleryMoviesComponent } from './popular-gallery-movies/popular-
 import { TopRatedGalleryMoviesComponent } from './top-rated-gallery-movies/top-rated-gallery-movies.component';
 import { UpcomingGalleryMoviesComponent } from './upcoming-gallery-movies/upcoming-gallery-movies.component';
 import { NowPlayingGalleryMoviesDetails } from './now-playing-gallery-movies-details/now-playing-gallery-movies-details.component';
-import { PopularGalleryMoviesDetailsComponent } from './popular-movies-gallery-details/popular-gallery-movies-details.component';
+import { PopularGalleryMoviesDetailsComponent } from './popular-gallery-movies-details/popular-gallery-movies-details.component';
 import { TopRatedGalleryMoviesDetailsComponent } from './top-rated-gallery-movies-details/top-rated-gallery-movies-details.component';
 import { UpcomingGalleryMoviesDetailsComponent } from './upcoming-gallery-movies-details/upcoming-gallery-movies-details.component';
 import { AiringTodayGalleryTvShowsComponent } from './airing-today-gallery-tv-shows/airing-today-gallery-tv-shows.component';
