@@ -109,24 +109,19 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 		for episode := 1; episode <= episodes; episode++ {
 			var sizeOfTorrent []uint
 
-			var queryString, queryStringWSpace string
-			if season < 10 {
-				if episode < 10 {
-					queryString = fmt.Sprintf("%s S0%dE0%d", query, season, episode)
-					queryStringWSpace = fmt.Sprintf("%s S0%d E0%d", query, season, episode)
-				} else {
-					queryString = fmt.Sprintf("%s S0%dE%d", query, season, episode)
-					queryStringWSpace = fmt.Sprintf("%s S0%d E%d", query, season, episode)
-				}
-			} else {
-				if episode < 10 {
-					queryString = fmt.Sprintf("%s S%dE0%d", query, season, episode)
-					queryStringWSpace = fmt.Sprintf("%s S%d E0%d", query, season, episode)
-				} else {
-					queryString = fmt.Sprintf("%s S%dE%d", query, season, episode)
-					queryStringWSpace = fmt.Sprintf("%s S%d E%d", query, season, episode)
-				}
+			seasonFormat := "%02d"
+			episodeFormat := "%02d"
+
+			if season >= 10 {
+				seasonFormat = "%d"
 			}
+
+			if episode >= 10 {
+				episodeFormat = "%d"
+			}
+
+			queryString := fmt.Sprintf("%s S"+seasonFormat+"E"+episodeFormat, query, season, episode)
+			queryStringWSpace := fmt.Sprintf("%s S"+seasonFormat+" E"+episodeFormat, query, season, episode)
 
 			searchQueries := []string{queryString, queryStringWSpace}
 
