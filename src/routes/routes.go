@@ -90,7 +90,7 @@ func SetupRouter() {
 
 	// Create a custom HTTP server with the TLS configuration
 	server := &http.Server{
-		Addr:      ":8782",
+		Addr:      "api.cinemacloud.tv:8782",
 		Handler:   r,
 		TLSConfig: tlsConfig,
 	}
