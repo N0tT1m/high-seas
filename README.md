@@ -24,6 +24,7 @@ export const environment = {
       authorization: "THE BEARER TOKEN FOR TMDb API",
       port: "THE PORT YOUR GOLANG API IS RUNNING ON",
       ip: "THE IP YOUR GOLANG API IS RUNNING ON",
+      transport: "HTTPS or HTTP",
     },
   };
   

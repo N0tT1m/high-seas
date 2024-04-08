@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"crypto/tls"
-
 	"github.com/gin-gonic/gin"
 
 	"high-seas/src/api"
@@ -51,14 +49,16 @@ func SetupRouter() {
 		}
 	})
 
-	r.POST("/show/query", func(c *gin.Context) {
-		host := c.Request.Host
-		if host == "api.cinemacloud.tv" {
-			api.QueryShowRequest(c)
-		} else {
-			c.AbortWithStatus(http.StatusNotFound)
-		}
-	})
+	// r.POST("/show/query", func(c *gin.Context) {
+	// host := c.Request.Host
+	// if host == "api.cinemacloud.tv" {
+	// 	api.QueryShowRequest(c)
+	// } else {
+	// 	c.AbortWithStatus(http.StatusNotFound)
+	// }
+	// })
+
+	r.POST("/show/query", api.QueryShowRequest)
 
 	r.POST("/anime/query", func(c *gin.Context) {
 		host := c.Request.Host
@@ -69,29 +69,31 @@ func SetupRouter() {
 		}
 	})
 
-	// Load the Let's Encrypt certificate and key
-	certFile := "./fullchain.pem"
-	keyFile := "./privkey.pem"
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		panic(err)
-	}
+	r.Run(":8782")
 
-	// Create a custom TLS configuration
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
+	// // Load the Let's Encrypt certificate and key
+	// certFile := "./fullchain.pem"
+	// keyFile := "./privkey.pem"
+	// cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// Create a custom HTTP server with the TLS configuration
-	server := &http.Server{
-		Addr:      ":443",
-		Handler:   r,
-		TLSConfig: tlsConfig,
-	}
+	// // Create a custom TLS configuration
+	// tlsConfig := &tls.Config{
+	// 	Certificates: []tls.Certificate{cert},
+	// }
 
-	// Start the server with TLS
-	err = server.ListenAndServeTLS("", "")
-	if err != nil {
-		panic(err)
-	}
+	// // Create a custom HTTP server with the TLS configuration
+	// server := &http.Server{
+	// 	Addr:      ":443",
+	// 	Handler:   r,
+	// 	TLSConfig: tlsConfig,
+	// }
+
+	// // Start the server with TLS
+	// err = server.ListenAndServeTLS("", "")
+	// if err != nil {
+	// 	panic(err)
+	// }
 }

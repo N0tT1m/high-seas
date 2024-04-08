@@ -152,7 +152,7 @@ export class MovieService {
       'Access-Control-Allow-Methods': 'POST,DELETE',
     };
 
-    var movieUrl = 'https://' + environment.envVar.ip + ':' + environment.envVar.port + '/movie/query';
+    var movieUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/movie/query';
 
     const options = {
       headers: queryApiHeaders,

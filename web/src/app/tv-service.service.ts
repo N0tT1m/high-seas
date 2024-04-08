@@ -133,7 +133,7 @@ export class TvShowService {
       'Access-Control-Allow-Methods': 'POST,DELETE',
     };
 
-    var tvShowUrl = 'https://' + environment.envVar.ip + ':' + environment.envVar.port + '/show/query';
+    var tvShowUrl = 'http://' + environment.envVar.ip + ':' + environment.envVar.port + '/show/query';
 
     const options = {
       headers: queryApiHeaders,
