@@ -136,9 +136,9 @@ export class AiringTodayTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);
-  public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public fetchedData: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]
   public fetchedShow: TvShow | undefined;
-  public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public tvShowList: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]
   public showsLength: number;
   public seasonEpisodeNumbers = [0];
   public totalSeason = [0];
@@ -251,11 +251,21 @@ export class AiringTodayTvShowsDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      console.log(this.episodes);
-      this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+      // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
-      console.log('TV');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request));
+      console.log('Movie');
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
+        request => {
+          console.log(request);
+          // Show the pop-up when the request is successful
+          alert('Download request submitted successfully!');
+        },
+        error => {
+          console.error(error);
+          // Show an error message if the request fails
+          alert('An error occurred while submitting the download request.');
+        }
+      );
     }
   }
 }

@@ -166,8 +166,18 @@ export class UpcomingMoviesDetailsComponent {
       // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
-      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request));
-
+      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(
+        request => {
+          console.log(request);
+          // Show the pop-up when the request is successful
+          alert('Download request submitted successfully!');
+        },
+        error => {
+          console.error(error);
+          // Show an error message if the request fails
+          alert('An error occurred while submitting the download request.');
+        }
+      );
     }
   }
 }

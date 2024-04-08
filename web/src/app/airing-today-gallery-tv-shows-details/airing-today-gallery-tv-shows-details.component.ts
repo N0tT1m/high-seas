@@ -238,11 +238,21 @@ export class AiringTodayGalleryTvShowsDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      console.log(this.episodes);
-      this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+      // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
     } else {
-      console.log('TV');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request));
+      console.log('Movie');
+      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
+        request => {
+          console.log(request);
+          // Show the pop-up when the request is successful
+          alert('Download request submitted successfully!');
+        },
+        error => {
+          console.error(error);
+          // Show an error message if the request fails
+          alert('An error occurred while submitting the download request.');
+        }
+      );
     }
   }
 }
