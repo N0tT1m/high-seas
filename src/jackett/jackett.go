@@ -97,8 +97,6 @@ func sortTorrentsBySeeders(torrents []jackett.Result) []jackett.Result {
 }
 
 func MakeShowQuery(query string, seasons []int, name string, year string, description string) {
-	name = strings.Replace(name, ":", "", -1)
-
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
@@ -106,7 +104,7 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 	})
 
 	for i := 0; i < len(seasons); i++ {
-		season := i + 1
+		season := i
 		episodes := seasons[i]
 
 		for episode := 1; episode <= episodes; episode++ {
@@ -338,7 +336,7 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 
 	if !exactMatch {
 		// Check if the result title contains the main show name followed by extra text
-		nameParts := strings.Split(name, ":")
+		nameParts := strings.Fields(name)
 		mainName := strings.TrimSpace(nameParts[0])
 
 		if strings.Contains(r.Title, mainName) {
@@ -348,7 +346,19 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 
 			// Check if the substring after the main show name is present in the original name
 			if !strings.Contains(name, substringAfterMainName) {
-				return false
+				// Check if the extra text is separated by a colon, hyphen, or other common separators
+				separators := []string{":", "-", "–", "|", "//", "."}
+				isSeparated := false
+				for _, sep := range separators {
+					if strings.HasPrefix(substringAfterMainName, sep) {
+						isSeparated = true
+						break
+					}
+				}
+
+				if !isSeparated {
+					return false
+				}
 			}
 		} else {
 			// Check if the result title contains a different show with similar name
