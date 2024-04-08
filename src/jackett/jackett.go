@@ -106,135 +106,161 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 	})
 
 	for i := 0; i < len(seasons); i++ {
-		count := 1
+		season := i + 1
+		episodes := seasons[i]
 
-		for count <= seasons[i] {
+		for episode := 1; episode <= episodes; episode++ {
 			var sizeOfTorrent []uint
 
-			season := i + 1
+			if season < 10 {
+				if episode < 10 {
+					queryString := fmt.Sprintf("%s S0%dE0%d", query, season, episode)
+					queryStringWSpace := fmt.Sprintf("%s S0%d E0%d", query, season, episode)
+					searchQueries := []string{queryString, queryStringWSpace}
 
-			if i < 10 {
-				fmt.Println("COUNT", count)
-				queryString := fmt.Sprintf("%s S0%d E0%d", query, season, count)
-				queryStringWSpace := fmt.Sprintf("%s S0%dE0%d", query, season, count)
+					for _, q := range searchQueries {
+						logger.WriteInfo(q)
 
-				logger.WriteInfo(queryString)
-				logger.WriteInfo(queryStringWSpace)
+						resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+							Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+							Query:      q,
+						})
+						if err != nil {
+							logger.WriteFatal("Failed to fetch from Jackett.", err)
+						}
 
-				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-					Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-					Query:      queryString,
-				})
-				if err != nil {
-					logger.WriteFatal("Failed to fetch from Jackett.", err)
-				}
-				resp2, err := j.Fetch(ctx, &jackett.FetchRequest{
-					Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-					Query:      queryStringWSpace,
-				})
-				if err != nil {
-					logger.WriteFatal("Failed to fetch from Jackett.", err)
-				}
+						for i := 0; i < len(resp.Results); i++ {
+							if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+								sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+							}
+						}
 
-				for i := 0; i < len(resp.Results); i++ {
-					if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-						sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+						for _, r := range resp.Results {
+							tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
+							logger.WriteInfo(tmdbOutput)
+							if isCorrectShow(r, name, year, description) {
+								fmt.Println(r.Title)
+
+								if r.Seeders == slices.Max(sizeOfTorrent) {
+									link := r.Link
+									logger.WriteInfo(link)
+									deluge.AddTorrent(link)
+								}
+							}
+						}
 					}
-				}
-				for i := 0; i < len(resp2.Results); i++ {
-					if !slices.Contains(sizeOfTorrent, resp2.Results[i].Seeders) {
-						sizeOfTorrent = append(sizeOfTorrent, resp2.Results[i].Seeders)
-					}
-				}
+				} else {
+					queryString := fmt.Sprintf("%s S0%dE%d", query, season, episode)
+					queryStringWSpace := fmt.Sprintf("%s S0%d E%d", query, season, episode)
+					searchQueries := []string{queryString, queryStringWSpace}
 
-				for _, r := range resp.Results {
-					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year, description) {
-						fmt.Println(r.Title)
+					for _, q := range searchQueries {
+						logger.WriteInfo(q)
 
-						if r.Seeders == slices.Max(sizeOfTorrent) {
-							link := r.Link
-							logger.WriteInfo(link)
-							deluge.AddTorrent(link)
+						resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+							Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+							Query:      q,
+						})
+						if err != nil {
+							logger.WriteFatal("Failed to fetch from Jackett.", err)
+						}
+
+						for i := 0; i < len(resp.Results); i++ {
+							if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+								sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+							}
+						}
+
+						for _, r := range resp.Results {
+							tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
+							logger.WriteInfo(tmdbOutput)
+							if isCorrectShow(r, name, year, description) {
+								fmt.Println(r.Title)
+
+								if r.Seeders == slices.Max(sizeOfTorrent) {
+									link := r.Link
+									logger.WriteInfo(link)
+									deluge.AddTorrent(link)
+								}
+							}
 						}
 					}
 				}
-				for _, r := range resp2.Results {
-					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year, description) {
-						fmt.Println(r.Title)
+			} else {
+				if episode < 10 {
+					queryString := fmt.Sprintf("%s S%dE0%d", query, season, episode)
+					queryStringWSpace := fmt.Sprintf("%s S%d E0%d", query, season, episode)
+					searchQueries := []string{queryString, queryStringWSpace}
 
-						if r.Seeders == slices.Max(sizeOfTorrent) {
-							link := r.Link
-							logger.WriteInfo(link)
-							deluge.AddTorrent(link)
+					for _, q := range searchQueries {
+						logger.WriteInfo(q)
+
+						resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+							Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+							Query:      q,
+						})
+						if err != nil {
+							logger.WriteFatal("Failed to fetch from Jackett.", err)
+						}
+
+						for i := 0; i < len(resp.Results); i++ {
+							if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+								sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+							}
+						}
+
+						for _, r := range resp.Results {
+							tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
+							logger.WriteInfo(tmdbOutput)
+							if isCorrectShow(r, name, year, description) {
+								fmt.Println(r.Title)
+
+								if r.Seeders == slices.Max(sizeOfTorrent) {
+									link := r.Link
+									logger.WriteInfo(link)
+									deluge.AddTorrent(link)
+								}
+							}
 						}
 					}
-				}
-			} else if i >= 10 {
-				queryString := fmt.Sprintf("%s S%d E0%d", query, season, count)
-				queryStringWSpace := fmt.Sprintf("%s S0%dE0%d", query, season, count)
+				} else {
+					queryString := fmt.Sprintf("%s S%dE%d", query, season, episode)
+					queryStringWSpace := fmt.Sprintf("%s S%d E%d", query, season, episode)
+					searchQueries := []string{queryString, queryStringWSpace}
 
-				logger.WriteInfo(queryString)
-				logger.WriteInfo(queryStringWSpace)
+					for _, q := range searchQueries {
+						logger.WriteInfo(q)
 
-				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-					Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-					Query:      queryString,
-				})
-				if err != nil {
-					logger.WriteFatal("Failed to fetch from Jackett.", err)
-				}
-				resp2, err := j.Fetch(ctx, &jackett.FetchRequest{
-					Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-					Query:      queryStringWSpace,
-				})
-				if err != nil {
-					logger.WriteFatal("Failed to fetch from Jackett.", err)
-				}
-
-				for i := 0; i < len(resp.Results); i++ {
-					if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-						sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-					}
-				}
-				for i := 0; i < len(resp2.Results); i++ {
-					if !slices.Contains(sizeOfTorrent, resp2.Results[i].Seeders) {
-						sizeOfTorrent = append(sizeOfTorrent, resp2.Results[i].Seeders)
-					}
-				}
-
-				for _, r := range resp.Results {
-					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year, description) {
-						fmt.Println(r.Title)
-
-						if r.Seeders == slices.Max(sizeOfTorrent) {
-							link := r.Link
-							logger.WriteInfo(link)
-							deluge.AddTorrent(link)
+						resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+							Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+							Query:      q,
+						})
+						if err != nil {
+							logger.WriteFatal("Failed to fetch from Jackett.", err)
 						}
-					}
-				}
-				for _, r := range resp2.Results {
-					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-					logger.WriteInfo(tmdbOutput)
-					if isCorrectShow(r, name, year, description) {
-						fmt.Println(r.Title)
 
-						if r.Seeders == slices.Max(sizeOfTorrent) {
-							link := r.Link
-							logger.WriteInfo(link)
-							deluge.AddTorrent(link)
+						for i := 0; i < len(resp.Results); i++ {
+							if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+								sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+							}
+						}
+
+						for _, r := range resp.Results {
+							tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
+							logger.WriteInfo(tmdbOutput)
+							if isCorrectShow(r, name, year, description) {
+								fmt.Println(r.Title)
+
+								if r.Seeders == slices.Max(sizeOfTorrent) {
+									link := r.Link
+									logger.WriteInfo(link)
+									deluge.AddTorrent(link)
+								}
+							}
 						}
 					}
 				}
 			}
-
-			count++
 		}
 	}
 }
