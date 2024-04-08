@@ -197,6 +197,9 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 				link := r.Link
 				logger.WriteInfo(link)
 				err := deluge.AddTorrent(link)
+
+				season++
+
 				if err != nil {
 					logger.WriteError("Failed to add torrent.", err)
 				} else {
@@ -208,7 +211,6 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		if !found {
 			return false
 		}
-		season++
 	}
 	return true
 }
