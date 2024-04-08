@@ -187,6 +187,11 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 
 		sortedTorrents := sortTorrentsBySeeders(resp.Results)
 		for _, r := range sortedTorrents {
+			// Check if the result title contains any episode text
+			if containsEpisodeText(r.Title) {
+				continue // Skip this result and move to the next one
+			}
+
 			tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 			logger.WriteInfo(tmdbOutput)
 			if isCorrectShow(r, name, year, description) {
@@ -203,6 +208,12 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		}
 	}
 	return false
+}
+
+func containsEpisodeText(title string) bool {
+	// Use regular expression to check if the title contains any episode text
+	episodeRegex := regexp.MustCompile(`(?i)(?:e\d+|episode\s*\d+)`)
+	return episodeRegex.MatchString(title)
 }
 
 func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) {
