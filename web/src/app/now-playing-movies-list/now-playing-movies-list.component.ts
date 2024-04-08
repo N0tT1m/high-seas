@@ -16,7 +16,7 @@ import { Movie } from '../http-service/http-service.component';
       <h2 class="show-name">Show name: {{ movie.title }}</h2>
       <p class="show-overview">{{ movie.overview}}</p>
       <p class="show-vote-average">The vote average for this show is: {{movie.vote_average }} </p>
-      <a [routerLink]="['/search-show', movie.id, this.page, this.query]">Link to {{ movie.title }}</a>
+      <a [routerLink]="['/now-playing/movies/details', movie.id, this.page]">Link to {{ movie.title }}</a>
     </section>
   </div>
   `,
