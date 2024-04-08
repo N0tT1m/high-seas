@@ -14,7 +14,7 @@ var password = utils.EnvVar("DELUGE_PASSWORD", "")
 var ip = utils.EnvVar("DELUGE_IP", "")
 var port = utils.EnvVar("DELUGE_PORT", "")
 
-func AddTorrent(file string) {
+func AddTorrent(file string) error {
 	numPort, err := strconv.Atoi(port)
 	if err != nil {
 		logger.WriteError("Failed to convert port to a number.", err)
@@ -37,7 +37,9 @@ func AddTorrent(file string) {
 	result, err := deluge.AddTorrentURL(file, options)
 	if err != nil {
 		logger.WriteError("Failed to add torrent.", err)
+		return err
 	}
 
 	logger.WriteCMDInfo("Results: ", result)
+	return nil
 }

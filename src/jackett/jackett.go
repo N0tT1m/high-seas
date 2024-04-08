@@ -8,6 +8,7 @@ import (
 	"high-seas/src/utils"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/webtor-io/go-jackett"
@@ -61,10 +62,38 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	if selectedTorrent != nil {
 		link := selectedTorrent.Link
 		logger.WriteInfo(link)
-		deluge.AddTorrent(link)
+
+		// Try adding the torrent with the highest seeder value
+		err := deluge.AddTorrent(link)
+		if err != nil {
+			logger.WriteError("Failed to add torrent with the highest seeder value.", err)
+
+			// If adding the torrent fails, try the next highest seeder value
+			sortedTorrents := sortTorrentsBySeeders(resp.Results)
+			for _, torrent := range sortedTorrents {
+				if isCorrectMovie(torrent, title, description, years[0], Imdb) && torrent.Seeders < maxSeeders {
+					link := torrent.Link
+					logger.WriteInfo(link)
+
+					err := deluge.AddTorrent(link)
+					if err == nil {
+						break
+					} else {
+						logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
+					}
+				}
+			}
+		}
 	} else {
 		logger.WriteInfo("No matching torrent found with the maximum number of seeders.")
 	}
+}
+
+func sortTorrentsBySeeders(torrents []jackett.Result) []jackett.Result {
+	sort.Slice(torrents, func(i, j int) bool {
+		return torrents[i].Seeders > torrents[j].Seeders
+	})
+	return torrents
 }
 
 func MakeShowQuery(query string, seasons []int, name string, year string, description string) {
