@@ -145,7 +145,7 @@ const routeConfig: Routes = [
   {
     path: 'on-the-air/shows',
     component: OnTheAirTvShowsComponent,
-    title: 'On The Error Tv Shows'
+    title: 'On The Air Tv Shows'
   },
   {
     path: 'airing-today/shows/details/:id/:page',
