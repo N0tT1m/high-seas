@@ -2,10 +2,10 @@ package routes
 
 import (
 	"crypto/tls"
+	"high-seas/src/api"
 
 	"github.com/gin-gonic/gin"
 
-	"high-seas/src/api"
 	"net/http"
 )
 
@@ -41,33 +41,37 @@ func SetupRouter() {
 
 	r.Use(CORS)
 
-	// Define routes based on the domain name
-	r.POST("/movie/query", func(c *gin.Context) {
-		host := c.Request.Host
-		if host == "www.cinemacloud.tv" {
-			api.QueryMovieRequest(c)
-		} else {
-			c.AbortWithStatus(http.StatusNotFound)
-		}
-	})
+	r.POST("/movie/query", api.QueryMovieRequest)
+	r.POST("/show/query", api.QueryShowRequest)
+	r.POST("/anime/query", api.QueryAnimeRequest)
 
-	r.POST("/show/query", func(c *gin.Context) {
-		host := c.Request.Host
-		if host == "www.cinemacloud.tv" {
-			api.QueryShowRequest(c)
-		} else {
-			c.AbortWithStatus(http.StatusNotFound)
-		}
-	})
+	// // Define routes based on the domain name
+	// r.POST("/movie/query", func(c *gin.Context) {
+	// 	host := c.Request.Host
+	// 	if host == "www.cinemacloud.tv" {
+	// 		api.QueryMovieRequest(c)
+	// 	} else {
+	// 		c.AbortWithStatus(http.StatusNotFound)
+	// 	}
+	// })
 
-	r.POST("/anime/query", func(c *gin.Context) {
-		host := c.Request.Host
-		if host == "www.cinemacloud.tv" {
-			api.QueryAnimeRequest(c)
-		} else {
-			c.AbortWithStatus(http.StatusNotFound)
-		}
-	})
+	// r.POST("/show/query", func(c *gin.Context) {
+	// 	host := c.Request.Host
+	// 	if host == "www.cinemacloud.tv" {
+	// 		api.QueryShowRequest(c)
+	// 	} else {
+	// 		c.AbortWithStatus(http.StatusNotFound)
+	// 	}
+	// })
+
+	// r.POST("/anime/query", func(c *gin.Context) {
+	// 	host := c.Request.Host
+	// 	if host == "www.cinemacloud.tv" {
+	// 		api.QueryAnimeRequest(c)
+	// 	} else {
+	// 		c.AbortWithStatus(http.StatusNotFound)
+	// 	}
+	// })
 
 	// r.Run(":8782")
 
