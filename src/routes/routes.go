@@ -44,7 +44,7 @@ func SetupRouter() {
 	// Define routes based on the domain name
 	r.POST("/movie/query", func(c *gin.Context) {
 		host := c.Request.Host
-		if host == "api.cinemacloud.tv" {
+		if host == "www.cinemacloud.tv" {
 			api.QueryMovieRequest(c)
 		} else {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -53,7 +53,7 @@ func SetupRouter() {
 
 	r.POST("/show/query", func(c *gin.Context) {
 		host := c.Request.Host
-		if host == "api.cinemacloud.tv" {
+		if host == "www.cinemacloud.tv" {
 			api.QueryShowRequest(c)
 		} else {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -62,7 +62,7 @@ func SetupRouter() {
 
 	r.POST("/anime/query", func(c *gin.Context) {
 		host := c.Request.Host
-		if host == "api.cinemacloud.tv" {
+		if host == "www.cinemacloud.tv" {
 			api.QueryAnimeRequest(c)
 		} else {
 			c.AbortWithStatus(http.StatusNotFound)
