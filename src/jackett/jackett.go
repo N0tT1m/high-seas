@@ -337,14 +337,17 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	}
 
 	if !exactMatch {
-		// Check if the result title contains a variation of the show name
+		// Check if the result title contains the main show name followed by extra text
 		nameParts := strings.Split(name, ":")
 		mainName := strings.TrimSpace(nameParts[0])
 
 		if strings.Contains(r.Title, mainName) {
-			// Check if the result title contains the exact variation
-			variation := strings.TrimSpace(strings.Join(nameParts[1:], ":"))
-			if !strings.Contains(r.Title, variation) {
+			// Extract the substring after the main show name
+			mainNameIndex := strings.Index(r.Title, mainName)
+			substringAfterMainName := strings.TrimSpace(r.Title[mainNameIndex+len(mainName):])
+
+			// Check if the substring after the main show name is present in the original name
+			if !strings.Contains(name, substringAfterMainName) {
 				return false
 			}
 		} else {
