@@ -141,7 +141,7 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 			for _, r := range resp.Results {
 				tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 				logger.WriteInfo(tmdbOutput)
-				if isCorrectShow(r, name, year, description) {
+				if compareBundle(r, name) {
 					fmt.Println(r.Title)
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.Link
