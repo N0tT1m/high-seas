@@ -138,16 +138,19 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 				}
 			}
 
-			for _, r := range resp.Results {
+			sortedTorrents := sortTorrentsBySeeders(resp.Results)
+			for _, r := range sortedTorrents {
 				tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 				logger.WriteInfo(tmdbOutput)
 				if compareBundle(r, name) {
 					fmt.Println(r.Title)
-					if r.Seeders == slices.Max(sizeOfTorrent) {
-						link := r.Link
-						logger.WriteInfo(link)
-						deluge.AddTorrent(link)
+					link := r.Link
+					logger.WriteInfo(link)
+					err := deluge.AddTorrent(link)
+					if err == nil {
 						return true
+					} else {
+						logger.WriteError("Failed to add torrent.", err)
 					}
 				}
 			}
@@ -190,15 +193,19 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					}
 				}
 
-				for _, r := range resp.Results {
+				sortedTorrents := sortTorrentsBySeeders(resp.Results)
+				for _, r := range sortedTorrents {
 					tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 					logger.WriteInfo(tmdbOutput)
 					if isCorrectShow(r, name, year, description) {
 						fmt.Println(r.Title)
-						if r.Seeders == slices.Max(sizeOfTorrent) {
-							link := r.Link
-							logger.WriteInfo(link)
-							deluge.AddTorrent(link)
+						link := r.Link
+						logger.WriteInfo(link)
+						err := deluge.AddTorrent(link)
+						if err != nil {
+							logger.WriteError("Failed to add torrent.", err)
+						} else {
+							break
 						}
 					}
 				}
