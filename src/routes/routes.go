@@ -35,7 +35,7 @@ func CORS(c *gin.Context) {
 }
 
 func SetupRouter() {
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
 
