@@ -86,7 +86,7 @@ func SetupRouter() {
 
 	// Create a custom HTTP server with the TLS configuration
 	server := &http.Server{
-		Addr:      ":443",
+		Addr:      ":8782",
 		Handler:   r,
 		TLSConfig: tlsConfig,
 	}
