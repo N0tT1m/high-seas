@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"crypto/tls"
+
 	"github.com/gin-gonic/gin"
 
 	"high-seas/src/api"
@@ -67,31 +69,31 @@ func SetupRouter() {
 		}
 	})
 
-	r.Run(":8782")
+	// r.Run(":8782")
 
-	// // Load the Let's Encrypt certificate and key
-	// certFile := "./fullchain.pem"
-	// keyFile := "./privkey.pem"
-	// cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// Load the Let's Encrypt certificate and key
+	certFile := "./fullchain.pem"
+	keyFile := "./privkey.pem"
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		panic(err)
+	}
 
-	// // Create a custom TLS configuration
-	// tlsConfig := &tls.Config{
-	// 	Certificates: []tls.Certificate{cert},
-	// }
+	// Create a custom TLS configuration
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
 
-	// // Create a custom HTTP server with the TLS configuration
-	// server := &http.Server{
-	// 	Addr:      ":443",
-	// 	Handler:   r,
-	// 	TLSConfig: tlsConfig,
-	// }
+	// Create a custom HTTP server with the TLS configuration
+	server := &http.Server{
+		Addr:      ":443",
+		Handler:   r,
+		TLSConfig: tlsConfig,
+	}
 
-	// // Start the server with TLS
-	// err = server.ListenAndServeTLS("", "")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// Start the server with TLS
+	err = server.ListenAndServeTLS("", "")
+	if err != nil {
+		panic(err)
+	}
 }
