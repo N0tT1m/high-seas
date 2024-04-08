@@ -103,8 +103,16 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
-	for season := 1; season <= len(seasons); season++ {
-		episodes := seasons[season-1]
+	// Remove the first season from the list
+	if len(seasons) > 1 {
+		seasons = seasons[1:]
+	} else {
+		logger.WriteInfo("No seasons available to index.")
+		return
+	}
+
+	for seasonIndex, episodes := range seasons {
+		season := seasonIndex + 2 // Start indexing from the second season
 
 		for episode := 1; episode <= episodes; episode++ {
 			var sizeOfTorrent []uint
