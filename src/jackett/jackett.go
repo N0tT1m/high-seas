@@ -44,16 +44,26 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
 	}
 
+	maxSeeders := slices.Max(sizeOfTorrent)
+	var selectedTorrent *jackett.Result
+
 	for _, r := range resp.Results {
 		if isCorrectMovie(r, title, description, years[0], Imdb) {
-			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The max seeders is ==> %s", r.Title, title, r.Seeders, slices.Max(sizeOfTorrent)))
+			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The max seeders is ==> %d", r.Title, title, r.Seeders, maxSeeders))
 
-			if r.Seeders == slices.Max(sizeOfTorrent) {
-				link := r.Link
-				logger.WriteInfo(link)
-				deluge.AddTorrent(link)
+			if r.Seeders == maxSeeders {
+				selectedTorrent = &r
+				break
 			}
 		}
+	}
+
+	if selectedTorrent != nil {
+		link := selectedTorrent.Link
+		logger.WriteInfo(link)
+		deluge.AddTorrent(link)
+	} else {
+		logger.WriteInfo("No matching torrent found with the maximum number of seeders.")
 	}
 }
 
