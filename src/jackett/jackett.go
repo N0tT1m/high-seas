@@ -161,6 +161,8 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 				}
 			}
 		}
+
+		bundleFound = true
 	}
 
 	if !bundleFound {
