@@ -72,8 +72,8 @@ func SetupRouter() {
 	// r.Run(":8782")
 
 	// Load the Let's Encrypt certificate and key
-	certFile := "C:\\Certbot\\live\\api.cinemacloud.tv\\fullchain.pem"
-	keyFile := "C:\\Certbot\\live\\api.cinemacloud.tv\\privkey.pem"
+	certFile := "./fullchain.pem"
+	keyFile := "./privkey.pem"
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		panic(err)
