@@ -258,7 +258,7 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
 	versions := createStringVersions(name)
 
-	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
 		return false
 	}
 
@@ -310,16 +310,16 @@ func isCorrectAnime(r jackett.Result, name, year, description string) bool {
 // Helper functions for matching criteria
 func compareDescriptions(resultDescription, description string) bool {
 	// Basic implementation: return true if the description contains the title and year
-	logger.WriteInfo(description)
-	logger.WriteInfo(resultDescription)
+	logger.WriteInfo("TMDb Description --> " + description)
+	logger.WriteInfo("The Torrent Indexer Description --> " + resultDescription)
 
 	return strings.Contains(resultDescription, description)
 }
 
 func checkEpisodeTitlesAndDescriptions(title, name string) bool {
 	// Basic implementation: return true if the title contains the name
-	logger.WriteInfo(title)
-	logger.WriteInfo(name)
+	logger.WriteInfo("The Torrent Indexer Title --> " + title)
+	logger.WriteInfo("TMDb Description --> " + name)
 
 	return strings.Contains(title, name)
 }
