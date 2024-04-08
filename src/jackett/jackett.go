@@ -108,12 +108,13 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 
 	if !bundleFound {
 		// If a complete bundle is not found, search for individual seasons
-		seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
+		// seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
 
-		if !seasonFound {
-			// If individual seasons are not found, search for individual episodes
-			searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
-		}
+		searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
+
+		// if !seasonFound {
+		// If individual seasons are not found, search for individual episodes
+		// }
 	}
 }
 
