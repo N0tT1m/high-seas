@@ -301,10 +301,33 @@ func isCorrectShow(r jackett.Result, name, year, description string) bool {
 		return false
 	}
 
-	// // Check air date
-	// if !checkAirDate(r.PublishDate, year) {
-	// 	return false
-	// }
+	// Check if the result title contains the exact show name or a variation
+	exactMatch := false
+	for _, version := range versions {
+		if strings.Contains(r.Title, version) {
+			exactMatch = true
+			break
+		}
+	}
+
+	if !exactMatch {
+		// Check if the result title contains a variation of the show name
+		nameParts := strings.Split(name, ":")
+		mainName := strings.TrimSpace(nameParts[0])
+
+		if strings.Contains(r.Title, mainName) {
+			// Check if the result title contains the exact variation
+			variation := strings.TrimSpace(strings.Join(nameParts[1:], ":"))
+			if !strings.Contains(r.Title, variation) {
+				return false
+			}
+		} else {
+			// Check if the result title contains a different show with similar name
+			if containsAnyPart(r.Title, nameParts) {
+				return false
+			}
+		}
+	}
 
 	return true
 }

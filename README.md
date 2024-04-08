@@ -20,7 +20,7 @@ export const environment = {
        * Add environment variables you want to retriev from process
        * PORT:4200,
        * VAR_NAME: defaultValue
-       */
+       */git 
       authorization: "THE BEARER TOKEN FOR TMDb API",
       port: "THE PORT YOUR GOLANG API IS RUNNING ON",
       ip: "THE IP YOUR GOLANG API IS RUNNING ON",
