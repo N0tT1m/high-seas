@@ -162,7 +162,8 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 }
 
 func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) bool {
-	for season := 1; season <= len(seasons); season++ {
+	season := 1
+	for season <= len(seasons) {
 		var sizeOfTorrent []uint
 		seasonFormat := "%02d"
 		if season >= 10 {
@@ -170,7 +171,6 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		}
 		queryString := fmt.Sprintf("%s S"+seasonFormat, query, season)
 		logger.WriteInfo(queryString)
-
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
 			Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
 			Query:      queryString,
@@ -178,20 +178,18 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		if err != nil {
 			logger.WriteFatal("Failed to fetch from Jackett.", err)
 		}
-
 		for i := 0; i < len(resp.Results); i++ {
 			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
 				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
 			}
 		}
-
 		sortedTorrents := sortTorrentsBySeeders(resp.Results)
+		found := false
 		for _, r := range sortedTorrents {
 			// Check if the result title contains any episode text
 			if containsEpisodeText(r.Title) {
 				continue // Skip this result and move to the next one
 			}
-
 			tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
 			logger.WriteInfo(tmdbOutput)
 			if isCorrectShow(r, name, year, description) {
@@ -202,12 +200,17 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 				if err != nil {
 					logger.WriteError("Failed to add torrent.", err)
 				} else {
-					return true
+					found = true
+					break
 				}
 			}
 		}
+		if !found {
+			return false
+		}
+		season++
 	}
-	return false
+	return true
 }
 
 func containsEpisodeText(title string) bool {
