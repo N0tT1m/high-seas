@@ -33,9 +33,9 @@ func CORS(c *gin.Context) {
 }
 
 func SetupRouter() {
-	r := gin.Default()
-
 	gin.SetMode(gin.ReleaseMode)
+
+	r := gin.Default()
 
 	r.Use(CORS)
 
@@ -49,16 +49,14 @@ func SetupRouter() {
 		}
 	})
 
-	// r.POST("/show/query", func(c *gin.Context) {
-	// host := c.Request.Host
-	// if host == "api.cinemacloud.tv" {
-	// 	api.QueryShowRequest(c)
-	// } else {
-	// 	c.AbortWithStatus(http.StatusNotFound)
-	// }
-	// })
-
-	r.POST("/show/query", api.QueryShowRequest)
+	r.POST("/show/query", func(c *gin.Context) {
+		host := c.Request.Host
+		if host == "api.cinemacloud.tv" {
+			api.QueryShowRequest(c)
+		} else {
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+	})
 
 	r.POST("/anime/query", func(c *gin.Context) {
 		host := c.Request.Host
