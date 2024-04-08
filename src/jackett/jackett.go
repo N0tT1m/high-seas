@@ -46,7 +46,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 
 	for _, r := range resp.Results {
 		if isCorrectMovie(r, title, description, years[0], Imdb) {
-			logger.WriteInfo(fmt.Sprintf("This is the Jackett Imdb ID ==> %d. This is the TMDb ID ==> %d", r.Imdb, Imdb))
+			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %d, The max seeders is ==> %d", r.Title, title, r.Seeders, slices.Max(sizeOfTorrent)))
 
 			if r.Seeders == slices.Max(sizeOfTorrent) {
 				link := r.Link
