@@ -395,7 +395,7 @@ func isCorrectMovie(r jackett.Result, title, description, year string, imdbID ui
 	// Compare plot summaries and descriptions
 	versions := createStringVersions(title)
 
-	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
 		return false
 	}
 
