@@ -163,7 +163,7 @@ export class MovieService {
   }
 
   getMovieDetails(id) {
-    var movieUrl = 'https://api.themoviedb.org/3/movie/'+ id +'';
+    var movieUrl = 'https://api.themoviedb.org/3/movie/'+ id;
 
     return this.http.get<MovieDetails>(movieUrl, { headers: this.headers })
   }
