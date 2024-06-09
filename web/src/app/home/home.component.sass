@@ -11,12 +11,10 @@ body
   justify-content: center
   align-items: center
   overflow: hidden
-
   img
     max-width: 100%
     max-height: 100%
     object-fit: contain
-
   &.hidden
     display: none
 
@@ -31,7 +29,6 @@ body
   perspective: 400px
   overflow: hidden
   animation: fadeOut 40s forwards
-
   p
     margin-bottom: 0
     animation: scroll 40s linear forwards
@@ -46,16 +43,15 @@ body
   text-align: left
   opacity: 0
   animation: fadeIn 30s forwards
-
   p
     margin-bottom: 0
 
 @keyframes scroll
   0%
-    transform: rotateX(20deg) translateZ(-500px) scale(1)
+    transform: rotateX(20deg) translateZ(0) scale(1)
     opacity: 1
   100%
-    transform: rotateX(25deg) translateY(-5000px) scale(0.5)
+    transform: rotateX(25deg) translateY(-100%) scale(0.5)
     opacity: 0
 
 @keyframes fadeOut
