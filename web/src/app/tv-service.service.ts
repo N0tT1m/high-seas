@@ -143,6 +143,25 @@ export class TvShowService {
     return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb, 'description': description }, options);
   }
 
+  makePlexRequest() {
+    var queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST,DELETE',
+    };
+
+    var tvShowUrl = 'http://127.0.0.1:5000/shows/';
+
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
+    return this.http.get<QueryRequest>(tvShowUrl, options);
+  }
+
   makeAnimeDownloadRequest(query: string, episodes: number) {
     var queryApiHeaders = {
       'Content-Type': 'application/json',

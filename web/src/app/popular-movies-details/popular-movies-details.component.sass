@@ -209,3 +209,40 @@
   100%
     opacity: 1
     transform: translateY(0)
+
+.movie-details
+  color: #ffffff
+  padding: 20px
+  margin-bottom: 40px
+  .movie-header
+    display: flex
+    align-items: flex-start
+    margin-bottom: 20px
+    .movie-poster
+      width: 300px
+      height: auto
+      margin-right: 20px
+    .movie-info
+      flex: 1
+      perspective: 800px
+      transform-style: preserve-3d
+      .movie-title
+        font-size: 48px
+        font-weight: bold
+        margin-bottom: 20px
+        text-align: center
+        text-transform: uppercase
+        letter-spacing: 4px
+        color: #ffe81f
+        animation: intro-title 5s ease-out forwards
+      .movie-overview
+        font-size: 24px
+        margin-bottom: 40px
+        text-align: justify
+        line-height: 1.5
+        color: #ffffff
+        animation: intro-overview 5s ease-out forwards
+      .movie-tagline, .movie-year, .movie-duration, .movie-rating, .movie-genres, .movie-actors
+        font-size: 18px
+        margin-bottom: 10px
+/* ... (rest of the styles) */

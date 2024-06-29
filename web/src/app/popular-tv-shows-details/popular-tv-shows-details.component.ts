@@ -126,6 +126,7 @@ import { TvShowService } from '../tv-service.service';
         </select>
       </div>
       <button class="show-download-button" (click)="downloadShow(show.name, show.original_language, this.quality)">Download Show</button>
+      <button class="show-download-button" (click)="getPlexDetailsOfTheShow()">Get Plex Details</button>
     </div>
   </article>
     `,
@@ -246,6 +247,15 @@ export class PopularTvShowsDetailsComponent {
         this.episodes = this.episodes + this.seasonEpisodeNumbers[i];
       }
     })
+  }
+
+  getPlexDetailsOfTheShow() {
+    this.tvShowService.makePlexRequest().subscribe(
+      request => {
+        console.log(request);
+        alert('Plex request successful!')
+      }
+    )
   }
 
   downloadShow(title: string, lang: string, quality: string) {
