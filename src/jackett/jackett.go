@@ -34,8 +34,8 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	})
 
 	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080},
-		Query:      query,
+		// Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080},
+		Query: query,
 	})
 	if err != nil {
 		logger.WriteFatal("Failed to fetch from Jackett.", err)
@@ -128,8 +128,8 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 	logger.WriteInfo(queryString)
 
 	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-		Query:      queryString,
+		// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+		Query: queryString,
 	})
 	if err != nil {
 		logger.WriteFatal("Failed to fetch from Jackett.", err)
@@ -173,8 +173,8 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		queryString := fmt.Sprintf("%s S"+seasonFormat, query, season)
 		logger.WriteInfo(queryString)
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-			Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-			Query:      queryString,
+			// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+			Query: queryString,
 		})
 		if err != nil {
 			logger.WriteFatal("Failed to fetch from Jackett.", err)
@@ -239,8 +239,8 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 			logger.WriteInfo(queryString)
 
 			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-				Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
-				Query:      queryString,
+				// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
+				Query: queryString,
 			})
 			if err != nil {
 				logger.WriteFatal("Failed to fetch from Jackett.", err)
@@ -292,8 +292,8 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 			logger.WriteInfo(queryString)
 
 			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-				Categories: []uint{100060, 140679, 5070, 127720},
-				Query:      queryString,
+				// Categories: []uint{100060, 140679, 5070, 127720},
+				Query: queryString,
 			})
 			if err != nil {
 				logger.WriteFatal("Failed to fetch from Jackett.", err)
