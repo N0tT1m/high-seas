@@ -42,6 +42,12 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 		logger.WriteFatal("Failed to fetch from Jackett.", err)
 	}
 
+	for i := 0; i < len(resp.Results); i++ {
+		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+		qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
+	}
+
+	maxSeeders := slices.Max(sizeOfTorrent)
 	var selectedTorrent *jackett.Result
 	var maxScore float64
 
