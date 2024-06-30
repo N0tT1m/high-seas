@@ -1,10 +1,9 @@
 package deluge
 
 import (
+	"fmt"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
-
-	"strconv"
 
 	"github.com/superturkey650/go-qbittorrent/qbt"
 )
@@ -15,16 +14,13 @@ var ip = utils.EnvVar("DELUGE_IP", "")
 var port = utils.EnvVar("DELUGE_PORT", "")
 
 func AddTorrent(file string) error {
-	numPort, err := strconv.Atoi(port)
-	if err != nil {
-		logger.WriteError("Failed to convert port to a number.", err)
-	}
+	url := fmt.Sprintf("http://{}:{}", ip, port)
 
-	qb := qbt.NewClient("http://{}:{}/", ip, numPort)
+	qb := qbt.NewClient(url)
 
 	qb.Login(user, password)
 
-	options := &qbt.Options{}
+	options := map[string]string{}
 
 	result, err := qb.DownloadFromLink(file, options)
 	if err != nil {
@@ -32,6 +28,6 @@ func AddTorrent(file string) error {
 		return err
 	}
 
-	logger.WriteCMDInfo("Results: ", result)
+	logger.WriteCMDInfo("Status Code Returned: ", result.Status)
 	return nil
 }
