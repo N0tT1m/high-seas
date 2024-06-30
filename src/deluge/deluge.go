@@ -5,8 +5,6 @@ import (
 	"high-seas/src/utils"
 
 	"strconv"
-
-	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
 var user = utils.EnvVar("DELUGE_USER", "")
