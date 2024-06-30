@@ -95,7 +95,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	}
 }
 
-func calculateScore(seeders int, size int64) float64 {
+func calculateScore(seeders uint, size uint) float64 {
 	// Normalize the seeders and size values
 	normalizedSeeders := float64(seeders) / 1000.0
 	normalizedSize := float64(size) / (1024.0 * 1024.0 * 1024.0) // Convert size to GB
