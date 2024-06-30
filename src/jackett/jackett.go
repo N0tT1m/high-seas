@@ -332,7 +332,7 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
 	versions := createStringVersions(name)
-	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
 		return false
 	}
 
@@ -401,7 +401,7 @@ func isCorrectMovie(r jackett.Result, title, description, year string, imdbID ui
 	// Compare plot summaries and descriptions
 	versions := createStringVersions(title)
 
-	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
 		return false
 	}
 
