@@ -42,21 +42,19 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 		logger.WriteFatal("Failed to fetch from Jackett.", err)
 	}
 
-	for i := 0; i < len(resp.Results); i++ {
-		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-		qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
-	}
-
-	maxSeeders := slices.Max(sizeOfTorrent)
 	var selectedTorrent *jackett.Result
+	var maxScore float64
 
-	for _, r := range resp.Results {
-		if isCorrectMovie(r, title, description, years[0], Imdb) { // && isHighQuality(r.Size)
-			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The max seeders is ==> %d", r.Title, title, r.Seeders, maxSeeders))
+	for i := 0; i < len(resp.Results); i++ {
+		if isCorrectMovie(resp.Results[i], title, description, years[0], Imdb) {
+			// Calculate a score based on seeders and size
+			score := calculateScore(resp.Results[i].Seeders, resp.Results[i].Size)
 
-			if r.Seeders == maxSeeders {
-				selectedTorrent = &r
-				break
+			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The score is ==> %.2f", resp.Results[i].Title, title, resp.Results[i].Seeders, score))
+
+			if score > maxScore {
+				maxScore = score
+				selectedTorrent = &resp.Results[i]
 			}
 		}
 	}
@@ -89,6 +87,20 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	} else {
 		logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
 	}
+}
+
+func calculateScore(seeders int, size int64) float64 {
+	// Normalize the seeders and size values
+	normalizedSeeders := float64(seeders) / 1000.0
+	normalizedSize := float64(size) / (1024.0 * 1024.0 * 1024.0) // Convert size to GB
+
+	// Assign weights to seeders and size
+	seederWeight := 0.7
+	sizeWeight := 0.3
+
+	// Calculate the score
+	score := seederWeight*normalizedSeeders + sizeWeight*normalizedSize
+	return score
 }
 
 func sortTorrentsBySeeders(torrents []jackett.Result) []jackett.Result {
