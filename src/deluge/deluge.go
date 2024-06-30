@@ -5,6 +5,8 @@ import (
 	"high-seas/src/utils"
 
 	"strconv"
+
+	"superturkey650/go-qbittorrent/qbt"
 )
 
 var user = utils.EnvVar("DELUGE_USER", "")
@@ -18,21 +20,13 @@ func AddTorrent(file string) error {
 		logger.WriteError("Failed to convert port to a number.", err)
 	}
 
-	deluge := delugeclient.NewV2(delugeclient.Settings{
-		Hostname: ip,
-		Port:     uint(numPort),
-		Login:    user,
-		Password: password,
-	})
+	qb := qbt.NewClient("http://{}:{}/", ip, numPort)
 
-	err = deluge.Connect()
-	if err != nil {
-		logger.WriteError("Could not connect to deluge.", err)
-	}
+	qb.Login(user, password)
 
-	options := &delugeclient.Options{}
+	options := &qbt.Options{}
 
-	result, err := deluge.AddTorrentURL(file, options)
+	result, err := qb.AddTorrentURL(file, options)
 	if err != nil {
 		logger.WriteError("Failed to add torrent.", err)
 		return err
