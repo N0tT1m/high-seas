@@ -6,7 +6,7 @@ import (
 
 	"strconv"
 
-	"superturkey650/go-qbittorrent/qbt"
+	"github.com/superturkey650/go-qbittorrent/qbt"
 )
 
 var user = utils.EnvVar("DELUGE_USER", "")
