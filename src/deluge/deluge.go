@@ -26,7 +26,7 @@ func AddTorrent(file string) error {
 
 	options := &qbt.Options{}
 
-	result, err := qb.AddTorrentURL(file, options)
+	result, err := qb.DownloadFromLink(file, options)
 	if err != nil {
 		logger.WriteError("Failed to add torrent.", err)
 		return err
