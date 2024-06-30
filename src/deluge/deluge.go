@@ -14,7 +14,7 @@ var ip = utils.EnvVar("DELUGE_IP", "")
 var port = utils.EnvVar("DELUGE_PORT", "")
 
 func AddTorrent(file string) error {
-	url := fmt.Sprintf("http://%s:%s", ip, port)
+	url := fmt.Sprintf("https://%s:%s", ip, port)
 
 	qb := qbt.NewClient(url)
 
