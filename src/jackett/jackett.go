@@ -20,6 +20,7 @@ var port = utils.EnvVar("JACKETT_PORT", "")
 
 func MakeMovieQuery(query string, title string, year string, Imdb uint, description string) {
 	var sizeOfTorrent []uint
+	var qualityOfTorrent []uint
 
 	title = strings.Replace(title, ":", "", -1)
 	years := strings.Split(year, "-")
@@ -43,13 +44,14 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 
 	for i := 0; i < len(resp.Results); i++ {
 		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+		qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
 	}
 
 	maxSeeders := slices.Max(sizeOfTorrent)
 	var selectedTorrent *jackett.Result
 
 	for _, r := range resp.Results {
-		if isCorrectMovie(r, title, description, years[0], Imdb) {
+		if isCorrectMovie(r, title, description, years[0], Imdb) { // && isHighQuality(r.Size)
 			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The max seeders is ==> %d", r.Title, title, r.Seeders, maxSeeders))
 
 			if r.Seeders == maxSeeders {
@@ -71,7 +73,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 			// If adding the torrent fails, try the next highest seeder value
 			sortedTorrents := sortTorrentsBySeeders(resp.Results)
 			for _, torrent := range sortedTorrents {
-				if isCorrectMovie(torrent, title, description, years[0], Imdb) && torrent.Seeders < maxSeeders {
+				if isCorrectMovie(torrent, title, description, years[0], Imdb) && torrent.Seeders < maxSeeders { // isHighQuality(torrent.Size) &&
 					link := torrent.Link
 					logger.WriteInfo(link)
 
@@ -85,7 +87,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 			}
 		}
 	} else {
-		logger.WriteInfo("No matching torrent found with the maximum number of seeders.")
+		logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
 	}
 }
 
@@ -94,6 +96,12 @@ func sortTorrentsBySeeders(torrents []jackett.Result) []jackett.Result {
 		return torrents[i].Seeders > torrents[j].Seeders
 	})
 	return torrents
+}
+
+func isHighQuality(size uint) {
+	// Check if the size indicates 1080p or 4k quality
+	// You can modify this logic based on your specific criteria
+	// return strings.Contains(size, "1080p") || strings.Contains(size, "4k")
 }
 
 func MakeShowQuery(query string, seasons []int, name string, year string, description string) {
@@ -108,13 +116,11 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 
 	if !bundleFound {
 		// If a complete bundle is not found, search for individual seasons
-		// seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
+		seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
 
-		searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
-
-		// if !seasonFound {
-		// If individual seasons are not found, search for individual episodes
-		// }
+		if !seasonFound {
+			searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
+		}
 	}
 }
 
@@ -395,7 +401,7 @@ func isCorrectMovie(r jackett.Result, title, description, year string, imdbID ui
 	// Compare plot summaries and descriptions
 	versions := createStringVersions(title)
 
-	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
+	if !containsAnyPart(r.Title, versions) && !compareDescriptions(r.Description, description) && !checkExternalIDs(r.TVDBId, r.Imdb) && r.Imdb != imdbID && !matchGenre(r.Category) {
 		return false
 	}
 
