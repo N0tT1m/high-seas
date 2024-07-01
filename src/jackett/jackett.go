@@ -243,9 +243,8 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 
 	var sizeOfTorrent []uint
 	for i := 0; i < len(resp.Results); i++ {
-		if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-			sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-		}
+		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+		// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
 	}
 
 	maxSeeders := slices.Max(sizeOfTorrent)
@@ -319,9 +318,8 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		}
 
 		for i := 0; i < len(resp.Results); i++ {
-			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-			}
+			sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+			// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
 		}
 
 		maxSeeders := slices.Max(sizeOfTorrent)
@@ -413,9 +411,8 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 			}
 
 			for i := 0; i < len(resp.Results); i++ {
-				if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-					sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-				}
+				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+				// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
 			}
 
 			maxSeeders := slices.Max(sizeOfTorrent)
@@ -499,9 +496,8 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 			}
 
 			for i := 0; i < len(resp.Results); i++ {
-				if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-					sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-				}
+				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+				// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
 			}
 
 			for _, r := range resp.Results {
