@@ -173,8 +173,11 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 		if compareBundle(r, name) {
 			fmt.Println(r.Title)
 			link := r.MagnetUri
-			logger.WriteInfo(link)
-			err := deluge.AddTorrent(link)
+
+			fixedLink := strings.Replace(link, "\n", "", 1)
+
+			logger.WriteInfo(fixedLink)
+			err := deluge.AddTorrent(fixedLink)
 			if err == nil {
 				return true
 			} else {
@@ -220,8 +223,11 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 			if isCorrectShow(r, name, year, description) {
 				fmt.Println(r.Title)
 				link := r.MagnetUri
-				logger.WriteInfo(link)
-				err := deluge.AddTorrent(link)
+
+				fixedLink := strings.Replace(link, "\n", "", 1)
+
+				logger.WriteInfo(fixedLink)
+				err := deluge.AddTorrent(fixedLink)
 
 				season++
 
@@ -284,8 +290,11 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.MagnetUri
-						logger.WriteInfo(link)
-						deluge.AddTorrent(link)
+
+						fixedLink := strings.Replace(link, "\n", "", 1)
+
+						logger.WriteInfo(fixedLink)
+						deluge.AddTorrent(fixedLink)
 					}
 				}
 			}
@@ -337,7 +346,10 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 						}
 					} else {
 						link := r.MagnetUri
-						logger.WriteInfo(link)
+
+						fixedLink := strings.Replace(link, "\n", "", 1)
+
+						logger.WriteInfo(fixedLink)
 					}
 				}
 			}
