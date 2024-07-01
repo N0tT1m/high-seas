@@ -14,7 +14,6 @@ import (
 
 	"github.com/webtor-io/go-jackett"
 
-	"io/ioutil"
 	"os"
 
 	"golang.org/x/crypto/ssh"
@@ -123,22 +122,22 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 
 func copyFileToRemotePC(sourceURL, destinationPath string) error {
 	// Read the SSH private key file
-	key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519")
-	if err != nil {
-		return fmt.Errorf("failed to read private key: %v", err)
-	}
+	// key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519")
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read private key: %v", err)
+	// }
 
 	// Create a signer for the SSH authentication
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		return fmt.Errorf("failed to parse private key: %v", err)
-	}
+	// signer, err := ssh.ParsePrivateKey(key)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to parse private key: %v", err)
+	// }
 
 	// SSH client configuration
 	config := &ssh.ClientConfig{
 		User: "timmy",
 		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
+			ssh.Password("B@bycakes15!"),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Ignore host key verification for simplicity (not recommended for production)
 	}
