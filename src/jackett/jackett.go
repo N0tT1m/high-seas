@@ -6,12 +6,18 @@ import (
 	"high-seas/src/deluge"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
+	"io"
 	"regexp"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/webtor-io/go-jackett"
+
+	"io/ioutil"
+	"os"
+
+	"golang.org/x/crypto/ssh"
 )
 
 var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
@@ -22,7 +28,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	var sizeOfTorrent []uint
 	var qualityOfTorrent []uint
 
-	title = strings.ReplaceAll(title, ":", "")
+	title = strings.Replace(title, ":", "", -1)
 	years := strings.Split(year, "-")
 
 	logger.WriteInfo(title)
@@ -66,11 +72,11 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	}
 
 	if selectedTorrent != nil {
-		link := selectedTorrent.MagnetUri
+		link := selectedTorrent.Link
 		logger.WriteInfo(link)
 
 		// Try adding the torrent with the highest seeder value
-		err := deluge.AddTorrent(link)
+		err := saveFileToRemotePC(selectedTorrent)
 		if err != nil {
 			logger.WriteError("Failed to add torrent with the highest seeder value.", err)
 
@@ -78,7 +84,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 			sortedTorrents := sortTorrentsBySeeders(resp.Results)
 			for _, torrent := range sortedTorrents {
 				if isCorrectMovie(torrent, title, description, years[0], Imdb) && torrent.Seeders < maxSeeders { // isHighQuality(torrent.Size) &&
-					link := torrent.MagnetUri
+					link := torrent.Link
 					logger.WriteInfo(link)
 
 					err := deluge.AddTorrent(link)
@@ -95,6 +101,85 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	}
 }
 
+func saveFileToRemotePC(torrent *jackett.Result) error {
+	// Implement the logic to save the file to the remote PC
+	// This is a placeholder function and needs to be implemented based on your specific requirements
+	fileName := fmt.Sprintf("%s.torrent", torrent.Title)
+	remoteFilePath := fmt.Sprintf("/path/to/remote/directory/%s", fileName)
+
+	// Example: Use SSH to copy the file to the remote PC
+	// You'll need to implement this part based on your specific setup
+	err := copyFileToRemotePC(torrent.Link, remoteFilePath)
+	if err != nil {
+		logger.WriteError("Failed to save file to remote PC", err)
+		return err
+		// Implement fallback logic or retry mechanism if needed
+	} else {
+		logger.WriteInfo(fmt.Sprintf("File saved successfully: %s", remoteFilePath))
+	}
+
+	return nil
+}
+
+func copyFileToRemotePC(sourceURL, destinationPath string) error {
+	// Read the SSH private key file
+	key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519.pub")
+	if err != nil {
+		return fmt.Errorf("failed to read private key: %v", err)
+	}
+
+	// Create a signer for the SSH authentication
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	// SSH client configuration
+	config := &ssh.ClientConfig{
+		User: "your_username",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Ignore host key verification for simplicity (not recommended for production)
+	}
+
+	// Connect to the remote PC
+	client, err := ssh.Dial("tcp", "192.168.1.92:22", config)
+	if err != nil {
+		return fmt.Errorf("failed to dial: %v", err)
+	}
+	defer client.Close()
+
+	// Create an SCP session
+	session, err := client.NewSession()
+	if err != nil {
+		return fmt.Errorf("failed to create session: %v", err)
+	}
+	defer session.Close()
+
+	// Open the source file
+	sourceFile, err := os.Open(sourceURL)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %v", err)
+	}
+	defer sourceFile.Close()
+
+	// Copy the file to the remote PC using SCP
+	go func() {
+		w, _ := session.StdinPipe()
+		defer w.Close()
+
+		io.Copy(w, sourceFile)
+		fmt.Fprintln(w, "\x00")
+	}()
+
+	err = session.Run("/usr/bin/scp -t " + destinationPath)
+	if err != nil {
+		return fmt.Errorf("failed to run SCP command: %v", err)
+	}
+
+	return nil
+}
 func calculateScore(seeders uint, size uint) float64 {
 	// Normalize the seeders and size values
 	normalizedSeeders := float64(seeders) / 1000.0
@@ -172,12 +257,9 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 		logger.WriteInfo(tmdbOutput)
 		if compareBundle(r, name) {
 			fmt.Println(r.Title)
-			link := r.MagnetUri
-
-			fixedLink := strings.ReplaceAll(link, "\n", "")
-
-			logger.WriteInfo(fixedLink)
-			err := deluge.AddTorrent(fixedLink)
+			link := r.Link
+			logger.WriteInfo(link)
+			err := deluge.AddTorrent(link)
 			if err == nil {
 				return true
 			} else {
@@ -222,12 +304,9 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 			logger.WriteInfo(tmdbOutput)
 			if isCorrectShow(r, name, year, description) {
 				fmt.Println(r.Title)
-				link := r.MagnetUri
-
-				fixedLink := strings.ReplaceAll(link, "\n", "")
-
-				logger.WriteInfo(fixedLink)
-				err := deluge.AddTorrent(fixedLink)
+				link := r.Link
+				logger.WriteInfo(link)
+				err := deluge.AddTorrent(link)
 
 				season++
 
@@ -289,12 +368,9 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					fmt.Println(r.Title)
 
 					if r.Seeders == slices.Max(sizeOfTorrent) {
-						link := r.MagnetUri
-
-						fixedLink := strings.ReplaceAll(link, "\n", "")
-
-						logger.WriteInfo(fixedLink)
-						deluge.AddTorrent(fixedLink)
+						link := r.Link
+						logger.WriteInfo(link)
+						deluge.AddTorrent(link)
 					}
 				}
 			}
@@ -303,7 +379,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 }
 
 func MakeAnimeQuery(query string, episodes int, name string, year string, description string) {
-	name = strings.ReplaceAll(name, ":", "")
+	name = strings.Replace(name, ":", "", -1)
 
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
@@ -345,11 +421,8 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 							logger.WriteInfo(r.Title)
 						}
 					} else {
-						link := r.MagnetUri
-
-						fixedLink := strings.ReplaceAll(link, "\n", "")
-
-						logger.WriteInfo(fixedLink)
+						link := r.Link
+						logger.WriteInfo(link)
 					}
 				}
 			}
