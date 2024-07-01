@@ -212,20 +212,21 @@ func MakeShowQuery(query string, seasons []int, name string, year string, descri
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
+	addedSeasons := make(map[int]bool)
+
 	// Check if all seasons are available in a bundle
-	bundleFound := searchSeasonBundle(ctx, j, query, seasons, name, year, description)
+	bundleFound := searchSeasonBundle(ctx, j, query, seasons, name, year, description, addedSeasons)
 
 	if !bundleFound {
 		// If a complete bundle is not found, search for individual seasons
-		seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
-
-		if !seasonFound {
-			searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
-		}
+		searchIndividualSeasons(ctx, j, query, seasons, name, year, description, addedSeasons)
 	}
+
+	// Search for individual episodes for seasons that weren't added
+	searchRemainingEpisodes(ctx, j, query, seasons, name, year, description, addedSeasons)
 }
 
-func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) bool {
+func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string, addedSeasons map[int]bool) bool {
 	seasonBundleFormat := "S%02d-S%02d"
 	if len(seasons) >= 10 {
 		seasonBundleFormat = "S%d-S%d"
@@ -288,6 +289,10 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 
 					err := saveFileToRemotePC(selectedTorrent)
 					if err == nil {
+						// Mark all seasons as added if the bundle is successfully added
+						for _, season := range seasons {
+							addedSeasons[season] = true
+						}
 						return true
 					} else {
 						logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
@@ -295,6 +300,10 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 				}
 			}
 		} else {
+			// Mark all seasons as added if the bundle is successfully added
+			for _, season := range seasons {
+				addedSeasons[season] = true
+			}
 			return true
 		}
 	} else {
@@ -304,8 +313,12 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 	return false
 }
 
-func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) bool {
-	for season := 1; season <= len(seasons); season++ {
+func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string, addedSeasons map[int]bool) {
+	for _, season := range seasons {
+		if addedSeasons[season] {
+			continue // Skip already added seasons
+		}
+
 		var sizeOfTorrent []uint
 		seasonFormat := "%02d"
 		if season >= 10 {
@@ -371,20 +384,85 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 
 						err := saveFileToRemotePC(&torrent)
 						if err == nil {
+							addedSeasons[season] = true
 							break
 						} else {
 							logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
 						}
 					}
 				}
+			} else {
+				addedSeasons[season] = true
 			}
 		} else {
 			logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
-			return false
 		}
 	}
+}
 
-	return true
+func searchRemainingEpisodes(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string, addedSeasons map[int]bool) {
+	for _, season := range seasons {
+		if addedSeasons[season] {
+			continue // Skip seasons that were already added
+		}
+
+		// Search for individual episodes of this season
+		searchIndividualEpisodes(ctx, j, query, season, name, year, description)
+	}
+}
+
+func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query string, season int, name string, year string, description string) {
+	// Implement the logic to search for individual episodes of a specific season
+	seasonFormat := "%02d"
+	if season >= 10 {
+		seasonFormat = "%d"
+	}
+
+	for episode := 1; episode <= 30; episode++ { // Assume max 30 episodes per season
+		episodeFormat := "%02d"
+		if episode >= 10 {
+			episodeFormat = "%d"
+		}
+
+		queryString := fmt.Sprintf("%s S"+seasonFormat+"E"+episodeFormat, query, season, episode)
+		logger.WriteInfo(queryString)
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Query: queryString,
+		})
+		if err != nil {
+			logger.WriteFatal("Failed to fetch from Jackett.", err)
+		}
+
+		var selectedTorrent *jackett.Result
+		var maxScore float64
+
+		for i := 0; i < len(resp.Results); i++ {
+			if isCorrectShow(resp.Results[i], name, year, description) {
+				score := calculateScore(resp.Results[i].Seeders, resp.Results[i].Size)
+
+				logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The score is ==> %.2f", resp.Results[i].Title, name, resp.Results[i].Seeders, score))
+
+				if score > maxScore {
+					maxScore = score
+					selectedTorrent = &resp.Results[i]
+				}
+			}
+		}
+
+		if selectedTorrent != nil {
+			link := selectedTorrent.Link
+			logger.WriteInfo(link)
+
+			err := saveFileToRemotePC(selectedTorrent)
+			if err != nil {
+				logger.WriteError("Failed to add episode torrent.", err)
+			}
+		} else {
+			logger.WriteInfo(fmt.Sprintf("No matching torrent found for S%sE%s", fmt.Sprintf(seasonFormat, season), fmt.Sprintf(episodeFormat, episode)))
+			break // If no episode found, assume it's the end of the season
+		}
+	}
 }
 
 func containsEpisodeText(title string) bool {
