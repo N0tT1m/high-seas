@@ -369,7 +369,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.Link
 						logger.WriteInfo(link)
-						err := saveFileToRemotePC(selectedTorrent)
+						err := saveFileToRemotePC(r)
 						if err != nil {
 							logger.WriteError("Cannot save file to remote PC: ", err)
 						}
