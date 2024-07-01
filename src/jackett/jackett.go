@@ -314,7 +314,7 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 }
 
 func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string, addedSeasons map[int]bool) {
-	for season := 1; season <= len(seasons); season++ {
+	for _, season := range seasons {
 		if addedSeasons[season] {
 			continue // Skip already added seasons
 		}
