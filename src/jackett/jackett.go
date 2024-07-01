@@ -22,7 +22,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	var sizeOfTorrent []uint
 	var qualityOfTorrent []uint
 
-	title = strings.Replace(title, ":", "", -1)
+	title = strings.ReplaceAll(title, ":", "")
 	years := strings.Split(year, "-")
 
 	logger.WriteInfo(title)
@@ -174,7 +174,7 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 			fmt.Println(r.Title)
 			link := r.MagnetUri
 
-			fixedLink := strings.Replace(link, "\n", "", 1)
+			fixedLink := strings.ReplaceAll(link, "\n", "")
 
 			logger.WriteInfo(fixedLink)
 			err := deluge.AddTorrent(fixedLink)
@@ -224,7 +224,7 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 				fmt.Println(r.Title)
 				link := r.MagnetUri
 
-				fixedLink := strings.Replace(link, "\n", "", 1)
+				fixedLink := strings.ReplaceAll(link, "\n", "", 1)
 
 				logger.WriteInfo(fixedLink)
 				err := deluge.AddTorrent(fixedLink)
@@ -291,7 +291,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.MagnetUri
 
-						fixedLink := strings.Replace(link, "\n", "", 1)
+						fixedLink := strings.ReplaceAlllink, "\n", "")
 
 						logger.WriteInfo(fixedLink)
 						deluge.AddTorrent(fixedLink)
@@ -303,7 +303,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 }
 
 func MakeAnimeQuery(query string, episodes int, name string, year string, description string) {
-	name = strings.Replace(name, ":", "", -1)
+	name = strings.ReplaceAll(name, ":", "")
 
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
@@ -347,7 +347,7 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 					} else {
 						link := r.MagnetUri
 
-						fixedLink := strings.Replace(link, "\n", "", 1)
+						fixedLink := strings.ReplaceAll(link, "\n", "")
 
 						logger.WriteInfo(fixedLink)
 					}
