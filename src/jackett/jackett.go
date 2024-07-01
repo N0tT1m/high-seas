@@ -387,12 +387,6 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 	return true
 }
 
-func containsEpisodeText(title string) bool {
-	// Use regular expression to check if the title contains any episode text
-	episodeRegex := regexp.MustCompile(`(?i)(?:e\d+|episode\s*\d+)`)
-	return episodeRegex.MatchString(title)
-}
-
 func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) {
 	var sizeOfTorrent []uint
 
