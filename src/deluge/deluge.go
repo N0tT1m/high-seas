@@ -22,7 +22,7 @@ func AddTorrent(file string) error {
 
 	options := map[string]string{}
 
-	result, err := qb.DownloadFromFile(file, options)
+	result, err := qb.DownloadFromLink(file, options)
 	if err != nil {
 		logger.WriteError("Failed to add torrent.", err)
 		return err
