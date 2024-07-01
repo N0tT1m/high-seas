@@ -123,7 +123,7 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 
 func copyFileToRemotePC(sourceURL, destinationPath string) error {
 	// Read the SSH private key file
-	key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519.pub")
+	key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519")
 	if err != nil {
 		return fmt.Errorf("failed to read private key: %v", err)
 	}
