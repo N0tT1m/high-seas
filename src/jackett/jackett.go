@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/webtor-io/go-jackett"
+	"golang.org/x/crypto/ssh"
 
 	"os"
 
@@ -150,7 +151,7 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 }
 
 func copyFileToRemotePC(sourceURL, destinationPath string) error {
-	sshConfig, err := auth.PasswordKey("timmy", "B@bycakes15!", nil)
+	sshConfig, err := auth.PasswordKey("timmy", "B@bycakes15!", ssh.InsecureIgnoreHostKey())
 	if err != nil {
 		return err
 	}
