@@ -258,7 +258,7 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 			fmt.Println(r.Title)
 			link := r.Link
 			logger.WriteInfo(link)
-			err := deluge.AddTorrent(link)
+			err := saveFileToRemotePC(r)
 			if err == nil {
 				return true
 			} else {
@@ -305,7 +305,7 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 				fmt.Println(r.Title)
 				link := r.Link
 				logger.WriteInfo(link)
-				err := deluge.AddTorrent(link)
+				err := derr := saveFileToRemotePC(r)
 
 				season++
 
@@ -369,7 +369,10 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.Link
 						logger.WriteInfo(link)
-						deluge.AddTorrent(link)
+						err := saveFileToRemotePC(selectedTorrent)
+						if err != nil {
+							logger.WriteError("Cannot save file to remote PC: ", err)
+						}
 					}
 				}
 			}
