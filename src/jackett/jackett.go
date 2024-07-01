@@ -163,11 +163,6 @@ func copyFileToRemotePC(sourceURL, destinationPath string) error {
 		return err
 	}
 
-	fileData, err := os.Open("/Users/local-user-name/Desktop/test.txt")
-	if err != nil {
-		return err
-	}
-
 	ctx := context.Background()
 
 	file, err := os.Open(sourceURL)
@@ -180,7 +175,7 @@ func copyFileToRemotePC(sourceURL, destinationPath string) error {
 	scpClient.CopyFile(ctx, reader, destinationPath, "0655")
 
 	defer scpClient.Close()
-	defer fileData.Close()
+	defer file.Close()
 
 	return nil
 }
