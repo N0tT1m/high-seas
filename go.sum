@@ -1,3 +1,5 @@
+github.com/bramvdbogaerde/go-scp v1.4.0 h1:jKMwpwCbcX1KyvDbm/PDJuXcMuNVlLGi0Q0reuzjyKY=
+github.com/bramvdbogaerde/go-scp v1.4.0/go.mod h1:on2aH5AxaFb2G0N5Vsdy6B0Ml7k9HuHSwfo1y0QzAbQ=
 github.com/brunoga/go-deluge v0.0.0-20180310163126-b055bfbff10d h1:4v5oeu0HsPQknLLszh2MZgmShpVaZsEwJXxr7cs8AMI=
 github.com/brunoga/go-deluge v0.0.0-20180310163126-b055bfbff10d/go.mod h1:i2etWFEvk2VFFrDMLILDdt8Bzcv+st9o9o5CUNXUaV4=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=

@@ -1,6 +1,7 @@
 package jackett
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"high-seas/src/deluge"
@@ -16,7 +17,8 @@ import (
 
 	"os"
 
-	"golang.org/x/crypto/ssh"
+	scp "github.com/bramvdbogaerde/go-scp"
+	"github.com/bramvdbogaerde/go-scp/auth"
 
 	"net/http"
 )
@@ -148,61 +150,36 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 }
 
 func copyFileToRemotePC(sourceURL, destinationPath string) error {
-	// Read the SSH private key file
-	// key, err := ioutil.ReadFile("/home/timmy/.ssh/id_ed25519")
-	// if err != nil {
-	// 	return fmt.Errorf("failed to read private key: %v", err)
-	// }
-
-	// Create a signer for the SSH authentication
-	// signer, err := ssh.ParsePrivateKey(key)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to parse private key: %v", err)
-	// }
-
-	// SSH client configuration
-	config := &ssh.ClientConfig{
-		User: "timmy",
-		Auth: []ssh.AuthMethod{
-			ssh.Password("B@bycakes15!"),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Ignore host key verification for simplicity (not recommended for production)
-	}
-
-	// Connect to the remote PC
-	client, err := ssh.Dial("tcp", "192.168.1.92:22", config)
-	if err != nil {
-		return fmt.Errorf("failed to dial: %v", err)
-	}
-	defer client.Close()
-
-	// Create an SCP session
-	session, err := client.NewSession()
-	if err != nil {
-		return fmt.Errorf("failed to create session: %v", err)
-	}
-	defer session.Close()
-
-	// Open the source file
-	sourceFile, err := os.Open(sourceURL)
-	if err != nil {
-		return fmt.Errorf("failed to open source file: %v", err)
-	}
-	defer sourceFile.Close()
-
-	// Copy the file to the remote PC using SCP
-	go func() {
-		w, _ := session.StdinPipe()
-		defer w.Close()
-
-		io.Copy(w, sourceFile)
-		fmt.Fprintln(w, "\x00")
-	}()
-
-	err = session.Run("/usr/bin/scp -t " + destinationPath)
+	sshConfig, err := auth.PasswordKey("timmy", "B@bycakes15!", nil)
 	if err != nil {
 		return err
 	}
+
+	scpClient := scp.NewClient("192.168.1.92:22", &sshConfig)
+
+	err = scpClient.Connect()
+	if err != nil {
+		return err
+	}
+
+	fileData, err := os.Open("/Users/local-user-name/Desktop/test.txt")
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	file, err := os.Open(sourceURL)
+	if err != nil {
+		return err
+	}
+
+	reader := bufio.NewReader(file)
+
+	scpClient.CopyFile(ctx, reader, destinationPath, "0655")
+
+	defer scpClient.Close()
+	defer fileData.Close()
 
 	return nil
 }
