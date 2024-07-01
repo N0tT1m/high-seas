@@ -291,7 +291,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					if r.Seeders == slices.Max(sizeOfTorrent) {
 						link := r.MagnetUri
 
-						fixedLink := strings.ReplaceAlllink, "\n", "")
+						fixedLink := strings.ReplaceAll(link, "\n", "")
 
 						logger.WriteInfo(fixedLink)
 						deluge.AddTorrent(fixedLink)
