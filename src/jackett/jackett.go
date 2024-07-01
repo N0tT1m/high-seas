@@ -243,11 +243,16 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 
 	var sizeOfTorrent []uint
 	for i := 0; i < len(resp.Results); i++ {
-		sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-		// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
+		if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+			sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+		}
 	}
 
-	maxSeeders := slices.Max(sizeOfTorrent)
+	var maxSeeders uint
+	if len(sizeOfTorrent) > 0 {
+		maxSeeders = slices.Max(sizeOfTorrent)
+	}
+
 	var selectedTorrent *jackett.Result
 	var maxScore float64
 
@@ -318,11 +323,16 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		}
 
 		for i := 0; i < len(resp.Results); i++ {
-			sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-			// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
+			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+			}
 		}
 
-		maxSeeders := slices.Max(sizeOfTorrent)
+		var maxSeeders uint
+		if len(sizeOfTorrent) > 0 {
+			maxSeeders = slices.Max(sizeOfTorrent)
+		}
+
 		var selectedTorrent *jackett.Result
 		var maxScore float64
 
@@ -411,11 +421,16 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 			}
 
 			for i := 0; i < len(resp.Results); i++ {
-				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-				// qualityOfTorrent = append(qualityOfTorrent, resp.Results[i].Size)
+				if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
+					sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+				}
 			}
 
-			maxSeeders := slices.Max(sizeOfTorrent)
+			var maxSeeders uint
+			if len(sizeOfTorrent) > 0 {
+				maxSeeders = slices.Max(sizeOfTorrent)
+			}
+
 			var selectedTorrent *jackett.Result
 			var maxScore float64
 
