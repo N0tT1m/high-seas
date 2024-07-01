@@ -17,6 +17,8 @@ import (
 	"os"
 
 	"golang.org/x/crypto/ssh"
+
+	"net/http"
 )
 
 var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
@@ -106,9 +108,34 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 	fileName := fmt.Sprintf("%s.torrent", torrent.Title)
 	remoteFilePath := fmt.Sprintf("/home/timmy/torrents/%s", fileName)
 
+	// Create the file
+	out, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(torrent.Link)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	// Writer the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
 	// Example: Use SSH to copy the file to the remote PC
 	// You'll need to implement this part based on your specific setup
-	err := copyFileToRemotePC(torrent.Link, remoteFilePath)
+	err = copyFileToRemotePC(fileName, remoteFilePath)
 	if err != nil {
 		logger.WriteError("Failed to save file to remote PC", err)
 		return err
