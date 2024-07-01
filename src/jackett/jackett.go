@@ -105,7 +105,7 @@ func saveFileToRemotePC(torrent *jackett.Result) error {
 	// Implement the logic to save the file to the remote PC
 	// This is a placeholder function and needs to be implemented based on your specific requirements
 	fileName := fmt.Sprintf("%s.torrent", torrent.Title)
-	remoteFilePath := fmt.Sprintf("/path/to/remote/directory/%s", fileName)
+	remoteFilePath := fmt.Sprintf("/home/timmy/torrents/%s", fileName)
 
 	// Example: Use SSH to copy the file to the remote PC
 	// You'll need to implement this part based on your specific setup
@@ -136,7 +136,7 @@ func copyFileToRemotePC(sourceURL, destinationPath string) error {
 
 	// SSH client configuration
 	config := &ssh.ClientConfig{
-		User: "your_username",
+		User: "timmy",
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
