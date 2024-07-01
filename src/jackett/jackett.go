@@ -66,7 +66,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 	}
 
 	if selectedTorrent != nil {
-		link := selectedTorrent.Link
+		link := selectedTorrent.MagnetUri
 		logger.WriteInfo(link)
 
 		// Try adding the torrent with the highest seeder value
@@ -78,7 +78,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 			sortedTorrents := sortTorrentsBySeeders(resp.Results)
 			for _, torrent := range sortedTorrents {
 				if isCorrectMovie(torrent, title, description, years[0], Imdb) && torrent.Seeders < maxSeeders { // isHighQuality(torrent.Size) &&
-					link := torrent.Link
+					link := torrent.MagnetUri
 					logger.WriteInfo(link)
 
 					err := deluge.AddTorrent(link)
@@ -172,7 +172,7 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 		logger.WriteInfo(tmdbOutput)
 		if compareBundle(r, name) {
 			fmt.Println(r.Title)
-			link := r.Link
+			link := r.MagnetUri
 			logger.WriteInfo(link)
 			err := deluge.AddTorrent(link)
 			if err == nil {
@@ -219,7 +219,7 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 			logger.WriteInfo(tmdbOutput)
 			if isCorrectShow(r, name, year, description) {
 				fmt.Println(r.Title)
-				link := r.Link
+				link := r.MagnetUri
 				logger.WriteInfo(link)
 				err := deluge.AddTorrent(link)
 
@@ -283,7 +283,7 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 					fmt.Println(r.Title)
 
 					if r.Seeders == slices.Max(sizeOfTorrent) {
-						link := r.Link
+						link := r.MagnetUri
 						logger.WriteInfo(link)
 						deluge.AddTorrent(link)
 					}
@@ -336,7 +336,7 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 							logger.WriteInfo(r.Title)
 						}
 					} else {
-						link := r.Link
+						link := r.MagnetUri
 						logger.WriteInfo(link)
 					}
 				}
