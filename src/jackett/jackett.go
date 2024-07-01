@@ -314,11 +314,8 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 }
 
 func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string, addedSeasons map[int]bool) {
-	for _, season := range seasons {
-		if addedSeasons[season] {
-			continue // Skip already added seasons
-		}
-
+	for season := 1; season <= len(seasons); season++ {
+		var sizeOfTorrent []uint
 		seasonFormat := "%02d"
 		if season >= 10 {
 			seasonFormat = "%d"
@@ -333,7 +330,6 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 			logger.WriteFatal("Failed to fetch from Jackett.", err)
 		}
 
-		var sizeOfTorrent []uint
 		for i := 0; i < len(resp.Results); i++ {
 			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
 				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
@@ -384,7 +380,6 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 
 						err := saveFileToRemotePC(&torrent)
 						if err == nil {
-							addedSeasons[season] = true
 							break
 						} else {
 							logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
