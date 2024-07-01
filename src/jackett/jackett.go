@@ -224,7 +224,7 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 				fmt.Println(r.Title)
 				link := r.MagnetUri
 
-				fixedLink := strings.ReplaceAll(link, "\n", "", 1)
+				fixedLink := strings.ReplaceAll(link, "\n", "")
 
 				logger.WriteInfo(fixedLink)
 				err := deluge.AddTorrent(fixedLink)
