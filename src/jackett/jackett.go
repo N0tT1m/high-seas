@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"high-seas/src/deluge"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
 	"io"
@@ -236,7 +235,6 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 	logger.WriteInfo(queryString)
 
 	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
 		Query: queryString,
 	})
 	if err != nil {
@@ -250,21 +248,53 @@ func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, s
 		}
 	}
 
-	sortedTorrents := sortTorrentsBySeeders(resp.Results)
-	for _, r := range sortedTorrents {
-		tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-		logger.WriteInfo(tmdbOutput)
-		if compareBundle(r, name) {
-			fmt.Println(r.Title)
-			link := r.Link
-			logger.WriteInfo(link)
-			err := saveFileToRemotePC(r)
-			if err == nil {
-				return true
-			} else {
-				logger.WriteError("Failed to add torrent.", err)
+	maxSeeders := slices.Max(sizeOfTorrent)
+	var selectedTorrent *jackett.Result
+	var maxScore float64
+
+	for i := 0; i < len(resp.Results); i++ {
+		if isCorrectShow(resp.Results[i], name, year, description) {
+			// Calculate a score based on seeders and size
+			score := calculateScore(resp.Results[i].Seeders, resp.Results[i].Size)
+
+			logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The score is ==> %.2f", resp.Results[i].Title, name, resp.Results[i].Seeders, score))
+
+			if score > maxScore {
+				maxScore = score
+				selectedTorrent = &resp.Results[i]
 			}
 		}
+	}
+
+	if selectedTorrent != nil {
+		link := selectedTorrent.Link
+		logger.WriteInfo(link)
+
+		// Try adding the torrent with the highest seeder value
+		err := saveFileToRemotePC(selectedTorrent)
+		if err != nil {
+			logger.WriteError("Failed to add torrent with the highest seeder value.", err)
+
+			// If adding the torrent fails, try the next highest seeder value
+			sortedTorrents := sortTorrentsBySeeders(resp.Results)
+			for _, torrent := range sortedTorrents {
+				if isCorrectShow(torrent, name, year, description) && torrent.Seeders < maxSeeders {
+					link := torrent.Link
+					logger.WriteInfo(link)
+
+					err := saveFileToRemotePC(selectedTorrent)
+					if err == nil {
+						return true
+					} else {
+						logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
+					}
+				}
+			}
+		} else {
+			return true
+		}
+	} else {
+		logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
 	}
 
 	return false
@@ -280,47 +310,76 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 		}
 		queryString := fmt.Sprintf("%s S"+seasonFormat, query, season)
 		logger.WriteInfo(queryString)
+
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-			// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
 			Query: queryString,
 		})
 		if err != nil {
 			logger.WriteFatal("Failed to fetch from Jackett.", err)
 		}
+
 		for i := 0; i < len(resp.Results); i++ {
 			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
 				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
 			}
 		}
-		sortedTorrents := sortTorrentsBySeeders(resp.Results)
-		found := false
-		for _, r := range sortedTorrents {
-			// Check if the result title contains any episode text
-			if containsEpisodeText(r.Title) {
-				continue // Skip this result and move to the next one
+
+		maxSeeders := slices.Max(sizeOfTorrent)
+		var selectedTorrent *jackett.Result
+		var maxScore float64
+
+		for i := 0; i < len(resp.Results); i++ {
+			if containsEpisodeText(resp.Results[i].Title) {
+				continue
 			}
-			tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-			logger.WriteInfo(tmdbOutput)
-			if isCorrectShow(r, name, year, description) {
-				fmt.Println(r.Title)
-				link := r.Link
-				logger.WriteInfo(link)
-				err := derr := saveFileToRemotePC(r)
 
-				season++
+			if isCorrectShow(resp.Results[i], name, year, description) {
+				// Calculate a score based on seeders and size
+				score := calculateScore(resp.Results[i].Seeders, resp.Results[i].Size)
 
-				if err != nil {
-					logger.WriteError("Failed to add torrent.", err)
-				} else {
-					found = true
-					break
+				logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The score is ==> %.2f", resp.Results[i].Title, name, resp.Results[i].Seeders, score))
+
+				if score > maxScore {
+					maxScore = score
+					selectedTorrent = &resp.Results[i]
 				}
 			}
 		}
-		if !found {
+
+		if selectedTorrent != nil {
+			link := selectedTorrent.Link
+			logger.WriteInfo(link)
+
+			// Try adding the torrent with the highest seeder value
+			err := saveFileToRemotePC(selectedTorrent)
+			if err != nil {
+				logger.WriteError("Failed to add torrent with the highest seeder value.", err)
+
+				// If adding the torrent fails, try the next highest seeder value
+				sortedTorrents := sortTorrentsBySeeders(resp.Results)
+				for _, torrent := range sortedTorrents {
+					if isCorrectShow(torrent, name, year, description) && !containsEpisodeText(torrent.Title) && torrent.Seeders < maxSeeders {
+						link := torrent.Link
+						logger.WriteInfo(link)
+
+						err := saveFileToRemotePC(selectedTorrent)
+						if err == nil {
+							season++
+							break
+						} else {
+							logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
+						}
+					}
+				}
+			} else {
+				season++
+			}
+		} else {
+			logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -347,7 +406,6 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 			logger.WriteInfo(queryString)
 
 			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-				// Categories: []uint{5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080},
 				Query: queryString,
 			})
 			if err != nil {
@@ -360,21 +418,51 @@ func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query str
 				}
 			}
 
-			for _, r := range resp.Results {
-				tmdbOutput := fmt.Sprintf("The TMDb from Jackett is --> %s.", r.Tracker)
-				logger.WriteInfo(tmdbOutput)
-				if isCorrectShow(r, name, year, description) {
-					fmt.Println(r.Title)
+			maxSeeders := slices.Max(sizeOfTorrent)
+			var selectedTorrent *jackett.Result
+			var maxScore float64
 
-					if r.Seeders == slices.Max(sizeOfTorrent) {
-						link := r.Link
-						logger.WriteInfo(link)
-						err := saveFileToRemotePC(r)
-						if err != nil {
-							logger.WriteError("Cannot save file to remote PC: ", err)
+			for i := 0; i < len(resp.Results); i++ {
+				if isCorrectShow(resp.Results[i], name, year, description) {
+					// Calculate a score based on seeders and size
+					score := calculateScore(resp.Results[i].Seeders, resp.Results[i].Size)
+
+					logger.WriteInfo(fmt.Sprintf("This is the Jackett Title ==> %s. This is the TMDb Title ==> %s. This is the Jackett Seeders ==> %s, The score is ==> %.2f", resp.Results[i].Title, name, resp.Results[i].Seeders, score))
+
+					if score > maxScore {
+						maxScore = score
+						selectedTorrent = &resp.Results[i]
+					}
+				}
+			}
+
+			if selectedTorrent != nil {
+				link := selectedTorrent.Link
+				logger.WriteInfo(link)
+
+				// Try adding the torrent with the highest seeder value
+				err := saveFileToRemotePC(selectedTorrent)
+				if err != nil {
+					logger.WriteError("Failed to add torrent with the highest seeder value.", err)
+
+					// If adding the torrent fails, try the next highest seeder value
+					sortedTorrents := sortTorrentsBySeeders(resp.Results)
+					for _, torrent := range sortedTorrents {
+						if isCorrectShow(torrent, name, year, description) && torrent.Seeders < maxSeeders {
+							link := torrent.Link
+							logger.WriteInfo(link)
+
+							err := saveFileToRemotePC(selectedTorrent)
+							if err == nil {
+								break
+							} else {
+								logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
+							}
 						}
 					}
 				}
+			} else {
+				logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
 			}
 		}
 	}
