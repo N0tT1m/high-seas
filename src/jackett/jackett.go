@@ -369,7 +369,7 @@ func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query stri
 						link := torrent.Link
 						logger.WriteInfo(link)
 
-						err := saveFileToRemotePC(torrent)
+						err := saveFileToRemotePC(&torrent)
 						if err == nil {
 							break
 						} else {
