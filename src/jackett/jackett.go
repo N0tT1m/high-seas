@@ -87,7 +87,7 @@ func MakeMovieQuery(query string, title string, year string, Imdb uint, descript
 					link := torrent.Link
 					logger.WriteInfo(link)
 
-					err := deluge.AddTorrent(link)
+					err := saveFileToRemotePC(selectedTorrent)
 					if err == nil {
 						break
 					} else {
@@ -175,7 +175,7 @@ func copyFileToRemotePC(sourceURL, destinationPath string) error {
 
 	err = session.Run("/usr/bin/scp -t " + destinationPath)
 	if err != nil {
-		return fmt.Errorf("failed to run SCP command: %v", err)
+		return err
 	}
 
 	return nil
