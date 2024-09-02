@@ -3,17 +3,19 @@ module high-seas
 go 1.22
 
 require (
+	github.com/bramvdbogaerde/go-scp v1.4.0
 	github.com/gdm85/go-libdeluge v0.6.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
+	github.com/superturkey650/go-qbittorrent v0.0.0-20190708212631-514bc1f1e281
 	github.com/webtor-io/go-jackett v0.0.0-20201110160721-0d56a2f41070
+	golang.org/x/crypto v0.24.0
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
 )
 
 require (
-	github.com/bramvdbogaerde/go-scp v1.4.0 // indirect
 	github.com/brunoga/go-deluge v0.0.0-20180310163126-b055bfbff10d // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
@@ -35,11 +37,9 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/superturkey650/go-qbittorrent v0.0.0-20190708212631-514bc1f1e281 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
