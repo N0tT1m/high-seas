@@ -1,11 +1,12 @@
 package deluge
 
 import (
-	"fmt"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
 
-	"github.com/superturkey650/go-qbittorrent/qbt"
+	"strconv"
+
+	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
 var user = utils.EnvVar("DELUGE_USER", "")
@@ -14,20 +15,31 @@ var ip = utils.EnvVar("DELUGE_IP", "")
 var port = utils.EnvVar("DELUGE_PORT", "")
 
 func AddTorrent(file string) error {
-	url := fmt.Sprintf("https://%s:%s", ip, port)
+	numPort, err := strconv.Atoi(port)
+	if err != nil {
+		logger.WriteError("Failed to convert port to a number.", err)
+	}
 
-	qb := qbt.NewClient(url)
+	deluge := delugeclient.NewV2(delugeclient.Settings{
+		Hostname: ip,
+		Port:     uint(numPort),
+		Login:    user,
+		Password: password,
+	})
 
-	qb.Login(user, password)
+	err = deluge.Connect()
+	if err != nil {
+		logger.WriteError("Could not connect to deluge.", err)
+	}
 
-	options := map[string]string{}
+	options := &delugeclient.Options{}
 
-	result, err := qb.DownloadFromLink(file, options)
+	result, err := deluge.AddTorrentURL(file, options)
 	if err != nil {
 		logger.WriteError("Failed to add torrent.", err)
 		return err
 	}
 
-	logger.WriteCMDInfo("Status Code Returned: ", result.Status)
+	logger.WriteCMDInfo("Results: ", result)
 	return nil
 }
