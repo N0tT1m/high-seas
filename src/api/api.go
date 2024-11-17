@@ -51,6 +51,8 @@ func QueryShowRequest(c *gin.Context) {
 		logger.WriteError("Failed to Unmarshal JSON.", err)
 	}
 
+	// fmt.Println("{}", request.Query, request.Seasons, request.Name, request.Year, request.Description)
+
 	jackett.MakeShowQuery(request.Query, request.Seasons, request.Name, request.Year, request.Description)
 
 	logger.WriteCMDInfo("Read body complete.", "Success")

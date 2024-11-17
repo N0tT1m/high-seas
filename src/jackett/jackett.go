@@ -532,6 +532,9 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 func isCorrectShow(r jackett.Result, name, year, description string) bool {
 	// Check if the name and year match
 	versions := createStringVersions(name)
+
+	fmt.Println("Description: ", r.Description)
+
 	if !containsAnyPart(r.Title, versions) || !compareDescriptions(r.Description, description) && !checkEpisodeTitlesAndDescriptions(r.Title, name) && !checkExternalIDs(r.TVDBId, r.Imdb) && !checkProductionInfo(r.Category) && !matchGenre(r.Category) {
 		return false
 	}
