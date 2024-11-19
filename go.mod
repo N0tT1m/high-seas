@@ -9,8 +9,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superturkey650/go-qbittorrent v0.0.0-20190708212631-514bc1f1e281
-	github.com/webtor-io/go-jackett v0.0.0-20201110160721-0d56a2f41070
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.29.0
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
 )
@@ -39,10 +38,11 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	github.com/webtor-io/go-jackett v0.0.0-20201110160721-0d56a2f41070 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -3,239 +3,683 @@ package jackett
 import (
 	"context"
 	"fmt"
+	jackett "github.com/webtor-io/go-jackett"
+	"high-seas/src/deluge"
 	"high-seas/src/logger"
 	"high-seas/src/utils"
+	"math"
 	"regexp"
-	"slices"
+	"sort"
+	"strconv"
 	"strings"
-
-	"github.com/webtor-io/go-jackett"
+	"time"
 )
 
 var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
 var ip = utils.EnvVar("JACKETT_IP", "")
 var port = utils.EnvVar("JACKETT_PORT", "")
 
-func MakeMovieQuery(query string, title string, year string, Imdb uint, description string) {
-	// var sizeOfTorrent []uint
+// Result scoring constants
+const (
+	TITLE_MATCH_WEIGHT   = 0.35 // Reduced from 0.4
+	SEEDERS_WEIGHT       = 0.35 // Increased from 0.3
+	QUALITY_WEIGHT       = 0.2  // Kept the same
+	SIZE_WEIGHT          = 0.1  // Kept the same
+	MIN_ACCEPTABLE_SCORE = 0.5  // Reduced from 0.6
+)
 
-	title = strings.Replace(title, ":", "", -1)
-	// years := strings.Split(year, "-")
+type searchResult struct {
+	result *jackett.Result
+	score  float64
+}
 
+// Make sure MakeMovieQuery uses the same pattern as MakeShowQuery
+func MakeMovieQuery(query string, tmdbID int, quality string) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
+	queryString := fmt.Sprintf("%s %s", query, quality)
+	logger.WriteInfo(fmt.Sprintf("Searching for movie: %s", queryString))
+
 	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080},
-		Query:      query,
+		Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080}, // Movie categories
+		Query:      queryString,
 	})
 	if err != nil {
 		logger.WriteFatal("Failed to fetch from Jackett.", err)
+		return err
 	}
 
-	for i := 0; i < len(resp.Results); i++ {
-		fmt.Printf("Title: %s; TMDb: %d", resp.Results[i].Title, resp.Results[i].TMDb)
+	results := processResults(resp.Results, tmdbID, quality, query)
+	if len(results) > 0 {
+		if addTorrentToDeluge(results[0].result) {
+			return nil
+		}
+		return fmt.Errorf("failed to add movie torrent to Deluge")
 	}
 
-	//for i := 0; i < len(resp.Results); i++ {
-	//	sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-	//}
-	//
-	//for _, r := range resp.Results {
-	//	if isCorrectMovie(r, title, years[0], Imdb) {
-	//		logger.WriteInfo(fmt.Sprintf("This is the Jackett Imdb ID ==> %d. This is the TMDb ID ==> %d", r.Imdb, Imdb))
-	//
-	//		if r.Imdb == Imdb {
-	//			if r.Seeders == slices.Max(sizeOfTorrent) {
-	//				link := r.Link
-	//				logger.WriteInfo(link)
-	//				// deluge.AddTorrent(link)
-	//			}
-	//		}
-	//	}
-	//}
+	return fmt.Errorf("no suitable matches found for movie: %s", query)
 }
 
-func MakeShowQuery(query string, seasons []int, name string, year string, description string) {
+func processMovieResults(results []jackett.Result, tmdbID int, quality string) []searchResult {
+	var scoredResults []searchResult
+
+	for _, result := range results {
+		score := calculateMovieScore(&result, tmdbID, quality)
+		if score >= MIN_ACCEPTABLE_SCORE {
+			scoredResults = append(scoredResults, searchResult{
+				result: &result,
+				score:  score,
+			})
+			logger.WriteInfo(fmt.Sprintf("Found match: %s (Score: %.2f)", result.Title, score))
+		}
+	}
+
+	// Sort by score in descending order
+	sort.Slice(scoredResults, func(i, j int) bool {
+		return scoredResults[i].score > scoredResults[j].score
+	})
+
+	return scoredResults
+}
+
+func calculateMovieScore(result *jackett.Result, tmdbID int, quality string) float64 {
+	score := 0.0
+
+	// TMDb match is a strong indicator
+	if result.TMDb > 0 && int(result.TMDb) == tmdbID {
+		score += 0.5
+	}
+
+	// Seeders score (normalized to 0-1)
+	seedersScore := math.Min(float64(result.Seeders)/1000.0, 1.0)
+	score += seedersScore * SEEDERS_WEIGHT
+
+	// Quality match
+	qualityScore := calculateQualityMatch(result.Title, quality)
+	score += qualityScore * QUALITY_WEIGHT
+
+	// Size appropriateness
+	sizeScore := calculateMovieSizeScore(result.Size, quality)
+	score += sizeScore * SIZE_WEIGHT
+
+	return score
+}
+
+func calculateMovieSizeScore(size uint, quality string) float64 {
+	sizeGB := float64(size) / 1024 / 1024 / 1024
+
+	qualitySizeRanges := map[string]struct{ min, max, ideal float64 }{
+		"2160p": {10.0, 80.0, 40.0},
+		"1080p": {4.0, 20.0, 8.0},
+		"720p":  {2.0, 8.0, 4.0},
+		"480p":  {0.7, 4.0, 1.5},
+	}
+
+	if range_, exists := qualitySizeRanges[quality]; exists {
+		if sizeGB < range_.min {
+			return 0.3
+		}
+		if sizeGB > range_.max {
+			return 0.5
+		}
+		// Higher score the closer to ideal size
+		deviation := math.Abs(sizeGB-range_.ideal) / range_.ideal
+		return math.Max(0.0, 1.0-deviation)
+	}
+
+	return 0.5 // Default score if quality not recognized
+}
+
+// Modify handleBestMovieResult to use addTorrentToDeluge
+func handleBestMovieResult(result *jackett.Result) error {
+	if result == nil {
+		return fmt.Errorf("no valid result found")
+	}
+
+	success := addTorrentToDeluge(result)
+	if !success {
+		return fmt.Errorf("failed to add movie torrent to Deluge")
+	}
+
+	return nil
+}
+
+func MakeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
-	// Check if all seasons are available in a bundle
-	bundleFound := searchSeasonBundle(ctx, j, query, seasons, name, year, description)
+	totalSeasons := len(seasons)
+	logger.WriteInfo(fmt.Sprintf("Starting search for %s with %d total seasons", query, totalSeasons))
 
-	if !bundleFound {
-		// If a complete bundle is not found, search for individual seasons
-		seasonFound := searchIndividualSeasons(ctx, j, query, seasons, name, year, description)
-
-		if !seasonFound {
-			searchIndividualEpisodes(ctx, j, query, seasons, name, year, description)
-		}
+	// Print out the episode counts for each season for debugging
+	for i, count := range seasons {
+		logger.WriteInfo(fmt.Sprintf("Season %d has %d episodes", i+1, count))
 	}
+
+	// Step 1: Try complete series bundle
+	if searchFullSeriesBundle(ctx, j, query, seasons, tmdbID, quality) {
+		return nil
+	}
+
+	// Step 2: Try season bundles or individual episodes
+	currentSeason := 1
+	for currentSeason <= totalSeasons {
+		// Try to find season pack first
+		if found := searchCompleteSeason(ctx, j, query, currentSeason, seasons[currentSeason-1], tmdbID, quality); !found {
+			// If season pack not found, search episode by episode
+			logger.WriteInfo(fmt.Sprintf("No season pack found for season %d, searching %d individual episodes",
+				currentSeason, seasons[currentSeason-1]))
+			searchSeasonEpisodesByOne(ctx, j, query, currentSeason, tmdbID, quality, seasons[currentSeason-1])
+		}
+		currentSeason++
+	}
+
+	return nil
 }
 
-func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) bool {
-	seasonBundleFormat := "S%02d-S%02d"
-	if len(seasons) >= 10 {
-		seasonBundleFormat = "S%d-S%d"
-	}
-	seasonBundle := fmt.Sprintf(seasonBundleFormat, 1, len(seasons))
-	queryString := fmt.Sprintf("%s %s", query, seasonBundle)
-	logger.WriteInfo(queryString)
-
-	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Query: queryString,
-	})
-	if err != nil {
-		logger.WriteFatal("Failed to fetch from Jackett.", err)
+func searchCompleteSeason(ctx context.Context, j *jackett.Jackett, query string, season, episodeCount, tmdbID int, quality string) bool {
+	seasonFormat := fmt.Sprintf("S%02d", season)
+	searchQueries := []string{
+		fmt.Sprintf("%s %s season %s", query, seasonFormat, quality),
+		fmt.Sprintf("%s complete %s %s", query, seasonFormat, quality),
+		fmt.Sprintf("%s %s complete %s", query, seasonFormat, quality),
 	}
 
-	var sizeOfTorrent []uint
-	for i := 0; i < len(resp.Results); i++ {
-		if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-			sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+	for _, queryString := range searchQueries {
+		logger.WriteInfo(fmt.Sprintf("Searching for complete season %d (%d episodes) with query: %s",
+			season, episodeCount, queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: []uint{5000, 5020, 5030, 5040, 5045},
+			Query:      queryString,
+		})
+		if err != nil {
+			continue
 		}
-	}
 
-	//var maxSeeders uint
-	//if len(sizeOfTorrent) > 0 {
-	//	maxSeeders = slices.Max(sizeOfTorrent)
-	//}
-	//
-	//var selectedTorrent *jackett.Result
-	//var maxScore float64
-
-	for i := 0; i < len(resp.Results); i++ {
-		respResults := fmt.Sprintf("Search Season Bundle: %v", resp.Results[i].PublishDate)
-		logger.WriteInfo(respResults)
+		results := processResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			seasonResults := filterSeasonPacks(results, season, episodeCount)
+			if len(seasonResults) > 0 {
+				bestResult := selectBestResult(seasonResults)
+				if bestResult != nil && addTorrentToDeluge(bestResult) {
+					logger.WriteInfo(fmt.Sprintf("Successfully added complete season %d (Size: %.2f GB)",
+						season, float64(bestResult.Size)/1024/1024/1024))
+					return true
+				}
+			}
+		}
 	}
 
 	return false
 }
 
-func searchIndividualSeasons(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) bool {
-	for season := 1; season <= len(seasons); season++ {
-		var sizeOfTorrent []uint
-		seasonFormat := "%02d"
-		if season >= 10 {
-			seasonFormat = "%d"
-		}
-		queryString := fmt.Sprintf("%s S"+seasonFormat, query, season)
-		logger.WriteInfo(queryString)
+// Helper function to get sorted keys from map
+func getKeysFromMap(m map[int]int) []int {
+	keys := make([]int, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	return keys
+}
 
-		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-			Query: queryString,
-		})
-		if err != nil {
-			logger.WriteFatal("Failed to fetch from Jackett.", err)
-		}
+func searchSeasonBundle(ctx context.Context, j *jackett.Jackett, query string, startSeason, endSeason, tmdbID int, quality string) bool {
+	var seasonQuery string
+	if startSeason == endSeason {
+		seasonQuery = fmt.Sprintf("S%02d", startSeason)
+	} else {
+		seasonQuery = fmt.Sprintf("S%02d-S%02d", startSeason, endSeason)
+	}
 
-		for i := 0; i < len(resp.Results); i++ {
-			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
+	queryString := fmt.Sprintf("%s %s %s", query, seasonQuery, quality)
+	logger.WriteInfo(fmt.Sprintf("Searching for season bundle: %s", queryString))
+
+	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: []uint{5000, 5020, 5030, 5040, 5045},
+		Query:      queryString,
+	})
+	if err != nil {
+		logger.WriteError("Failed to fetch from Jackett", err)
+		return false
+	}
+
+	results := processResults(resp.Results, tmdbID, quality, query)
+	if len(results) > 0 {
+		bestResult := selectBestResult(results)
+		if bestResult != nil {
+			success := addTorrentToDeluge(bestResult)
+			if success {
+				logger.WriteInfo(fmt.Sprintf("Successfully added bundle for seasons %d-%d (Size: %.2f GB)",
+					startSeason, endSeason, float64(bestResult.Size)/1024/1024/1024))
 			}
-		}
-
-		//var maxSeeders uint
-		//if len(sizeOfTorrent) > 0 {
-		//	maxSeeders = slices.Max(sizeOfTorrent)
-		//}
-		//
-		//var selectedTorrent *jackett.Result
-		//var maxScore float64
-
-		for i := 0; i < len(resp.Results); i++ {
-			respResults := fmt.Sprintf("Search Individual Seasons: %v", resp.Results[i].PublishDate)
-			logger.WriteInfo(respResults)
+			return success
 		}
 	}
 
+	return false
+}
+
+// New function to filter for actual season packs
+func filterSeasonPacks(results []searchResult, season, expectedEpisodeCount int) []searchResult {
+	var seasonPacks []searchResult
+	seasonStr := fmt.Sprintf("S%02d", season)
+	episodePattern := regexp.MustCompile(fmt.Sprintf("S%02dE\\d+", season))
+
+	for _, result := range results {
+		title := strings.ToLower(result.result.Title)
+		// Check if it contains the season number and doesn't contain episode numbers
+		if strings.Contains(title, strings.ToLower(seasonStr)) && !episodePattern.MatchString(title) {
+			// Look for season pack indicators
+			if strings.Contains(title, "complete") ||
+				strings.Contains(title, "season") ||
+				!strings.Contains(title, "e") { // No episode marker
+				seasonPacks = append(seasonPacks, result)
+			}
+		}
+	}
+
+	return seasonPacks
+}
+
+// Helper function to extract episode number from title
+func extractEpisodeNumber(title string) int {
+	// Look for pattern like "S01E02" or "S1E2"
+	re := regexp.MustCompile(`[Ss]\d+[Ee](\d+)`)
+	matches := re.FindStringSubmatch(title)
+	if len(matches) > 1 {
+		if num, err := strconv.Atoi(matches[1]); err == nil {
+			return num
+		}
+	}
+	return 0
+}
+
+func searchFullSeriesBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, tmdbID int, quality string) bool {
+	searchQueries := []string{
+		fmt.Sprintf("%s complete series %s", query, quality),
+		fmt.Sprintf("%s season 1-%d %s", query, len(seasons), quality),
+	}
+
+	for _, queryString := range searchQueries {
+		logger.WriteInfo(fmt.Sprintf("Searching for complete series with query: %s", queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: []uint{5000, 5020, 5030, 5040, 5045},
+			Query:      queryString,
+		})
+		if err != nil {
+			continue
+		}
+
+		results := processResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			bestResult := selectBestResult(results)
+			if bestResult != nil && addTorrentToDeluge(bestResult) {
+				logger.WriteInfo("Successfully added complete series")
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// Modified searchSeasonEpisodesByOne to ensure we get every episode
+func searchSeasonEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, season, tmdbID int, quality string, episodeCount int) bool {
+	logger.WriteInfo(fmt.Sprintf("Searching for %d individual episodes of season %d", episodeCount, season))
+	successCount := 0
+	missingEpisodes := []int{}
+
+	for episode := 1; episode <= episodeCount; episode++ {
+		episodeFormat := fmt.Sprintf("S%02dE%02d", season, episode)
+		// Add quotes around the show title to ensure exact matching
+		queryString := fmt.Sprintf("\"%s\" %s %s", query, episodeFormat, quality)
+
+		logger.WriteInfo(fmt.Sprintf("Searching for episode: %s", queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: []uint{5000, 5020, 5030, 5040, 5045},
+			Query:      queryString,
+		})
+		if err != nil {
+			missingEpisodes = append(missingEpisodes, episode)
+			continue
+		}
+
+		results := processResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			bestResult := selectBestResult(results)
+			if bestResult != nil && addTorrentToDeluge(bestResult) {
+				successCount++
+				logger.WriteInfo(fmt.Sprintf("Successfully added %s (%d/%d)",
+					episodeFormat, successCount, episodeCount))
+			} else {
+				missingEpisodes = append(missingEpisodes, episode)
+			}
+		} else {
+			logger.WriteWarning(fmt.Sprintf("No results found for %s", episodeFormat))
+			missingEpisodes = append(missingEpisodes, episode)
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if len(missingEpisodes) > 0 {
+		logger.WriteWarning(fmt.Sprintf("Missing episodes for season %d: %v", season, missingEpisodes))
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Found %d/%d episodes for season %d",
+		successCount, episodeCount, season))
+	return successCount > 0
+}
+
+func searchAndAddEpisode(ctx context.Context, j *jackett.Jackett, query string, season, episode, tmdbID int, quality string) bool {
+	episodeFormat := fmt.Sprintf("S%02dE%02d", season, episode)
+	queryString := fmt.Sprintf("%s %s %s", query, episodeFormat, quality)
+
+	logger.WriteInfo(fmt.Sprintf("Searching for episode: %s", queryString))
+
+	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: []uint{5000, 5020, 5030, 5040, 5045},
+		Query:      queryString,
+	})
+	if err != nil {
+		logger.WriteError(fmt.Sprintf("Failed to fetch episode %s from Jackett", episodeFormat), err)
+		return false
+	}
+
+	results := processResults(resp.Results, tmdbID, quality, query)
+	if len(results) > 0 {
+		bestResult := selectBestResult(results)
+		if bestResult != nil {
+			if addTorrentToDeluge(bestResult) {
+				logger.WriteInfo(fmt.Sprintf("Successfully added %s (Size: %.2f GB)",
+					episodeFormat, float64(bestResult.Size)/1024/1024/1024))
+				return true
+			}
+		}
+	}
+
+	logger.WriteInfo(fmt.Sprintf("No results found for %s", episodeFormat))
+	return false
+}
+
+// Helper functions
+func containsAnySeasons(seasons []int, start, end int) bool {
+	for _, s := range seasons {
+		if s >= start && s <= end {
+			return true
+		}
+	}
+	return false
+}
+
+func removeSeasonFromSlice(seasons []int, season int) []int {
+	newSeasons := make([]int, 0)
+	for _, s := range seasons {
+		if s != season {
+			newSeasons = append(newSeasons, s)
+		}
+	}
+	return newSeasons
+}
+
+// Modify processResults to include more logging
+func processResults(results []jackett.Result, tmdbID int, quality string, exactTitle string) []searchResult {
+	var scoredResults []searchResult
+
+	logger.WriteInfo(fmt.Sprintf("Processing %d results", len(results)))
+
+	for _, result := range results {
+		// Skip results that don't match the exact show title
+		if !isExactShowMatch(result.Title, exactTitle) {
+			logger.WriteInfo(fmt.Sprintf("Skipping non-matching title: %s", result.Title))
+			continue
+		}
+
+		score := calculateScore(&result, tmdbID, quality)
+		if score >= MIN_ACCEPTABLE_SCORE {
+			scoredResults = append(scoredResults, searchResult{
+				result: &result,
+				score:  score,
+			})
+			logger.WriteInfo(fmt.Sprintf("Added to candidates: %s (Score: %.2f)", result.Title, score))
+		}
+	}
+
+	// Sort by size in descending order
+	sort.Slice(scoredResults, func(i, j int) bool {
+		return scoredResults[i].result.Size > scoredResults[j].result.Size
+	})
+
+	if len(scoredResults) > 0 {
+		logger.WriteInfo(fmt.Sprintf("Selected best match: %s (Size: %.2f GB)",
+			scoredResults[0].result.Title,
+			float64(scoredResults[0].result.Size)/1024/1024/1024))
+	}
+
+	return scoredResults
+}
+
+func isExactShowMatch(resultTitle, exactTitle string) bool {
+	// Clean both titles for comparison
+	cleanResultTitle := cleanTitleForComparison(resultTitle)
+	cleanExactTitle := cleanExactTitle(exactTitle)
+
+	// The result title should start with the exact title we're looking for
+	return strings.HasPrefix(cleanResultTitle, cleanExactTitle)
+}
+
+func cleanTitleForComparison(title string) string {
+	// Convert to lowercase
+	title = strings.ToLower(title)
+
+	// Remove common suffixes and quality indicators
+	suffixesToRemove := []string{
+		"2160p", "1080p", "720p", "480p",
+		"web-dl", "webrip", "hdtv", "bluray", "blu-ray",
+		"x264", "x265", "hevc", "h264", "h265",
+		"proper", "repack",
+		"amzn", "hulu", "nf", "dsnp", // streaming service indicators
+	}
+
+	for _, suffix := range suffixesToRemove {
+		title = strings.ReplaceAll(title, suffix, "")
+	}
+
+	// Remove season/episode information (e.g., S01E01, 1x01)
+	seasonEpPattern := regexp.MustCompile(`\b[Ss]\d{1,2}[Ee]\d{1,2}\b|\b\d{1,2}x\d{1,2}\b`)
+	title = seasonEpPattern.ReplaceAllString(title, "")
+
+	// Remove special characters and extra spaces
+	title = regexp.MustCompile(`[^\w\s]`).ReplaceAllString(title, " ")
+	title = regexp.MustCompile(`\s+`).ReplaceAllString(title, " ")
+
+	return strings.TrimSpace(title)
+}
+
+func cleanExactTitle(title string) string {
+	// Convert to lowercase and trim spaces
+	title = strings.ToLower(strings.TrimSpace(title))
+
+	// Remove any special characters, keeping only letters, numbers, and spaces
+	title = regexp.MustCompile(`[^\w\s]`).ReplaceAllString(title, " ")
+	title = regexp.MustCompile(`\s+`).ReplaceAllString(title, " ")
+
+	return strings.TrimSpace(title)
+}
+
+func selectBestResult(results []searchResult) *jackett.Result {
+	if len(results) == 0 {
+		return nil
+	}
+
+	// Sort by size in descending order
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].result.Size > results[j].result.Size
+	})
+
+	return results[0].result
+}
+
+func calculateScore(result *jackett.Result, tmdbID int, quality string) float64 {
+	score := 0.0
+
+	// Title match score (NEW)
+	titleScore := calculateTitleMatch(result.Title)
+	score += titleScore * TITLE_MATCH_WEIGHT
+
+	// TMDb match bonus (reduced since we now have title matching)
+	if result.TMDb > 0 && int(result.TMDb) == tmdbID {
+		score += 0.3 // Reduced from 0.5 since we now have title matching
+	}
+
+	// Seeders score
+	seedersScore := math.Min(float64(result.Seeders)/500.0, 1.0)
+	score += seedersScore * SEEDERS_WEIGHT
+
+	// Quality match
+	qualityScore := calculateQualityMatch(result.Title, quality)
+	score += qualityScore * QUALITY_WEIGHT
+
+	// Size score
+	sizeScore := calculateSizeScore(result.Size, quality)
+	score += sizeScore * SIZE_WEIGHT
+
+	return score
+}
+
+// New function to calculate title match score
+func calculateTitleMatch(title string) float64 {
+	// Remove common strings that don't affect title matching
+	cleanTitle := strings.ToLower(title)
+	removeStrings := []string{
+		"2160p", "1080p", "720p", "480p",
+		"webrip", "web-dl", "bluray", "hdtv",
+		"x264", "x265", "hevc", "h264", "h265",
+		"dv", "hdr", "sdr",
+		"aac", "ac3", "dts", "ddp", "eac3",
+		"atmos",
+	}
+
+	for _, s := range removeStrings {
+		cleanTitle = strings.ReplaceAll(cleanTitle, strings.ToLower(s), "")
+	}
+
+	// Remove special characters and extra spaces
+	cleanTitle = strings.TrimSpace(cleanTitle)
+
+	// Basic scoring criteria
+	score := 1.0
+
+	// Penalize for suspicious patterns
+	if strings.Contains(cleanTitle, "sample") {
+		score -= 0.3
+	}
+
+	if strings.Contains(cleanTitle, "trailer") {
+		score -= 0.5
+	}
+
+	// Penalize for obviously wrong content
+	if strings.Contains(cleanTitle, "ost") || strings.Contains(cleanTitle, "soundtrack") {
+		score -= 0.8
+	}
+
+	return math.Max(0.0, score) // Ensure score doesn't go negative
+}
+
+func calculateQualityMatch(title, targetQuality string) float64 {
+	if strings.Contains(strings.ToLower(title), strings.ToLower(targetQuality)) {
+		return 1.0
+	}
+
+	qualityMap := map[string]float64{
+		"2160p": 1.0,
+		"1080p": 0.8,
+		"720p":  0.6,
+		"480p":  0.4,
+	}
+
+	for quality, score := range qualityMap {
+		if strings.Contains(strings.ToLower(title), strings.ToLower(quality)) {
+			return score
+		}
+	}
+
+	return 0.0
+}
+
+func calculateSizeScore(size uint, quality string) float64 {
+	sizeGB := float64(size) / 1024 / 1024 / 1024
+
+	// Adjusted size ranges for TV show episodes/seasons
+	qualitySizeRanges := map[string]struct{ min, max, ideal float64 }{
+		"2160p": {2.0, 20.0, 8.0},
+		"1080p": {1.0, 10.0, 4.0},
+		"720p":  {0.5, 4.0, 1.5},
+		"480p":  {0.2, 2.0, 0.7},
+	}
+
+	if range_, exists := qualitySizeRanges[quality]; exists {
+		if sizeGB < range_.min {
+			return 0.3
+		}
+		if sizeGB > range_.max {
+			return 0.5
+		}
+		// Higher score the closer to ideal size
+		deviation := math.Abs(sizeGB-range_.ideal) / range_.ideal
+		return math.Max(0.0, 1.0-deviation)
+	}
+
+	return 0.5
+}
+
+func addTorrentToDeluge(result *jackett.Result) bool {
+	if result == nil {
+		logger.WriteError("No valid result to add to Deluge", nil)
+		return false
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Attempting to add to Deluge: %s", result.Title))
+	logger.WriteInfo(fmt.Sprintf("Torrent Link: %s", result.Link))
+	logger.WriteInfo(fmt.Sprintf("Size: %.2f GB", float64(result.Size)/1024/1024/1024))
+	logger.WriteInfo(fmt.Sprintf("Seeders: %d", result.Seeders))
+
+	err := deluge.AddTorrent(result.Link)
+	if err != nil {
+		if strings.Contains(err.Error(), "Torrent already in session") {
+			// If we get "already in session", consider it a success since it means
+			// we already have this episode
+			logger.WriteInfo(fmt.Sprintf("Torrent already exists in Deluge: %s", result.Title))
+			return true
+		}
+		logger.WriteError(fmt.Sprintf("Failed to add torrent to Deluge for %s. Error: %v", result.Title, err), err)
+		return false
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Successfully sent to Deluge: %s", result.Title))
 	return true
 }
 
-func searchIndividualEpisodes(ctx context.Context, j *jackett.Jackett, query string, seasons []int, name string, year string, description string) {
-	var sizeOfTorrent []uint
-
-	// Search for a bundle of seasons
-	for startSeason := 1; startSeason <= len(seasons); startSeason++ {
-		for endSeason := startSeason; endSeason <= len(seasons); endSeason++ {
-			seasonBundleFormat := "S%02d-S%02d"
-			if startSeason >= 10 || endSeason >= 10 {
-				seasonBundleFormat = "S%d-S%d"
-			}
-
-			seasonBundle := fmt.Sprintf(seasonBundleFormat, startSeason, endSeason)
-			queryString := fmt.Sprintf("%s %s", query, seasonBundle)
-
-			logger.WriteInfo(queryString)
-
-			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-				Query: queryString,
-			})
-			if err != nil {
-				logger.WriteFatal("Failed to fetch from Jackett.", err)
-			}
-
-			for i := 0; i < len(resp.Results); i++ {
-				if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-					sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-				}
-			}
-
-			// var maxSeeders uint
-			//if len(sizeOfTorrent) > 0 {
-			//	maxSeeders = slices.Max(sizeOfTorrent)
-			//}
-
-			// var selectedTorrent *jackett.Result
-			// var maxScore float64
-
-			for i := 0; i < len(resp.Results); i++ {
-				respResults := fmt.Sprintf("Search Individual Episodes: %v", resp.Results[i].PublishDate)
-				logger.WriteInfo(respResults)
-			}
-
-			//if selectedTorrent != nil {
-			//	link := selectedTorrent.Link
-			//	logger.WriteInfo(link)
-			//
-			//	// Try adding the torrent with the highest seeder value
-			//	err := saveFileToRemotePC(selectedTorrent)
-			//	if err != nil {
-			//		logger.WriteError("Failed to add torrent with the highest seeder value.", err)
-			//
-			//		// If adding the torrent fails, try the next highest seeder value
-			//		sortedTorrents := sortTorrentsBySeeders(resp.Results)
-			//		for _, torrent := range sortedTorrents {
-			//			if isCorrectShow(torrent, name, year, description) && torrent.Seeders < maxSeeders {
-			//				link := torrent.Link
-			//				logger.WriteInfo(link)
-			//
-			//				err := saveFileToRemotePC(selectedTorrent)
-			//				if err == nil {
-			//					break
-			//				} else {
-			//					logger.WriteError("Failed to add torrent with the next highest seeder value.", err)
-			//				}
-			//			}
-			//		}
-			//	}
-			//} else {
-			//	logger.WriteInfo("No matching torrent found with the maximum number of seeders and high quality.")
-			//}
+func tryAddTorrentWithFallback(results []searchResult) bool {
+	for _, result := range results {
+		if addTorrentToDeluge(result.result) {
+			return true
 		}
+		// Wait a bit before trying the next result
+		time.Sleep(1 * time.Second)
 	}
-}
-
-func containsEpisodeText(title string) bool {
-	// Use regular expression to check if the title contains any episode text
-	episodeRegex := regexp.MustCompile(`(?i)(?:e\d+|episode\s*\d+)`)
-	return episodeRegex.MatchString(title)
+	return false
 }
 
 func MakeAnimeQuery(query string, episodes int, name string, year string, description string) {
@@ -291,171 +735,3 @@ func MakeAnimeQuery(query string, episodes int, name string, year string, descri
 	//	}
 	//}
 }
-
-//func isCorrectShow(r jackett.Result, name, year string) bool {
-//	// Check if the name and year match
-//	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
-//		return false
-//	}
-//
-//	// Compare plot summaries and descriptions
-//	if !compareDescriptions(r.Description, name, year) {
-//		return false
-//	}
-//
-//	// Check episode titles and descriptions
-//	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
-//		return false
-//	}
-//
-//	// Check air date
-//	if !checkAirDate(r.PublishDate, year) {
-//		return false
-//	}
-//
-//	// Check TMDb, TVDB, or IMDb ID
-//	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-//		return false
-//	}
-//
-//	// Check production company and country of origin
-//	if !checkProductionInfo(r.Publisher, r.Categories) {
-//		return false
-//	}
-//
-//	// Match the genre
-//	if !matchGenre(r.Categories) {
-//		return false
-//	}
-//
-//	return true
-//}
-//
-//func isCorrectMovie(r jackett.Result, title, year string, imdbID uint) bool {
-//	// Check if the title and year match
-//	if !strings.Contains(r.Title, title) || !strings.Contains(r.Title, year) {
-//		return false
-//	}
-//
-//	// Compare plot summaries and descriptions
-//	if !compareDescriptions(r.Description, title, year) {
-//		return false
-//	}
-//
-//	// Check rating
-//	if !checkRating(r.Rating) {
-//		return false
-//	}
-//
-//	// Check cast
-//	if !checkCast(r.Actors) {
-//		return false
-//	}
-//
-//	// Check release date
-//	if !checkReleaseDate(r.PublishDate, year) {
-//		return false
-//	}
-//
-//	// Check TMDb, TVDB, or IMDb ID
-//	if !checkExternalIDs(r.Tvdbid, r.Imdb) || r.Imdb != imdbID {
-//		return false
-//	}
-//
-//	// Check production company and country of origin
-//	if !checkProductionInfo(r.Publisher, r.Categories) {
-//		return false
-//	}
-//
-//	// Match the genre
-//	if !matchGenre(r.Categories) {
-//		return false
-//	}
-//
-//	return true
-//}
-//
-//func isCorrectAnime(r jackett.Result, name, year string) bool {
-//	// Check if the name and year match
-//	if !strings.Contains(r.Title, name) || !strings.Contains(r.Title, year) {
-//		return false
-//	}
-//
-//	// Compare plot summaries and descriptions
-//	if !compareDescriptions(r.Description, name, year) {
-//		return false
-//	}
-//
-//	// Check episode titles and descriptions
-//	if !checkEpisodeTitlesAndDescriptions(r.Title, name) {
-//		return false
-//	}
-//
-//	// Check air date
-//	if !checkAirDate(r.PublishDate, year) {
-//		return false
-//	}
-//
-//	// Check TMDb, TVDB, or IMDb ID
-//	if !checkExternalIDs(r.Tvdbid, r.Imdb) {
-//		return false
-//	}
-//
-//	// Check production company and country of origin
-//	if !checkProductionInfo(r.Publisher, r.Categories) {
-//		return false
-//	}
-//
-//	// Match the genre
-//	if !matchGenre(r.Categories) {
-//		return false
-//	}
-//
-//	return true
-//}
-//
-//// Helper functions for matching criteria (not implemented in this example)
-//func compareDescriptions(description, title, year string) bool {
-//	// Implement logic to compare plot summaries and descriptions
-//	return true
-//}
-//
-//func checkEpisodeTitlesAndDescriptions(title, name string) bool {
-//	// Implement logic to check episode titles and descriptions
-//	return true
-//}
-//
-//func checkAirDate(publishDate, year string) bool {
-//	// Implement logic to check air date
-//	return true
-//}
-//
-//func checkRating(rating float64) bool {
-//	// Implement logic to check rating
-//	return true
-//}
-//
-//func checkCast(actors string) bool {
-//	// Implement logic to check cast
-//	return true
-//}
-//
-//func checkReleaseDate(publishDate, year string) bool {
-//	// Implement logic to check release date
-//	return true
-//}
-//
-//func checkExternalIDs(tvdbID, imdbID uint) bool {
-//	// Implement logic to check TMDb, TVDB, or IMDb ID
-//	return true
-//}
-//
-//func checkProductionInfo(publisher string, categories []int) bool {
-//	// Implement logic to check production company and country of origin
-//	return true
-//}
-//
-//func matchGenre(categories []int) bool {
-//	// Implement logic to match genre
-//	return true
-//}
