@@ -9,21 +9,24 @@ import (
 )
 
 type MovieRequest struct {
-	ID          uint   `gorm:"primaryKey"`
-	Query       string `json:"query"`
-	Name        string `json:"name"`
-	Year        string `json:"year"`
-	TMDb        uint   `json:"TMDb"`
-	Description string `json:"description"`
+	ID      uint   `gorm:"primaryKey"`
+	Query   string `json:"query"`
+	TMDb    int    `json:"TMDb"`
+	Quality string `json:"quality"`
 }
 
 type ShowRequest struct {
-	ID          uint   `gorm:"primaryKey"`
-	Query       string `json:"query"`
-	Seasons     []int  `json:"seasons"`
-	Name        string `json:"name"`
-	Year        string `json:"year"`
-	Description string `json:"description"`
+	ID      uint   `gorm:"primaryKey"`
+	Query   string `json:"query"`
+	Seasons []int  `json:"seasons"`
+	TMDb    int    `json:"TMDb"`
+	Quality string `json:"quality"`
+}
+
+// SeasonInfo struct to hold season and episode count
+type SeasonInfo struct {
+	SeasonNumber int
+	EpisodeCount int
 }
 
 type AnimeRequest struct {

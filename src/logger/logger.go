@@ -11,9 +11,10 @@ import (
 type LogSeverity int
 
 const (
-	DEBUG LogSeverity = iota
-	ERROR LogSeverity = iota
-	INFO  LogSeverity = iota
+	DEBUG   LogSeverity = iota
+	ERROR   LogSeverity = iota
+	WARNING LogSeverity = iota
+	INFO    LogSeverity = iota
 )
 
 func GetSeverityString(logType LogSeverity) string {
@@ -22,6 +23,8 @@ func GetSeverityString(logType LogSeverity) string {
 		return "[DEBUG]"
 	case ERROR:
 		return "[ERROR]"
+	case WARNING:
+		return "[WARNING]"
 	case INFO:
 		return "[INFO]"
 	default:
@@ -44,6 +47,10 @@ func write(logType LogSeverity, message interface{}) {
 
 func WriteError(message string, err error) {
 	write(ERROR, fmt.Sprintf("%s %s", message, err))
+}
+
+func WriteWarning(message string) {
+	write(WARNING, message)
 }
 
 func WriteInfo(message interface{}) {
