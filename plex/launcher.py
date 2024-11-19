@@ -6,12 +6,31 @@ from flask import request
 import config
 from flask import Flask
 from flask_cors import CORS
+import os
+import logging
 
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app) # This will enable CORS for all routes
+allowed_origin = os.getenv('CORS_ORIGIN', 'http://localhost:6969')
+CORS(app, resources={r"/*": {"origins": allowed_origin}})
+
+# Configure logging
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(os.path.join(log_dir, 'app.log')),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 def login():
-    baseurl = 'http://' + config.IP + ':' + config.PORT
+    baseurl = 'http://' + config.PLEX_IP + ':' + config.PLEX_PORT
     token = '-yQYUqbbAqgBgKpgsPAm'
     plex = PlexServer(baseurl, token)
     return plex
@@ -78,9 +97,7 @@ def get_shows():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-# ... (omitted anime routes for brevity)
-
-# @app.route("/get-random-movie")
+@app.route("/get-random-movie")
 def get_random_movie():
     # num = request.form['number']
     num = "4"
@@ -104,3 +121,14 @@ def get_random_movie():
     device = plex.systemDevice(int(device_id))
     # client = PlexClient(plex, baseurl="http://192.168.1.66:32400/", token="-yQYUqbbAqgBgKpgsPAm", identifier="di8mvfiy9cmfk91hfaxpnc65")
     # client.playMedia(queue)
+
+if __name__ == "__main__":
+    logger.info(f"Starting {config.ENV} server on {config.HOST}:{config.PORT}")
+    logger.info(f"CORS origins: {config.CORS_ORIGINS}")
+
+    if config.ENV == 'development':
+        # Use Flask's development server
+        app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)
+    else:
+        # Use waitress for production
+        serve(app, host=config.HOST, port=config.PORT)

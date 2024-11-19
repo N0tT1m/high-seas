@@ -5,8 +5,11 @@ services:
     ports: 
       - "443:443"
       - "80:80"
-  # backend:
-  #   build: .
-  #   ports:
-  #     - "443:443"
-
+  backend:
+     build: .
+     ports:
+       - "8782:8782"
+  plex:
+     build: ./plex/.
+     ports:
+       - "3232:3232"
