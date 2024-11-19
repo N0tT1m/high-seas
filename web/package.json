@@ -7,12 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "ng build --aot --build-optimizer --common-chunk --vendor-chunk --optimization --progress --configuration=production",
     "build-img": "ng build --output-path=./dist/out --aot --build-optimizer --common-chunk --vendor-chunk --optimization --progress --configuration=production",
-    "start-remote": "ng serve --host 192.168.1.71 --port 42069",
-    "start-local": "ng serve --port 6969",
-    "build-image": "docker build -t high-seas-frontend .",
+    "start-local": "ng serve --port 8080",
+    "build-image": "docker buildx build -t high-seas-web .",
     "remove-image": "docker rmi high-seas-frontend",
-    "run-container": "docker run --name high-seas-frontend -d -p 8080:80 high-seas-frontend",
-    "remove-container": "docker rm -f high-seas-frontend",
+    "run-container": "docker run --name high-seas-web-1 -d -p 80:80 -p 443:443 high-seas-web",
+    "remove-container": "docker rm -f high-seas-web-1 ",
     "containerize": "npm run build-image && npm run run-container",
     "recontainerize": "npm run remove-container && npm run build-image && npm run run-container",
     "start-webpack": "webpack-dev-server --mode development",
@@ -20,14 +19,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/m0thm4n/high-seas-frontend.git"
+    "url": "git+https://github.com/m0thm4n/high-seas.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/m0thm4n/high-seas-frontend/issues"
+    "url": "https://github.com/m0thm4n/high-seas/issues"
   },
-  "homepage": "https://github.com/m0thm4n/high-seas-frontend#readme",
+  "homepage": "https://github.com/m0thm4n/high-seas#readme",
   "dependencies": {
     "@angular-devkit/build-angular": "^17.2.0",
     "@angular/animations": "^17.2.2",
