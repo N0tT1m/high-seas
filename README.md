@@ -1,131 +1,90 @@
 # High Seas
 
+A web application for searching and downloading shows/movies.
 
-**The High Seas app is designed to allow you to look for new or old shows / movies and allow you to download them.**
+> **Note**: This application is for educational purposes only.
 
+## Prerequisites
 
-## NOTE: This is purely for educational purposes.
+- Docker and Docker Compose
+- NodeJS (v20.12.0 or later)
+- Go (for building setup script)
+- Python 3.x
+- Nginx
 
+## Quick Start
 
-### Environment for High Seas typescript file format
+1. Clone the repository
+2. Set up environment files (see Configuration section)
+3. Run the installation script
+4. Start the application using Docker Compose
 
-#### Location to this file is: ```./web/src/app/environments/environment.ts```
+## Installation
 
-```
-export const environment = {
-    production: true,
-    baseUrl: 'http://www.example.com:8080',
-    envVar: {
-      /**
-       * Add environment variables you want to retriev from process
-       * PORT:4200,
-       * VAR_NAME: defaultValue
-       */git 
-      authorization: "THE BEARER TOKEN FOR TMDb API",
-      port: "THE PORT YOUR GOLANG API IS RUNNING ON",
-      ip: "THE IP YOUR GOLANG API IS RUNNING ON",
-      transport: "HTTPS or HTTP",
-    },
-  };
-  
-```
+### Setup Script Options
 
-### Ngnix Config File
+Choose one of the following setup methods:
 
-#### Location to this file is: ```./web/nginx.conf```
+#### Go Script (Recommended)
+```bash
+# Windows
+go build -o ./bin/setup.exe ./install-scripts/Setup.go
 
-```
-# the events block is required
-events{}
-
-http {
-    # include the default mime.types to map file extensions to MIME types
-    include /etc/nginx/mime.types;
-
-    server {
-        # set the root directory for the server (we need to copy our
-        # application files here)
-        root /usr/share/nginx/html;
-
-        # set the default index file for the server (Angular generates the
-        # index.html file for us and it will be in the above directory)
-        index index.html;
-
-        listen       6969;
-        server_name http://goose.duocore.space http://arch.duocore.space;
-
-        # specify the configuration for the '/' location
-        location / {
-            # try to serve the requested URI. if that fails then try to
-            # serve the URI with a trailing slash. if that fails, then
-            # serve the index.html file; this is needed in order to serve
-            # Angular routes--e.g.,'localhost:8080/customer' will serve
-            # the index.html file
-            try_files $uri $uri/ /index.html;
-        }
-    }
-}
-
+# Linux
+go build -o ./bin/setup ./install-scripts/Setup.go
 ```
 
-## Install script
+#### Python Script
+> Note: Currently being refactored, use Go script instead.
 
-Location: `./install-scripts`
+### Frontend Setup
 
-The scripts come in two forms:
+1. Install NodeJS:
+   - Windows: Download from [NodeJS v20.12.0](https://nodejs.org/dist/v20.12.0/node-v20.12.0-x64.msi)
+   - Linux: Use package manager
 
-A Go script:
-  - Setup.go
-    -> Build instructions: 
-      -> Windows:
-        - go build -o ./bin/setup.exe
-      -> Linux:
-        - go build -o ./bin/setup
-
-A Python script:
-  - Setup.py
-
-The Go script works, currently the Python script isn't refactored.
-
-## High Seas Frontend
-
-### Running the frontend of High Seas
-
-#### Installing NodeJS on Windows
-
-Download NodeJS from: https://nodejs.org/dist/v20.12.0/node-v20.12.0-x64.msi
-
-#### Running the app locally
-
-```
+2. Local Development:
+```bash
 cd web
 npm install
 npm run start-local
 ```
 
-### Building the frontend of High Seas
-
-To run the frontend of High Seas you can run the command:
-```
-cd ./web
-dockerbuild -t high-seas-frontend .
+3. Docker Deployment:
+```bash
+cd web
+docker build -t high-seas-frontend .
 docker run -d -p 6969:6969 high-seas-frontend
 ```
 
+### Backend Setup
 
-## High Seas Backend
-
-### Building the backend of High Seas
-
-To run the backend of High Seas you can run the command:
-```
-dockerbuild -t high-seas-backend .
+```bash
+docker build -t high-seas-backend .
 docker run -d -p 8782:8782 high-seas-backend
 ```
 
-##### Default file name **.env** in the root directory
+## Configuration
 
+### 1. Frontend Environment (`./web/src/app/environments/environment.ts`)
+
+```typescript
+export const environment = {
+  production: true,
+  baseUrl: 'http://www.example.com:8080',
+  envVar: {
+    authorization: "YOUR_TMDB_API_BEARER_TOKEN",
+    port: "GOLANG_API_PORT",
+    ip: "GOLANG_API_IP",
+    transport: "HTTPS_OR_HTTP",
+  },
+};
 ```
+
+### 2. Backend Environment (`.env`)
+
+Create this file in the root directory:
+```env
 DB_USER=DB_USER
 DB_PASSWORD=DB_PASSWORD
 DB_IP=DB_IP
@@ -139,13 +98,8 @@ JACKETT_PORT=JACKETT_PORT_HERE
 JACKETT_API_KEY=YOUR_KEY_HERE
 ```
 
-## Plex Python Backend
-
-### Config File Example
-
-##### Default file name: **config.py**
-
-```
+### 3. Plex Backend (`config.py`)
+```python
 HOST="192.168.1.1"
 USER="root"
 PASSWD="ThisIsAPassword"
@@ -154,10 +108,53 @@ IP="192.168.1.1"
 PORT="32400"
 ```
 
-## Docker Compose
+### 4. Nginx Configuration (`./web/nginx.conf`)
 
-### Running Docker Compose Yaml
+```nginx
+events{}
+
+http {
+    include /etc/nginx/mime.types;
+
+    server {
+        root /usr/share/nginx/html;
+        index index.html;
+        listen 6969;
+        server_name http://goose.duocore.space http://arch.duocore.space;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}
+```
+
+## Production Deployment
+
+### Using Docker Compose
 
 #### Linux
+```bash
+./start-dedicated.sh
+```
 
-To run docker-compose on Linux you need to run the script: ```start-dedicated.sh```
+## Project Structure
+
+```
+.
+├── web/                    # Frontend application
+├── install-scripts/        # Setup scripts
+├── docker-compose.yml      # Docker composition
+└── README.md              # This file
+```
+
+## Troubleshooting
+
+If you encounter issues:
+1. Verify all environment variables are set correctly
+2. Ensure all required ports are available
+3. Check Docker logs for detailed error messages
+
+## Support
+
+For issues and feature requests, please open an issue in the repository.
