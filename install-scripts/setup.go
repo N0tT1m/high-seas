@@ -1,497 +1,231 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
+	"text/template"
 )
 
-func main() {
-	// Detect the operating system
-	osName := runtime.GOOS
-	fmt.Println("Detected operating system:", osName)
+// Configuration structs for different components
+type FrontendConfig struct {
+	TMDBToken     string
+	GolangAPIPort string
+	GolangAPIIP   string
+	Transport     string
+}
 
-	// Install package managers if not installed
-	if osName == "darwin" {
-		installHomebrew()
-	} else if osName == "windows" {
-		installChocolatey()
-	}
+type BackendConfig struct {
+	DBUser         string
+	DBPassword     string
+	DBIP           string
+	DBPort         string
+	DelugeIP       string
+	DelugePort     string
+	DelugeUser     string
+	DelugePassword string
+	JackettIP      string
+	JackettPort    string
+	JackettAPIKey  string
+}
 
-	// Create the './plex/config.py' file
-	os.MkdirAll("./plex", os.ModePerm)
-	file, err := os.Create("./plex/config.py")
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer file.Close()
-	file.WriteString(`HOST="192.168.1.1"
-USER="root"
-PASSWD="ThisIsAPassword"
-DB="highseas"
-IP="192.168.1.1"
-PORT="32400"
-`)
+type PlexConfig struct {
+	Host     string
+	User     string
+	Password string
+	Database string
+	IP       string
+	Port     string
+}
 
-	// Create the environment files
-	os.MkdirAll("./web/src/app/environments", os.ModePerm)
-	environmentFiles := []string{"environment.prod.ts", "environment.ts", "environment.deployment.ts"}
-	for _, fileName := range environmentFiles {
-		file, err := os.Create("./web/src/app/environments/" + fileName)
-		if err != nil {
-			fmt.Println("Error creating file:", err)
-			continue
-		}
-		defer file.Close()
-		file.WriteString(`export const environment = {
+// promptUser helper function to get user input
+func promptUser(prompt string) string {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print(prompt)
+	input, _ := reader.ReadString('\n')
+	return strings.TrimSpace(input)
+}
+
+// createFrontendEnvironment creates the TypeScript environment file
+func createFrontendEnvironment(config FrontendConfig) error {
+	envContent := `export const environment = {
     production: true,
     baseUrl: 'http://www.example.com:8080',
     envVar: {
-      /**
-       * Add environment variables you want to retriev from process
-       * PORT:4200,
-       * VAR_NAME: defaultValue
-       */
-      authorization: "THE BEARER TOKEN FOR TMDb API",
-      port: "THE PORT YOUR GOLANG API IS RUNNING ON",
-      ip: "THE IP YOUR GOLANG API IS RUNNING ON",
+      authorization: "{{.TMDBToken}}",
+      port: "{{.GolangAPIPort}}",
+      ip: "{{.GolangAPIIP}}",
+      transport: "{{.Transport}}",
     },
-  };
-`)
+  };`
+
+	// Ensure directory exists
+	err := os.MkdirAll("./web/src/app/environments", 0755)
+	if err != nil {
+		return err
 	}
 
-	// Create the './web/nginx.conf' file
-
-	os.MkdirAll("./web", os.ModePerm)
-	file, err = os.Create("./web/nginx.conf")
+	// Create and write to file
+	file, err := os.Create("./web/src/app/environments/environment.ts")
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+		return err
 	}
 	defer file.Close()
-	file.WriteString(`# the events block is required
-events{}
-http {
-    # include the default mime.types to map file extensions to MIME types
-    include /etc/nginx/mime.types;
-    server {
-        # set the root directory for the server (we need to copy our
-        # application files here)
-        root /usr/share/nginx/html;
-        # set the default index file for the server (Angular generates the
-        # index.html file for us and it will be in the above directory)
-        index index.html;
-        listen       6969;
-        server_name http://goose.duocore.space http://arch.duocore.space;
-        # specify the configuration for the '/' location
-        location / {
-            # try to serve the requested URI. if that fails then try to
-            # serve the URI with a trailing slash. if that fails, then
-            # serve the index.html file; this is needed in order to serve
-            # Angular routes--e.g.,'localhost:8080/customer' will serve
-            # the index.html file
-            try_files $uri $uri/ /index.html;
-        }
-    }
-}
-`)
 
-	// Create the './.env' file
-
-	os.MkdirAll("./", os.ModePerm)
-	file, err = os.Create("./.env")
+	tmpl, err := template.New("environment").Parse(envContent)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer file.Close()
-	file.WriteString(`
-		DB_USER=DB_USER
-		DB_PASSWORD=DB_PASSWORD
-		DB_IP=DB_IP
-		DB_PORT=DB_PORT
-		DELUGE_IP=DELUGE_IP
-		DELUGE_PORT=DELUGE_PORT
-		DELUGE_USER=DELUGE_USER
-		DELUGE_PASSWORD=DELUGE_PASSWORD
-		JACKETT_IP=JACKETT_IP_HERE
-		JACKETT_PORT=JACKETT_PORT_HERE
-		JACKETT_API_KEY=YOUR_KEY_HERE
-	`)
-
-	// Install Docker and Docker Compose based on the operating system
-	if osName == "linux" {
-		// Detect the Linux distribution
-		distro := detectLinuxDistro()
-		fmt.Println("Detected Linux distribution:", distro)
-
-		// Install Docker and Docker Compose based on the distribution
-		installDockerLinux(distro)
-		installDockerComposeLinux(distro)
-	} else if osName == "darwin" {
-		// Install Docker Desktop for macOS
-		installDockerMac()
-		installDockerComposeMac()
-	} else if osName == "windows" {
-		// Install Docker Desktop for Windows
-		installDockerWindows()
-		installDockerComposeWindows()
-	} else {
-		fmt.Println("Unsupported operating system:", osName)
-		return
+		return err
 	}
 
-	// Start Docker
-	startDocker()
-
-	// Pass the password to the runCommand function
-
-	// Build the Dockerfile
-	buildDockerfileWeb()
-	buildDockerfileBackendGo()
-	buildDockerfileBackendPython()
-
-	// Run the application using Docker Compose
-	runDockerCompose()
-
-	fmt.Println("Application is running!")
+	return tmpl.Execute(file, config)
 }
 
-func detectLinuxDistro() string {
-	// Detect the Linux distribution based on the /etc/os-release file
-	// You can add more distributions and their detection logic here
-	content, err := os.ReadFile("/etc/os-release")
-	if err != nil {
-		fmt.Println("Error reading /etc/os-release file:", err)
-		return "unknown"
+// createBackendEnv creates the .env file for the backend
+func createBackendEnv(config BackendConfig) error {
+	envContent := fmt.Sprintf(`DB_USER=%s
+DB_PASSWORD=%s
+DB_IP=%s
+DB_PORT=%s
+DELUGE_IP=%s
+DELUGE_PORT=%s
+DELUGE_USER=%s
+DELUGE_PASSWORD=%s
+JACKETT_IP=%s
+JACKETT_PORT=%s
+JACKETT_API_KEY=%s`,
+		config.DBUser,
+		config.DBPassword,
+		config.DBIP,
+		config.DBPort,
+		config.DelugeIP,
+		config.DelugePort,
+		config.DelugeUser,
+		config.DelugePassword,
+		config.JackettIP,
+		config.JackettPort,
+		config.JackettAPIKey,
+	)
+
+	return os.WriteFile(".env", []byte(envContent), 0644)
+}
+
+// createPlexConfig creates the Plex backend config file
+func createPlexConfig(config PlexConfig) error {
+	configContent := fmt.Sprintf(`HOST="%s"
+USER="%s"
+PASSWD="%s"
+DB="%s"
+IP="%s"
+PORT="%s"`,
+		config.Host,
+		config.User,
+		config.Password,
+		config.Database,
+		config.IP,
+		config.Port,
+	)
+
+	return os.WriteFile("config.py", []byte(configContent), 0644)
+}
+
+// buildDockerContainers builds and starts the Docker containers
+func buildDockerContainers() error {
+	// Build frontend
+	fmt.Println("Building frontend container...")
+	cmdFront := exec.Command("docker", "build", "-t", "high-seas-frontend", "./web")
+	cmdFront.Stdout = os.Stdout
+	cmdFront.Stderr = os.Stderr
+	if err := cmdFront.Run(); err != nil {
+		return fmt.Errorf("frontend build failed: %v", err)
 	}
 
-	if strings.Contains(string(content), "Ubuntu") {
-		return "ubuntu"
-	} else if strings.Contains(string(content), "Arch") {
-		return "arch"
-	} else if strings.Contains(string(content), "Fedora") {
-		return "fedora"
-	} else if strings.Contains(string(content), "Debian") {
-		return "debian"
-	} else if strings.Contains(string(content), "Gentoo") {
-		return "gentoo"
-	} else if strings.Contains(string(content), "Slackware") {
-		return "slackware"
+	// Build backend
+	fmt.Println("Building backend container...")
+	cmdBack := exec.Command("docker", "build", "-t", "high-seas-backend", ".")
+	cmdBack.Stdout = os.Stdout
+	cmdBack.Stderr = os.Stderr
+	if err := cmdBack.Run(); err != nil {
+		return fmt.Errorf("backend build failed: %v", err)
 	}
 
-	return "unknown"
-}
-
-func installDockerLinux(distro string) {
-	var installCmd *exec.Cmd
-	var installBuildx *exec.Cmd
-
-	switch distro {
-	case "ubuntu", "debian":
-		installCmd = exec.Command("sudo", "apt-get", "update")
-		runCommand(installCmd)
-		installCmd = exec.Command("sudo", "apt-get", "install", "-y", "docker.io")
-	case "arch":
-		installCmd = exec.Command("yay", "-S", "--noconfirm", "docker")
-		installBuildx = exec.Command("sudo", "pacman", "-S", "--noconfirm", "docker-buildx")
-	case "fedora":
-		installCmd = exec.Command("sudo", "dnf", "install", "-y", "docker")
-	case "gentoo":
-		installCmd = exec.Command("sudo", "emerge", "--ask", "docker")
-	case "slackware":
-		installCmd = exec.Command("sudo", "slackpkg", "install", "docker")
-	default:
-		fmt.Println("Unsupported Linux distribution for Docker installation:", distro)
-		return
+	// Start containers using docker-compose
+	fmt.Println("Starting containers with docker-compose...")
+	cmdCompose := exec.Command("docker-compose", "up", "-d")
+	cmdCompose.Stdout = os.Stdout
+	cmdCompose.Stderr = os.Stderr
+	if err := cmdCompose.Run(); err != nil {
+		return fmt.Errorf("docker-compose failed: %v", err)
 	}
 
-	runCommand(installCmd)
-	runCommand(installBuildx)
-	fmt.Println("Docker installed successfully.")
+	return nil
 }
 
-func installDockerComposeLinux(distro string) {
-	var installCmd *exec.Cmd
+func main() {
+	fmt.Println("High Seas Setup Script")
+	fmt.Println("=====================")
 
-	switch distro {
-	case "ubuntu", "debian":
-		installCmd = exec.Command("sudo", "apt-get", "install", "-y", "docker-compose")
-	case "arch":
-		installCmd = exec.Command("sudo", "pacman", "-S", "--noconfirm", "docker-compose")
-	case "fedora":
-		installCmd = exec.Command("sudo", "dnf", "install", "-y", "docker-compose")
-	case "gentoo":
-		installCmd = exec.Command("sudo", "emerge", "--ask", "docker-compose")
-	case "slackware":
-		installCmd = exec.Command("sudo", "slackpkg", "install", "docker-compose")
-	default:
-		fmt.Println("Unsupported Linux distribution for Docker Compose installation:", distro)
-		return
+	// Get Frontend Configuration
+	frontendConfig := FrontendConfig{
+		TMDBToken:     promptUser("Enter TMDB API Bearer Token: "),
+		GolangAPIPort: promptUser("Enter Golang API Port: "),
+		GolangAPIIP:   promptUser("Enter Golang API IP: "),
+		Transport:     promptUser("Enter Transport (HTTP/HTTPS): "),
 	}
 
-	runCommand(installCmd)
-	fmt.Println("Docker Compose installed successfully.")
-}
-
-func installDockerMac() {
-	// Install Docker Desktop for macOS using Homebrew
-	installCmd := exec.Command("brew", "install", "--cask", "docker")
-	runCommand(installCmd)
-	fmt.Println("Docker Desktop installed successfully.")
-}
-
-func installDockerComposeMac() {
-	// Docker Compose is included with Docker Desktop for macOS
-	fmt.Println("Docker Compose is already installed with Docker Desktop.")
-}
-
-func installDockerWindows() {
-	// Install Docker Desktop for Windows using Chocolatey
-	_, err := exec.LookPath("docker-desktop")
-	if err != nil {
-		// Install Chocolatey
-		installCmd := exec.Command("choco", "install", "-y", "docker-desktop")
-		runCommand(installCmd)
-		fmt.Println("Docker Desktop installed successfully.")
-	} else {
-		fmt.Println("Docker Desktop is already installed.")
+	// Get Backend Configuration
+	backendConfig := BackendConfig{
+		DBUser:         promptUser("Enter Database User: "),
+		DBPassword:     promptUser("Enter Database Password: "),
+		DBIP:           promptUser("Enter Database IP: "),
+		DBPort:         promptUser("Enter Database Port: "),
+		DelugeIP:       promptUser("Enter Deluge IP: "),
+		DelugePort:     promptUser("Enter Deluge Port: "),
+		DelugeUser:     promptUser("Enter Deluge User: "),
+		DelugePassword: promptUser("Enter Deluge Password: "),
+		JackettIP:      promptUser("Enter Jackett IP: "),
+		JackettPort:    promptUser("Enter Jackett Port: "),
+		JackettAPIKey:  promptUser("Enter Jackett API Key: "),
 	}
 
-}
+	// Get Plex Configuration
+	plexConfig := PlexConfig{
+		Host:     promptUser("Enter Plex Host: "),
+		User:     promptUser("Enter Plex User: "),
+		Password: promptUser("Enter Plex Password: "),
+		Database: promptUser("Enter Plex Database Name: "),
+		IP:       promptUser("Enter Plex IP: "),
+		Port:     promptUser("Enter Plex Port: "),
+	}
 
-func installDockerComposeWindows() {
-	// Docker Compose is included with Docker Desktop for Windows
-	fmt.Println("Docker Compose is already installed with Docker Desktop.")
-}
+	// Create configuration files
+	fmt.Println("\nCreating configuration files...")
 
-func buildDockerfileWeb() {
-	// Build the Dockerfile
-	osName := runtime.GOOS
-	var buildCmd *exec.Cmd
-
-	if osName == "linux" {
-		distro := detectLinuxDistro()
-		switch distro {
-		case "ubuntu", "debian":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-frontend", "./web")
-		case "arch":
-			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-frontend", "./web")
-		case "fedora", "gentoo", "slackware":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-frontend", "./web")
-		default:
-			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
-			return
-		}
-	} else if osName == "darwin" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-frontend", "./web")
-	} else if osName == "windows" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-frontend", "./web")
-	} else {
-		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+	if err := createFrontendEnvironment(frontendConfig); err != nil {
+		fmt.Printf("Error creating frontend environment: %v\n", err)
 		return
 	}
 
-	runCommand(buildCmd)
-	fmt.Println("Dockerfile for High Seas frontend built successfully.")
-}
-
-func buildDockerfileBackendGo() {
-	osName := runtime.GOOS
-	var buildCmd *exec.Cmd
-
-	if osName == "linux" {
-		distro := detectLinuxDistro()
-		switch distro {
-		case "ubuntu", "debian":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-golang", ".")
-		case "arch":
-			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-golang", ".")
-		case "fedora", "gentoo", "slackware":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-golang", ".")
-		default:
-			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
-			return
-		}
-	} else if osName == "darwin" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-golang", ".")
-	} else if osName == "windows" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-golang", ".")
-	} else {
-		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+	if err := createBackendEnv(backendConfig); err != nil {
+		fmt.Printf("Error creating backend .env: %v\n", err)
 		return
 	}
 
-	runCommand(buildCmd)
-	fmt.Println("Dockerfile for High Seas backend in Golang built successfully.")
-}
-
-func buildDockerfileBackendPython() {
-	osName := runtime.GOOS
-	var buildCmd *exec.Cmd
-
-	if osName == "linux" {
-		distro := detectLinuxDistro()
-		switch distro {
-		case "ubuntu", "debian":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-python", ".")
-		case "arch":
-			buildCmd = exec.Command("sudo", "docker", "buildx", "build", "-t", "high-seas-python", ".")
-		case "fedora", "gentoo", "slackware":
-			buildCmd = exec.Command("sudo", "docker", "build", "-t", "high-seas-python", ".")
-		default:
-			fmt.Println("Unsupported Linux distribution for building Dockerfile:", distro)
-			return
-		}
-	} else if osName == "darwin" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-python", ".")
-	} else if osName == "windows" {
-		buildCmd = exec.Command("docker", "build", "-t", "high-seas-python", ".")
-	} else {
-		fmt.Println("Unsupported operating system for building Dockerfile:", osName)
+	if err := createPlexConfig(plexConfig); err != nil {
+		fmt.Printf("Error creating Plex config: %v\n", err)
 		return
 	}
 
-	runCommand(buildCmd)
-	fmt.Println("Dockerfile for High Seas backend in Python built successfully.")
-}
-
-func runDockerCompose() {
-	osName := runtime.GOOS
-	var runCmd *exec.Cmd
-
-	if osName == "linux" {
-		distro := detectLinuxDistro()
-		switch distro {
-		case "ubuntu", "debian":
-			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
-		case "arch":
-			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
-		case "fedora", "gentoo", "slackware":
-			runCmd = exec.Command("sudo", "docker-compose", "up", "-d")
-		default:
-			fmt.Println("Unsupported Linux distribution for running Docker Compose:", distro)
-			return
-		}
-	} else if osName == "darwin" {
-		runCmd = exec.Command("docker-compose", "up", "-d")
-	} else if osName == "windows" {
-		runCmd = exec.Command("docker-compose", "up", "-d")
-	} else {
-		fmt.Println("Unsupported operating system for running Docker Compose:", osName)
+	// Build and start Docker containers
+	fmt.Println("\nBuilding and starting Docker containers...")
+	if err := buildDockerContainers(); err != nil {
+		fmt.Printf("Error with Docker operations: %v\n", err)
 		return
 	}
 
-	runCommand(runCmd)
-	fmt.Println("Application is running with Docker Compose.")
-}
-
-func installHomebrew() {
-	// Check if Homebrew is installed
-	_, err := exec.LookPath("brew")
-	if err != nil {
-		// Install Homebrew
-		installCmd := exec.Command("/bin/bash", "-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
-		runCommand(installCmd)
-		fmt.Println("Homebrew installed successfully.")
-	} else {
-		fmt.Println("Homebrew is already installed.")
-	}
-}
-
-func installChocolatey() {
-	// Check if Chocolatey is installed
-	_, err := exec.LookPath("choco")
-	if err != nil {
-		// Install Chocolatey
-		installCmd := exec.Command("powershell", "-Command", "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))")
-		runCommand(installCmd)
-		fmt.Println("Chocolatey installed successfully.")
-	} else {
-		fmt.Println("Chocolatey is already installed.")
-	}
-}
-
-// ... (rest of the functions remain the same)
-
-func runCommand(cmd *exec.Cmd) {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// Create a pipe to pass the password to sudo via stdin
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		fmt.Println("Error creating stdin pipe:", err)
-		os.Exit(1)
-	}
-
-	// Start the command
-	err = cmd.Start()
-	if err != nil {
-		fmt.Println("Error starting command:", err)
-		os.Exit(1)
-	}
-
-	stdin.Close()
-
-	// Wait for the command to finish
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Println("Error running command:", err)
-		os.Exit(1)
-	} else {
-		fmt.Printf("Command executed successfully\n")
-	}
-}
-
-func startDocker() {
-	osName := runtime.GOOS
-
-	if osName == "linux" {
-		if isSystemdUsed() {
-			startDockerSystemd()
-		} else {
-			startDockerRcd()
-		}
-	} else if osName == "darwin" {
-		startDockerMac()
-	} else if osName == "windows" {
-		startDockerWindows()
-	} else {
-		fmt.Println("Unsupported operating system for starting Docker:", osName)
-		return
-	}
-}
-
-func isSystemdUsed() bool {
-	// Check if systemd is used as the init system
-	_, err := os.Stat("/run/systemd/system")
-	return err == nil
-}
-
-func startDockerSystemd() {
-	startCmd := exec.Command("sudo", "systemctl", "start", "docker")
-	runCommand(startCmd)
-	fmt.Println("Docker started successfully using systemd.")
-}
-
-func startDockerRcd() {
-	startCmd := exec.Command("sudo", "service", "docker", "start")
-	runCommand(startCmd)
-	fmt.Println("Docker started successfully using rc.d.")
-}
-
-func startDockerMac() {
-	startCmd := exec.Command("open", "/Applications/Docker.app")
-	runCommand(startCmd)
-	fmt.Println("Docker started successfully on macOS.")
-}
-
-func startDockerWindows() {
-	startCmd := exec.Command("C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe")
-	runCommand(startCmd)
-	fmt.Println("Docker started successfully on Windows.")
+	fmt.Println("\nSetup completed successfully!")
+	fmt.Println("You can access the application at:")
+	fmt.Printf("Frontend: http://localhost:6969\n")
+	fmt.Printf("Backend: http://localhost:8782\n")
 }

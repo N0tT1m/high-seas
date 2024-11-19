@@ -6,11 +6,11 @@ A web application for searching and downloading shows/movies.
 
 ## Prerequisites
 
-- Docker and Docker Compose
+- Docker and Docker Compose (for managing the application)
 - NodeJS (v20.12.0 or later)
-- Go (for building setup script)
-- Python 3.x
-- Nginx
+- Go (for building setup script and the movie and show backend)
+- Python 3.x (for the plex backend)
+- Nginx (for serving the application)
 
 ## Quick Start
 
