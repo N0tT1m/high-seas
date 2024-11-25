@@ -251,7 +251,7 @@ export class AiringTodayTvShowsDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+      this.tvShowService.makeAnimeDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
       this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(

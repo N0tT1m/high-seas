@@ -191,7 +191,7 @@ export class DiscoverMovieDetailsComponent {
   downloadMovie(title: string, name: string, year: string, quality: string, lang: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      // this.tvShowService.makeAnimeDownloadRequest(title, this.episodes).subscribe(request => console.log(request))
+      this.movieService.makeAnimeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
       this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(

@@ -1,0 +1,34 @@
+<nav class="dota-navbar">
+  <div class="navbar-content">
+    <a [routerLink]="['/']">
+      <img id="home" src="/assets/home-icon.jpg" height="50" width="50" alt="logo" aria-hidden="true">
+    </a>
+    <div class="menu-wrapper">
+      <div class="left-menu">
+        <app-dropdown
+          title="Now Playing / Popular / Top Rated / Upcoming Movies"
+          [links]="moviesLinks"
+          [(dropdownOpen)]="moviesDropdownOpen"
+        ></app-dropdown>
+
+        <app-dropdown
+          title="Discover & Search Movies"
+          [links]="searchMoviesLinks"
+          [(dropdownOpen)]="searchMoviesDropdownOpen"
+        ></app-dropdown>
+
+        <app-dropdown
+          title="Airing Today / Popular / Top Rated / On The Air Shows"
+          [links]="showsLinks"
+          [(dropdownOpen)]="showsDropdownOpen"
+        ></app-dropdown>
+
+        <app-dropdown
+          title="Discover & Search Shows"
+          [links]="searchShowsLinks"
+          [(dropdownOpen)]="searchShowsDropdownOpen"
+        ></app-dropdown>
+      </div>
+    </div>
+  </div>
+</nav>

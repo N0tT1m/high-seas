@@ -1,8 +1,217 @@
 // Variables
-$primary-color: #76b5c5
-$background-color: #25026d
-$link-color: #1ac4e5
+$primary-color: #3498db
+$background-color: #2c3e50
+$link-color: #ecf0f1
 $text-color: #ffffff
+
+button.primary
+  padding: 10px
+  border: solid 1px var(--primary-color)
+  background: var(--primary-color)
+  color: white
+  border-radius: 8px
+
+.background-placeholder
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  background-color: $background-color
+  z-index: -1
+
+.earth-spirit
+  color: $text-color
+  padding: 25px
+  margin: 10px
+  min-height: 100vh
+  position: relative
+
+footer
+  position: fixed
+  bottom: 0
+  left: 0
+  right: 0
+  width: 100%
+  z-index: 999
+
+a
+  color: $link-color
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+// Navbar styles
+.dota-navbar
+  background-color: $background-color
+  padding: 10px 20px
+  display: flex
+  justify-content: space-between
+  align-items: center
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+.navbar-content
+  display: flex
+  align-items: center
+
+.menu-wrapper
+  display: flex
+  justify-content: center
+  flex-grow: 1
+
+.left-menu
+  display: flex
+
+.dropdown
+  position: relative
+  display: inline-block
+
+  &-toggle
+    color: #ddd
+    text-decoration: none
+    margin: 0 15px
+    text-transform: uppercase
+    font-family: 'Pixel Font', sans-serif
+    font-size: 16px
+    cursor: pointer
+
+  &-menu
+    display: none
+    position: absolute
+    background-color: #222
+    min-width: 160px
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2)
+    padding: 12px 16px
+    z-index: 1
+
+    a
+      color: #ddd
+      text-decoration: none
+      display: block
+      margin: 5px 0
+      text-transform: uppercase
+      font-family: 'Pixel Font', sans-serif
+      font-size: 14px
+
+    &.dropdown:hover .dropdown-menu
+      display: block
+
+.right-menu
+  margin-left: auto
+
+  a
+    color: #ff6046
+
+.logo
+  font-size: 24px
+  color: $link-color
+  text-decoration: none
+  margin-right: 20px
+  font-weight: bold
+
+.menu-wrapper
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.left-menu, .right-menu
+  list-style: none
+  padding: 0
+  margin: 0
+  display: flex
+
+.left-menu li, .right-menu li
+  margin: 0 15px
+
+.left-menu a, .right-menu a
+  color: $link-color
+  text-decoration: none
+  font-size: 16px
+  transition: color 0.3s ease
+
+.left-menu a:hover, .right-menu a:hover
+  color: $primary-color
+
+// Dropdown styles
+.dropdown
+  position: relative
+
+.dropdown-menu
+  display: none
+  position: absolute
+  top: 100%
+  left: 0
+  background-color: #333
+  min-width: 160px
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2)
+  z-index: 1
+
+
+.dropdown-menu a
+  color: $link-color
+  padding: 12px 16px
+  text-decoration: none
+  display: block
+  text-align: left
+  transition: background-color 0.3s ease
+
+.dropdown-menu a:hover
+  background-color: #575757
+
+.dropdown:hover .dropdown-menu
+  display: block
+
+// Media queries for responsiveness
+@media screen and (max-width: 992px)
+  .menu-wrapper
+    flex-direction: column
+    align-items: flex-start
+
+  .right-menu
+    margin-top: 10px
+
+  .logo
+    margin-right: 0
+
+#home
+  display: block
+
+// Content styles
+.content
+  padding: 20px
+
+// Media queries
+@media screen and (max-width: 1200px)
+// Styles for desktop
+
+@media screen and (max-width: 1024px)
+// Styles for iPad
+
+@media screen and (max-width: 768px)
+  // Styles for tablet
+
+  .left-menu
+    flex-direction: column
+
+  .dropdown
+    margin-bottom: 10px
+
+@media screen and (max-width: 480px)
+  // Styles for phone and iPhone
+
+  .navbar-content
+    flex-direction: column
+    align-items: flex-start
+
+  .left-menu
+    margin-top: 10px
+
+@media screen and (max-width: 320px)
+// Styles for small screens
+
+@media screen and (min-width: 1600px)
+// Styles for big screens
 
 // Global styles
 body
@@ -53,55 +262,6 @@ a
   &:hover
     text-decoration: underline
 
-// Navbar styles
-.dota-navbar
-  background-color: #111
-  padding: 10px
-
-.navbar-content
-  display: flex
-  justify-content: space-between
-  align-items: center
-
-.menu-wrapper
-  display: flex
-  justify-content: center
-  flex-grow: 1
-
-.left-menu
-  display: flex
-
-.dropdown
-  position: relative
-  display: inline-block
-
-.dropdown-toggle
-  color: #ddd
-  text-decoration: none
-  margin: 0 15px
-  text-transform: uppercase
-  font-family: 'Pixel Font', sans-serif
-  font-size: 16px
-  cursor: pointer
-
-.dropdown-menu
-  display: none
-  position: absolute
-  background-color: #222
-  min-width: 160px
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2)
-  padding: 12px 16px
-  z-index: 1
-
-  a
-    color: #ddd
-    text-decoration: none
-    display: block
-    margin: 5px 0
-    text-transform: uppercase
-    font-family: 'Pixel Font', sans-serif
-    font-size: 14px
-
 .dropdown:hover .dropdown-menu
   display: block
 
@@ -111,7 +271,7 @@ a
   a
     color: #ff6046
 
-#big-titty-waifu-svg
+#home
   display: block
 
 // Content styles

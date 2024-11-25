@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"crypto/tls"
 	"high-seas/src/api"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +42,8 @@ func SetupRouter() {
 
 	r.POST("/movie/query", api.QueryMovieRequest)
 	r.POST("/show/query", api.QueryShowRequest)
-	r.POST("/anime/query", api.QueryAnimeRequest)
+	r.POST("/anime/movie/query", api.QueryAnimeMovieRequest)
+	r.POST("/anime/show/query", api.MakeAnimeShowQuery)
 
 	// // Define routes based on the domain name
 	// r.POST("/movie/query", func(c *gin.Context) {
@@ -73,31 +73,31 @@ func SetupRouter() {
 	// 	}
 	// })
 
-	// r.Run(":8782")
+	r.Run(":8782")
 
 	// Load the Let's Encrypt certificate and key
-	certFile := "./fullchain.pem"
-	keyFile := "./privkey.pem"
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a custom TLS configuration
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
-
-	// Create a custom HTTP server with the TLS configuration
-	server := &http.Server{
-		Addr:      "192.168.1.78:8782",
-		Handler:   r,
-		TLSConfig: tlsConfig,
-	}
-
-	// Start the server with TLS
-	err = server.ListenAndServeTLS("", "")
-	if err != nil {
-		panic(err)
-	}
+	//certFile := "./fullchain.pem"
+	//keyFile := "./privkey.pem"
+	//cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//// Create a custom TLS configuration
+	//tlsConfig := &tls.Config{
+	//	Certificates: []tls.Certificate{cert},
+	//}
+	//
+	//// Create a custom HTTP server with the TLS configuration
+	//server := &http.Server{
+	//	Addr:      "192.168.1.90:8782",
+	//	Handler:   r,
+	//	TLSConfig: tlsConfig,
+	//}
+	//
+	//// Start the server with TLS
+	//err = server.ListenAndServeTLS("", "")
+	//if err != nil {
+	//	panic(err)
+	//}
 }

@@ -162,7 +162,7 @@ export class TvShowService {
     return this.http.get<QueryRequest>(tvShowUrl, options);
   }
 
-  makeAnimeDownloadRequest(query: string, episodes: number) {
+  makeAnimeDownloadRequest(query: string, seasons: Array<number>, quality: string, TMDb: number, description: string) {
     var queryApiHeaders = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -171,9 +171,10 @@ export class TvShowService {
       'Access-Control-Allow-Methods': 'POST,DELETE',
     };
 
-    var tvShowUrl = 'https://127.0.0.1:8782/anime/query';
+    var tvShowUrl = 'http://' + environment.envVar.ip + ':' + environment.envVar.port + '/anime/query';
 
-    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "episodes": episodes }, { headers: queryApiHeaders });
+
+    return this.http.post<QueryRequest>(tvShowUrl, { "query": query, "seasons": seasons, "quality": quality, "TMDb": TMDb, 'description': description }, { headers: queryApiHeaders });
   }
 
   getGenres() {
