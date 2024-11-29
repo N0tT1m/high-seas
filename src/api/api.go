@@ -147,6 +147,7 @@ func QueryTopRatedTvShows(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Gets the first set of top rated shows
 func QueryInitialTopRatedTvShows(c *gin.Context) {
 	reqHeader := c.Request.Header
 	header := reqHeader.Get("Authorization")
