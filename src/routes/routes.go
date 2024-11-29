@@ -42,14 +42,14 @@ func SetupRouter() {
 
 	r.POST("/movie/query", api.QueryMovieRequest)
 	r.POST("/show/query", api.QueryShowRequest)
-	r.POST("/anime/query", api.QueryAnimeRequest)
 	r.POST("/tmdb/top-rated-tv-shows", api.QueryTopRatedTvShows)
 	r.POST("/tmdb/initial-top-rated-tv-shows", api.QueryInitialTopRatedTvShows)
 	r.POST("/tmdb/on-the-air-tv-shows", api.QueryOnTheAirTvShows)
 	r.POST("/tmdb/initial-on-the-air-tv-shows", api.QueryInitialOnTheAirTvShows)
 	r.POST("/tmdb/popular-tv-shows", api.QueryPopularTvShows)
 	r.POST("/tmdb/initial-popular-tv-shows", api.QueryInitialPopularTvShows)
-
+	r.POST("/anime/movie/query", api.QueryAnimeMovieRequest)
+	r.POST("/anime/show/query", api.MakeAnimeShowQuery)
 	// // Define routes based on the domain name
 	// r.POST("/movie/query", func(c *gin.Context) {
 	// 	host := c.Request.Host
@@ -95,7 +95,7 @@ func SetupRouter() {
 	//
 	//// Create a custom HTTP server with the TLS configuration
 	//server := &http.Server{
-	//	Addr:      "192.168.1.78:8782",
+	//	Addr:      "192.168.1.90:8782",
 	//	Handler:   r,
 	//	TLSConfig: tlsConfig,
 	//}

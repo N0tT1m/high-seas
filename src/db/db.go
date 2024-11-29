@@ -29,13 +29,19 @@ type SeasonInfo struct {
 	EpisodeCount int
 }
 
-type AnimeRequest struct {
-	ID          uint   `gorm:"primaryKey"`
-	Query       string `json:"query"`
-	Episodes    int    `json:"episodes"`
-	Name        string `json:"name"`
-	Year        string `json:"year"`
-	Description string `json:"description"`
+type AnimeMovieRequest struct {
+	ID      uint   `gorm:"primaryKey"`
+	Query   string `json:"query"`
+	TMDb    int    `json:"TMDb"`
+	Quality string `json:"quality"`
+}
+
+type AnimeTvRequest struct {
+	ID      uint   `gorm:"primaryKey"`
+	Query   string `json:"query"`
+	Seasons []int  `json:"seasons"`
+	TMDb    int    `json:"TMDb"`
+	Quality string `json:"quality"`
 }
 
 type TMDbRequest struct {

@@ -1,0 +1,8 @@
+<div class="dropdown">
+  <a class="dropdown-toggle" (click)="toggleDropdown($event)">
+    {{ title }}
+  </a>
+  <div class="dropdown-menu" [class.show]="dropdownOpen">
+    <a *ngFor="let link of links" [routerLink]="link.route">{{ link.label }}</a>
+  </div>
+</div>

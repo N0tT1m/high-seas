@@ -27,6 +27,16 @@ const (
 	MIN_ACCEPTABLE_SCORE = 0.5  // Reduced from 0.6
 )
 
+// Common constants and categories
+const (
+	searchDelay = 500 * time.Millisecond
+)
+
+var (
+	animeMovieCategories  = []uint{2000, 2010, 100001}
+	animeSeriesCategories = []uint{100060, 140679, 5070}
+)
+
 type searchResult struct {
 	result *jackett.Result
 	score  float64
@@ -487,56 +497,123 @@ func tryAddTorrentWithFallback(results []searchResult) bool {
 	return false
 }
 
-func MakeAnimeQuery(query string, episodes int, name string, year string, description string) {
-	//	name = strings.Replace(name, ":", "", -1)
-	//
-	//	ctx := context.Background()
-	//	j := jackett.NewJackett(&jackett.Settings{
-	//		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
-	//		ApiKey: fmt.Sprintf("%s", apiKey),
-	//	})
+// MakeAnimeMovieQuery handles searching and downloading anime movies
+func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
+	ctx := context.Background()
+	j := jackett.NewJackett(&jackett.Settings{
+		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
+		ApiKey: fmt.Sprintf("%s", apiKey),
+	})
 
-	//for i := 0; i < episodes; i++ {
-	//	count := 1
-	//
-	//	for count <= episodes {
-	//		var sizeOfTorrent []uint
-	//
-	//		season := i + 1
-	//
-	//		fmt.Println("season: ", season)
-	//		queryString := fmt.Sprintf("%s %d", query, count)
-	//
-	//		logger.WriteInfo(queryString)
-	//
-	//		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-	//			Categories: []uint{100060, 140679, 5070, 127720},
-	//			Query:      queryString,
-	//		})
-	//		if err != nil {
-	//			logger.WriteFatal("Failed to fetch from Jackett.", err)
-	//		}
-	//
-	//		for i := 0; i < len(resp.Results); i++ {
-	//			if !slices.Contains(sizeOfTorrent, resp.Results[i].Seeders) {
-	//				sizeOfTorrent = append(sizeOfTorrent, resp.Results[i].Seeders)
-	//			}
-	//		}
-	//
-	//		for _, r := range resp.Results {
-	//			if isCorrectAnime(r, name, year) {
-	//				if strings.Contains(query, "One Piece") {
-	//					if !strings.Contains(query, fmt.Sprintf("%d", 2023)) {
-	//						logger.WriteInfo(r.Title)
-	//					}
-	//				} else {
-	//					link := r.Link
-	//					logger.WriteInfo(link)
-	//				}
-	//			}
-	//		}
-	//
-	//		count++
-	//	}
-	//}
+	queryString := fmt.Sprintf("%s %s", query, quality)
+	logger.WriteInfo(fmt.Sprintf("Searching for anime movie: %s", queryString))
+
+	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: animeMovieCategories,
+		Query:      queryString,
+	})
+	if err != nil {
+		logger.WriteFatal("Failed to fetch from Jackett.", err)
+		return err
+	}
+
+	results := processResults(resp.Results, tmdbID, quality, query)
+	if len(results) > 0 {
+		if addTorrentToDeluge(results[0].result) {
+			return nil
+		}
+		return fmt.Errorf("failed to add anime movie torrent to Deluge")
+	}
+
+	// If no results found with preferred quality, try alternative qualities
+	alternativeQualities := []string{"1080p", "720p", "480p"}
+	for _, altQuality := range alternativeQualities {
+		if altQuality == quality {
+			continue
+		}
+
+		queryString := fmt.Sprintf("%s %s", query, altQuality)
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeMovieCategories,
+			Query:      queryString,
+		})
+		if err != nil {
+			continue
+		}
+
+		results := processResults(resp.Results, tmdbID, altQuality, query)
+		if len(results) > 0 && addTorrentToDeluge(results[0].result) {
+			return nil
+		}
+
+		time.Sleep(searchDelay)
+	}
+
+	return fmt.Errorf("no suitable matches found for anime movie: %s", query)
+}
+
+// MakeAnimeShowQuery handles searching and downloading anime series
+func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
+	ctx := context.Background()
+	j := jackett.NewJackett(&jackett.Settings{
+		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
+		ApiKey: fmt.Sprintf("%s", apiKey),
+	})
+
+	totalEpisodes := 0
+	for _, episodeCount := range seasons {
+		totalEpisodes += episodeCount
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Starting search for anime series: %s with %d total episodes",
+		query, totalEpisodes))
+
+	// Try complete series bundle first
+	if searchAnimeSeriesBundle(ctx, j, query, tmdbID, quality) {
+		return nil
+	}
+
+	// Search episode by episode if bundle not found
+	return searchAnimeEpisodesByOne(ctx, j, query, tmdbID, quality, totalEpisodes)
+}
+
+func searchAnimeSeriesBundle(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) bool {
+	bundleQuery := fmt.Sprintf("%s complete series", query)
+	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: animeSeriesCategories,
+		Query:      bundleQuery,
+	})
+	if err != nil {
+		return false
+	}
+
+	results := processResults(resp.Results, tmdbID, quality, query)
+	return len(results) > 0 && addTorrentToDeluge(results[0].result)
+}
+
+func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, totalEpisodes int) error {
+	for episode := 1; episode <= totalEpisodes; episode++ {
+		queryString := fmt.Sprintf("%s episode %d", query, episode)
+		logger.WriteInfo(fmt.Sprintf("Searching episode %d/%d", episode, totalEpisodes))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeSeriesCategories,
+			Query:      queryString,
+		})
+		if err != nil {
+			logger.WriteWarning(fmt.Sprintf("Failed to fetch episode %d: %v", episode, err))
+			continue
+		}
+
+		results := processResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			if !addTorrentToDeluge(results[0].result) {
+				logger.WriteWarning(fmt.Sprintf("Failed to add episode %d", episode))
+			}
+		}
+
+		time.Sleep(searchDelay)
+	}
+
+	return nil
 }

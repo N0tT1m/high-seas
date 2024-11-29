@@ -47,6 +47,23 @@ export class MovieService {
     return this.http.get<Movie>(movieUrl, { headers: this.headers });
   }
 
+  // Add this to MovieService class
+  makeAnimeMovieDownloadRequest(query: string, name: string, year: string, quality: string, tmdb: number, description: string) {
+    const queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST,DELETE',
+    };
+
+    const movieUrl = 'http://' + environment.envVar.ip + ':' + environment.envVar.port + '/anime/movie/query';
+
+    return this.http.post<QueryRequest>(movieUrl, {
+      "query": query, 'name': name, 'year': year, 'quality': quality, 'Imdb': tmdb, 'description': description,
+    }, { headers: queryApiHeaders });
+  }
+
   getTopRated(page: number) {
     var movieUrl = ' https://api.themoviedb.org/3/movie/top_rated?page=' + page.toString()
 
