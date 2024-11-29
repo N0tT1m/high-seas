@@ -69,40 +69,44 @@ export class TvShowService {
   }
 
   getPopular(page: number) {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/popular?page=' + page.toString();
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/popular?page=' + page.toString();
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/popular-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
 
   getInitialPopularPage() {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/popular?page=1';
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/popular?page=1';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-popular-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getAiringToday(page: number) {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=' + page.toString()
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=' + page.toString()
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/airing-today-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getInitialAiringTodayPage() {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=1';
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=1';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-airing-today-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getAllShows(page: number, query: string) {

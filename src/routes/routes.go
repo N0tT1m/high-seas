@@ -42,14 +42,17 @@ func SetupRouter() {
 
 	r.POST("/movie/query", api.QueryMovieRequest)
 	r.POST("/show/query", api.QueryShowRequest)
+	r.POST("/anime/movie/query", api.QueryAnimeMovieRequest)
+	r.POST("/anime/show/query", api.MakeAnimeShowQuery)
 	r.POST("/tmdb/top-rated-tv-shows", api.QueryTopRatedTvShows)
 	r.POST("/tmdb/initial-top-rated-tv-shows", api.QueryInitialTopRatedTvShows)
 	r.POST("/tmdb/on-the-air-tv-shows", api.QueryOnTheAirTvShows)
 	r.POST("/tmdb/initial-on-the-air-tv-shows", api.QueryInitialOnTheAirTvShows)
 	r.POST("/tmdb/popular-tv-shows", api.QueryPopularTvShows)
 	r.POST("/tmdb/initial-popular-tv-shows", api.QueryInitialPopularTvShows)
-	r.POST("/anime/movie/query", api.QueryAnimeMovieRequest)
-	r.POST("/anime/show/query", api.MakeAnimeShowQuery)
+	r.POST("/tmdb/airing-today", api.QueryAiringTodayTvShows)
+	r.POST("/tmdb/initial-airing-today", api.QueryInitialAiringTodayTvShows)
+
 	// // Define routes based on the domain name
 	// r.POST("/movie/query", func(c *gin.Context) {
 	// 	host := c.Request.Host
