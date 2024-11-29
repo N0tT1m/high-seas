@@ -115,21 +115,23 @@ export class TvShowService {
     // TODO: Add multiple people filter.
     // with_people=Shah%20Rukh%20Khan%20AND%20Shah%20Rukh%20Khan
 
-    var tvShowUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=' + page.toString();
+    var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=' + page.toString();
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<Movie>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getInitialPage(query: string) {
-    var tvShowUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=1';
+    var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=1';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-all-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<Movie>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   makeTvShowDownloadRequest(query: string, seasons: Array<number>, quality: string, TMDb: number, description: string) {
