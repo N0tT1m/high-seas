@@ -29,39 +29,43 @@ export class TvShowService {
   }
 
   getTopRated(page: number) {
-    var tvShowUrl = ' https://api.themoviedb.org/3/tv/top_rated?page=' + page.toString()
+    var tmdbUrl = ' https://api.themoviedb.org/3/tv/top_rated?page=' + page.toString()
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/top-rated-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getInitialTopRatedPage() {
-    var tvShowUrl = ' https://api.themoviedb.org/3/tv/top_rated?page=1';
+    var tmdbUrl = ' https://api.themoviedb.org/3/tv/top_rated?page=1';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-top-rated-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getOnTheAir(page: number) {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=' + page.toString()
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=' + page.toString()
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/on-the-air-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getInitialOnTheAirPage() {
-    var tvShowUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=1';
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=1';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-on-the-air-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvShowUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
   }
 
   getPopular(page: number) {

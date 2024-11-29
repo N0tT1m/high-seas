@@ -38,6 +38,35 @@ type AnimeRequest struct {
 	Description string `json:"description"`
 }
 
+type TMDbRequest struct {
+	ID  uint   `gorm:"primaryKey"`
+	Url string `json:"url"`
+}
+
+type TMDbResponse struct {
+	Page         uint          `json:"page"`
+	Results      []TMDbResults `json:"results"`
+	TotalPages   uint          `json:"total_pages"`
+	TotalResults uint          `json:"total_results"`
+}
+
+type TMDbResults struct {
+	Adult            bool   `json:"adult"`
+	BackdropPath     string `json:"backdrop_path"`
+	FirstAirDate     string `json:"first_air_date"`
+	GenreIds         []uint `json:"genre_ids"`
+	Id               uint   `json:"id"`
+	Name             string `json:"name"`
+	OriginalLanguage string `json:"original_language"`
+	OriginalName     string `json:"original_name"`
+	Overview         string `json:"overview"`
+	Popularity       uint   `json:"popularity"`
+	PosterPath       string `json:"poster_path"`
+	VoteAverage      uint   `json:"vote_average"`
+	VoteCount        uint   `json:"vote_count"`
+	Video            bool   `json:"video"`
+}
+
 var user = utils.EnvVar("DB_USER", "")
 var password = utils.EnvVar("DB_PASSWORD", "")
 var ip = utils.EnvVar("DB_IP", "")
