@@ -668,6 +668,7 @@ func respondError(s *discordgo.Session, i *discordgo.InteractionCreate, err erro
 	})
 }
 
+// Main func
 func main() {
 	err := godotenv.Load()
 	if err != nil {
