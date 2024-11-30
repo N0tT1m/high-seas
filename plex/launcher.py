@@ -9,9 +9,7 @@ from flask_cors import CORS
 import os
 import logging
 import requests
-from requests.adapters import HTTPAdapter, Retry
 
-PLEX_RETRIES = 5
 PLEX_TIMEOUT = 60
 
 # Initialize Flask app
@@ -47,24 +45,6 @@ def login():
     except Exception as e:
         logger.error(f"Failed to connect to Plex server: {str(e)}")
         raise
-
-
-def create_plex_session():
-    """Create a requests session with retry logic and timeouts"""
-    session = requests.Session()
-
-    # Configure retry strategy
-    retry_strategy = Retry(
-        total=PLEX_RETRIES,
-        backoff_factor=1,
-        status_forcelist=[408, 429, 500, 502, 503, 504],
-    )
-
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-
-    return session
 
 # Error handler for 404
 @app.errorhandler(404)
