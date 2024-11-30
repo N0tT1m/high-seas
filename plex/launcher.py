@@ -38,9 +38,8 @@ def login():
     baseurl = 'http://' + config.PLEX_IP + ':' + config.PLEX_PORT
     token = 'Y7fU6x3PPqr8A-P3WEjq'
 
-    session = create_plex_session()
     try:
-        plex = PlexServer(baseurl, token, session=session, timeout=PLEX_TIMEOUT)
+        plex = PlexServer(baseurl, token, timeout=PLEX_TIMEOUT)
         return plex
     except Exception as e:
         logger.error(f"Failed to connect to Plex server: {str(e)}")
