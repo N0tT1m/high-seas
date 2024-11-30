@@ -11,679 +11,232 @@ import (
 	"high-seas/src/db"
 	"high-seas/src/jackett"
 	"high-seas/src/logger"
-	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
 )
 
-func QueryMovieRequest(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.MovieRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	jackett.MakeMovieQuery(request.Query, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
+func CheckPlexStatus(name string, firstAirDate string) bool {
+	plex := login()
+	shows := plex.library.section('TV Shows')
+	results := shows.search(title=name, year=firstAirDate[:4])
+	return len(results) > 0
 }
 
-func QueryShowRequest(c *gin.Context) {
-	respBody := c.Request.Body
+func processTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {
+	header := c.Request.Header.Get("Authorization")
 
-	body, err := ioutil.ReadAll(respBody)
+	client := &http.Client{Timeout: time.Second * 30}
+	req, err := http.NewRequest("GET", strings.TrimSpace(url), nil)
 	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	var request db.ShowRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	// fmt.Println("{}", request.Query, request.Seasons, request.Name, request.Year, request.Description)
-
-	jackett.MakeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func QueryAnimeMovieRequest(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.AnimeMovieRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	err = jackett.MakeAnimeMovieQuery(request.Query, request.TMDb, request.Quality)
-	if err != nil {
-		logger.WriteError("Failed to Query Anime Movie Request.", err)
-	}
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func MakeAnimeShowQuery(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.AnimeTvRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	jackett.MakeAnimeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func QueryTopRatedTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.TMDbRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
 	req.Header.Add("Authorization", header)
 	req.Header.Add("accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
+	// Add Plex status for each show
+	for i := range response.Results {
+		response.Results[i].InPlex = CheckPlexStatus(
+			response.Results[i].Name,
+			response.Results[i].FirstAirDate,
+		)
+	}
+
+	return &response, nil
+}
+
+func QueryTopRatedTvShows(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// Gets the first set of top rated shows
 func QueryInitialTopRatedTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryOnTheAirTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryInitialOnTheAirTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryPopularTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryInitialPopularTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryAiringTodayTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryInitialAiringTodayTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryAllTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }
 
 func QueryInitialAllTvShows(c *gin.Context) {
-	reqHeader := c.Request.Header
-	header := reqHeader.Get("Authorization")
-
-	logger.WriteInfo(fmt.Sprintf("Completed getting the header with the value: %s", header))
-
-	reqBody := c.Request.Body
-	body, err := io.ReadAll(reqBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
 	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err = json.Unmarshal(body, &request)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	url := strings.Trim(request.Url, " ")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.WriteError("Failed to create a new request.", err)
-	}
-	req.Header.Add("Authorization", header)
-	req.Header.Add("accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.WriteError("Failed to make a request.", err)
-	}
-	defer resp.Body.Close()
-
-	logger.WriteInfo(fmt.Sprintf("Received %s back from '%s'", resp.Status, url))
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var response db.TMDbResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	logger.WriteInfo(fmt.Sprintf("Received: %v", response))
 
 	c.JSON(http.StatusOK, response)
 }

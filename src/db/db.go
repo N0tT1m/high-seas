@@ -71,6 +71,7 @@ type TMDbResults struct {
 	VoteAverage      uint   `json:"vote_average"`
 	VoteCount        uint   `json:"vote_count"`
 	Video            bool   `json:"video"`
+	InPlex           bool   `json:"in_plex"`
 }
 
 var user = utils.EnvVar("DB_USER", "")

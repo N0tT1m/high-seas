@@ -113,6 +113,12 @@ import { TvShowService } from '../tv-service.service';
         <span class="show-video-value">{{show!.video}}</span>
       </div>
     </section>
+    <div class="movie-meta-item" *ngIf="show.in_plex">
+      <div class="movie-meta-label">Status:</div>
+      <div class="movie-meta-value">
+        <span class="plex-badge">Available in Plex</span>
+      </div>
+    </div>
     <div class="show-actions">
       <div class="show-download-quality">
         <label for="quality" class="show-download-quality-label">Download Quality:</label>

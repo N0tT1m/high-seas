@@ -8,21 +8,36 @@ import (
 	"github.com/joho/godotenv"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
 	PlexAPIURL = "http://localhost:5000"
 )
 
-type plexResponse struct {
+type PlexResponse struct {
 	Status      string   `json:"status"`
 	Error       string   `json:"error"`
 	QueueLength int      `json:"queue_length"`
 	Items       []string `json:"items"`
+	Movies      int      `json:"movies"` // Add this field
+	Shows       int      `json:"shows"`  // Add this field
+}
+
+var httpClient = &http.Client{
+	Timeout: 60 * time.Second, // Increased timeout
+	Transport: &http.Transport{
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		DisableCompression:    true,
+		ResponseHeaderTimeout: 30 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+	},
 }
 
 type listMediaResponse struct {
@@ -66,19 +81,6 @@ func init() {
 			Description: "Show unwatched show count",
 		},
 		{
-			Name:        "random_movie",
-			Description: "Queue random movies",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "count",
-					Description: "Number of movies to queue",
-					Required:    true,
-				},
-			},
-		},
-
-		{
 			Name:        "smart-search",
 			Description: "Search for media by name",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -97,19 +99,6 @@ func init() {
 						{Name: "Movies", Value: "movies"},
 						{Name: "Shows", Value: "shows"},
 					},
-				},
-			},
-		},
-
-		{
-			Name:        "random_show",
-			Description: "Queue random shows",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "count",
-					Description: "Number of shows to queue",
-					Required:    true,
 				},
 			},
 		},
@@ -132,6 +121,18 @@ func init() {
 					Name:        "titles",
 					Description: "Comma-separated titles",
 					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        "get_all",
+					Description: "Queue all matching items instead of just the first match",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        "use_existing_queue",
+					Description: "Add to existing queue if available",
+					Required:    false,
 				},
 			},
 		},
@@ -244,46 +245,197 @@ func init() {
 			Name:        "playlists",
 			Description: "List Plex playlists",
 		},
+		{
+			Name:        "queue-status",
+			Description: "Show current queue status",
+		},
+		{
+			Name:        "clear-queue",
+			Description: "Clear the current queue",
+		},
+		{
+			Name:        "random_movie",
+			Description: "Queue random movies",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "count",
+					Description: "Number of movies to queue",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        "use_existing_queue",
+					Description: "Add to existing queue if available",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:        "random_show",
+			Description: "Queue random shows",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "count",
+					Description: "Number of shows to queue",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        "use_existing_queue",
+					Description: "Add to existing queue if available",
+					Required:    false,
+				},
+			},
+		},
 	}
 
-	commandHandlers["movies"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		resp, err := http.Get(PlexAPIURL + "/movies")
+	// Update the queue-status command handler
+	commandHandlers["queue-status"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		log.Println("Starting queue-status command")
+		resp, err := http.Get(PlexAPIURL + "/get-current-queue")
 		if err != nil {
+			log.Printf("Error getting queue status: %v", err)
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading response: %v", err)
 			respondError(s, i, err)
 			return
 		}
 
-		var plexResp PlexResponse
-		if err := json.NewDecoder(resp.Body).Decode(&plexResp); err != nil {
+		var result struct {
+			Status      string `json:"status"`
+			Message     string `json:"message"`
+			QueueLength int    `json:"queue_length"`
+			CurrentItem string `json:"current_item"`
+			Items       []struct {
+				Title    string `json:"title"`
+				Type     string `json:"type"`
+				Duration int    `json:"duration"`
+				Selected bool   `json:"selected"`
+			} `json:"items"`
+			Error string `json:"error"`
+		}
+
+		if err := json.Unmarshal(body, &result); err != nil {
+			log.Printf("Error parsing response: %v", err)
 			respondError(s, i, err)
 			return
 		}
 
+		// If there's a message but no error, it's an info message (like "No active queue")
+		if result.Message != "" && result.Error == "" {
+			embed := &discordgo.MessageEmbed{
+				Title:       "Queue Status",
+				Description: result.Message,
+				Color:       0x0099FF, // Blue for info
+			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{embed},
+				},
+			})
+			return
+		}
+
+		if result.Error != "" {
+			log.Printf("Error in response: %s", result.Error)
+			respondError(s, i, fmt.Errorf(result.Error))
+			return
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Queue Status",
+			Description: fmt.Sprintf("Total items in queue: %d", result.QueueLength),
+			Fields:      make([]*discordgo.MessageEmbedField, 0),
+			Color:       0x00FF00, // Green for success
+		}
+
+		if result.CurrentItem != "" {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   "Now Playing",
+				Value:  result.CurrentItem,
+				Inline: false,
+			})
+		}
+
+		for idx, item := range result.Items {
+			duration := fmt.Sprintf("%d:%02d", item.Duration/60000, (item.Duration/1000)%60)
+			status := ""
+			if item.Selected {
+				status = " (Current)"
+			}
+
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("%d. %s%s", idx+1, item.Title, status),
+				Value:  fmt.Sprintf("Type: %s\nDuration: %s", item.Type, duration),
+				Inline: true,
+			})
+		}
+
+		log.Println("Sending queue status response")
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Found %d unwatched movies", plexResp.Movies),
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
 	}
 
-	commandHandlers["shows"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		resp, err := http.Get(PlexAPIURL + "/shows")
+	// Update the clear-queue command handler
+	commandHandlers["clear-queue"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		log.Println("Starting clear-queue command")
+		resp, err := http.Post(PlexAPIURL+"/clear-queue", "application/json", nil)
 		if err != nil {
+			log.Printf("Error clearing queue: %v", err)
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading response: %v", err)
 			respondError(s, i, err)
 			return
 		}
 
-		var plexResp PlexResponse
-		if err := json.NewDecoder(resp.Body).Decode(&plexResp); err != nil {
+		var result struct {
+			Message string `json:"message"`
+			Status  string `json:"status"`
+			Error   string `json:"error"`
+		}
+
+		if err := json.Unmarshal(body, &result); err != nil {
+			log.Printf("Error parsing response: %v", err)
 			respondError(s, i, err)
 			return
 		}
 
+		if result.Error != "" {
+			log.Printf("Error in response: %s", result.Error)
+			respondError(s, i, fmt.Errorf(result.Error))
+			return
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Clear Queue",
+			Description: result.Message,
+			Color:       0x00FF00, // Green for success
+		}
+
+		log.Println("Sending clear queue response")
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Found %d unwatched shows", plexResp.Shows),
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
 	}
@@ -296,62 +448,199 @@ func init() {
 		handleRandomMedia(s, i, "show")
 	}
 
+	commandHandlers["list"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		handleList(s, i)
+	}
+
+	// Update the queue command handler
+	// Update the queue command handler
 	commandHandlers["queue"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		log.Println("Starting queue command handler")
+
+		// Immediately acknowledge the command
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Processing your request...",
+			},
+		})
+		if err != nil {
+			log.Printf("Error acknowledging interaction: %v", err)
+			return
+		}
+
+		// Process command parameters
 		mediaType := i.ApplicationCommandData().Options[0].StringValue()
 		titles := strings.Split(i.ApplicationCommandData().Options[1].StringValue(), ",")
 		for i := range titles {
 			titles[i] = strings.TrimSpace(titles[i])
 		}
 
-		data := map[string]interface{}{
-			"type":  mediaType,
-			"items": titles,
+		getAll := false
+		useExistingQueue := false
+		if len(i.ApplicationCommandData().Options) > 2 {
+			getAll = i.ApplicationCommandData().Options[2].BoolValue()
+		}
+		if len(i.ApplicationCommandData().Options) > 3 {
+			useExistingQueue = i.ApplicationCommandData().Options[3].BoolValue()
 		}
 
-		// Log the request data
-		fmt.Printf("Sending request to %s/queue-specific with data: %+v\n", PlexAPIURL, data)
+		log.Printf("Processed parameters - Type: %s, Titles: %v, GetAll: %v, UseExistingQueue: %v",
+			mediaType, titles, getAll, useExistingQueue)
+
+		// Prepare request
+		data := map[string]interface{}{
+			"type":               mediaType,
+			"items":              titles,
+			"get_all":            getAll,
+			"use_existing_queue": useExistingQueue,
+		}
 
 		jsonData, err := json.Marshal(data)
 		if err != nil {
-			respondError(s, i, err)
+			log.Printf("Error marshaling data: %v", err)
+			sendFollowUpError(s, i, fmt.Errorf("failed to prepare request: %v", err))
 			return
 		}
 
-		resp, err := http.Post(PlexAPIURL+"/queue-specific", "application/json", bytes.NewBuffer(jsonData))
+		log.Printf("Sending request to %s with data: %s", PlexAPIURL+"/queue-specific", string(jsonData))
+
+		// Make HTTP request with timeout
+		req, err := http.NewRequest("POST", PlexAPIURL+"/queue-specific", bytes.NewBuffer(jsonData))
+		if err != nil {
+			log.Printf("Error creating request: %v", err)
+			sendFollowUpError(s, i, fmt.Errorf("failed to create request: %v", err))
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		// Make the request
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Timeout() {
+				log.Printf("Request timed out: %v", err)
+				sendFollowUpError(s, i, fmt.Errorf("request timed out, please try again"))
+			} else {
+				log.Printf("Request failed: %v", err)
+				sendFollowUpError(s, i, fmt.Errorf("request failed: %v", err))
+			}
+			return
+		}
+		defer resp.Body.Close()
+
+		// Read response
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading response: %v", err)
+			sendFollowUpError(s, i, fmt.Errorf("failed to read response: %v", err))
+			return
+		}
+
+		log.Printf("Raw response from server: %s", string(body))
+
+		var result PlexResponse
+		if err := json.Unmarshal(body, &result); err != nil {
+			log.Printf("Error unmarshaling response: %v", err)
+			sendFollowUpError(s, i, fmt.Errorf("failed to parse response: %v", err))
+			return
+		}
+
+		log.Printf("Parsed response: %+v", result)
+
+		if result.Error != "" {
+			log.Printf("Error in response: %s", result.Error)
+			sendFollowUpError(s, i, fmt.Errorf(result.Error))
+			return
+		}
+
+		// Create embed
+		embed := &discordgo.MessageEmbed{
+			Title:       fmt.Sprintf("Queue %s", strings.Title(mediaType)),
+			Description: fmt.Sprintf("Added %d items to queue:", result.QueueLength),
+			Fields:      make([]*discordgo.MessageEmbedField, 0),
+			Color:       0x00FF00, // Green for success
+		}
+
+		for idx, title := range result.Items {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("%d.", idx+1),
+				Value:  title,
+				Inline: true,
+			})
+		}
+
+		log.Printf("Created embed: %+v", embed)
+
+		// Send follow-up message
+		_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		})
+		if err != nil {
+			log.Printf("Error sending follow-up message: %v", err)
+			sendFollowUpError(s, i, fmt.Errorf("failed to send response: %v", err))
+			return
+		}
+
+		log.Println("Queue command completed successfully")
+	}
+
+	// Update the movies command
+	commandHandlers["movies"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		resp, err := http.Get(PlexAPIURL + "/movies")
 		if err != nil {
 			respondError(s, i, err)
 			return
 		}
 		defer resp.Body.Close()
 
-		var result struct {
-			QueueLength int      `json:"queue_length"`
-			Items       []string `json:"items"`
-			Error       string   `json:"error"`
-		}
-
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("Response from server: %s\n", string(body))
-
-		if err := json.Unmarshal(body, &result); err != nil {
-			respondError(s, i, fmt.Errorf("failed to parse response: %v", err))
+		var plexResp PlexResponse
+		if err := json.NewDecoder(resp.Body).Decode(&plexResp); err != nil {
+			respondError(s, i, err)
 			return
 		}
 
-		if result.Error != "" {
-			respondError(s, i, fmt.Errorf(result.Error))
-			return
+		embed := &discordgo.MessageEmbed{
+			Title:       "Unwatched Movies",
+			Description: fmt.Sprintf("Found %d unwatched movies", plexResp.Movies),
 		}
 
-		message := fmt.Sprintf("Queued %d items:\n%s", result.QueueLength, strings.Join(result.Items, "\n"))
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: message,
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
 	}
 
+	// Update the shows command
+	commandHandlers["shows"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		resp, err := http.Get(PlexAPIURL + "/shows")
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		var plexResp PlexResponse
+		if err := json.NewDecoder(resp.Body).Decode(&plexResp); err != nil {
+			respondError(s, i, err)
+			return
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Unwatched Shows",
+			Description: fmt.Sprintf("Found %d unwatched shows", plexResp.Shows),
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
+	}
+
+	// Update the add command to use the standardized format
 	commandHandlers["add"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		mediaType := i.ApplicationCommandData().Options[0].StringValue()
 		titles := strings.Split(i.ApplicationCommandData().Options[1].StringValue(), ",")
@@ -366,41 +655,113 @@ func init() {
 		makePostRequest(s, i, "/add-to-queue", data)
 	}
 
-	"list": handleList,
-
-	commandHandlers["smart-search"] = handleSmartSearch
-
-	// Add handlers for new commands
+	// Fix for player command - properly declare and use jsonData
 	commandHandlers["player"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		action := i.ApplicationCommandData().Options[0].StringValue()
 		data := map[string]string{"action": action}
-		makePostRequest(s, i, "/player-controls", data)
+
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+
+		resp, err := http.Post(PlexAPIURL+"/player-controls", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Player Control",
+			Description: fmt.Sprintf("Successfully executed action: %s", action),
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
 	}
 
+	// Fix for volume command - properly declare and use jsonData
 	commandHandlers["volume"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		volume := i.ApplicationCommandData().Options[0].IntValue()
-		data := map[string]interface{}{
+		volumeData := map[string]interface{}{
 			"action": "setVolume",
 			"volume": volume,
 		}
-		makePostRequest(s, i, "/player-controls", data)
+
+		jsonData, err := json.Marshal(volumeData)
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+
+		resp, err := http.Post(PlexAPIURL+"/player-controls", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Volume Control",
+			Description: fmt.Sprintf("Set volume to: %d%%", volume),
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
 	}
 
+	// Fix for seek command - properly declare and use jsonData
 	commandHandlers["seek"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		seconds := i.ApplicationCommandData().Options[0].IntValue()
-		data := map[string]interface{}{
+		seekData := map[string]interface{}{
 			"action": "seekTo",
 			"time":   seconds * 1000, // Convert to milliseconds
 		}
-		makePostRequest(s, i, "/player-controls", data)
+
+		jsonData, err := json.Marshal(seekData)
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+
+		resp, err := http.Post(PlexAPIURL+"/player-controls", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "Seek Command",
+			Description: fmt.Sprintf("Seeked to position: %d:%02d", seconds/60, seconds%60),
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
 	}
 
+	// Update status command
 	commandHandlers["status"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, err := http.Get(PlexAPIURL + "/player-status")
 		if err != nil {
 			respondError(s, i, err)
 			return
 		}
+		defer resp.Body.Close()
 
 		var status struct {
 			State    string `json:"state"`
@@ -420,19 +781,35 @@ func init() {
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Title: "Player Status",
-			Fields: []*discordgo.MessageEmbedField{
-				{Name: "State", Value: status.State},
-				{Name: "Volume", Value: fmt.Sprintf("%d%% %s", status.Volume, map[bool]string{true: "(Muted)", false: ""}[status.Muted])},
-			},
+			Title:  "Player Status",
+			Fields: make([]*discordgo.MessageEmbedField, 0),
 		}
+
+		embed.Fields = append(embed.Fields,
+			&discordgo.MessageEmbedField{
+				Name:   "State",
+				Value:  strings.Title(status.State),
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Volume",
+				Value:  fmt.Sprintf("%d%% %s", status.Volume, map[bool]string{true: "(Muted)", false: ""}[status.Muted]),
+				Inline: true,
+			},
+		)
 
 		if status.Current != nil {
 			embed.Fields = append(embed.Fields,
-				&discordgo.MessageEmbedField{Name: "Playing", Value: status.Current.Title},
-				&discordgo.MessageEmbedField{Name: "Progress", Value: fmt.Sprintf("%d:%02d / %d:%02d",
-					status.Time/60000, (status.Time/1000)%60,
-					status.Duration/60000, (status.Duration/1000)%60)},
+				&discordgo.MessageEmbedField{
+					Name:   "Now Playing",
+					Value:  status.Current.Title,
+					Inline: false,
+				},
+				&discordgo.MessageEmbedField{
+					Name:   "Progress",
+					Value:  fmt.Sprintf("%d:%02d / %d:%02d", status.Time/60000, (status.Time/1000)%60, status.Duration/60000, (status.Duration/1000)%60),
+					Inline: true,
+				},
 			)
 		}
 
@@ -444,12 +821,14 @@ func init() {
 		})
 	}
 
+	// Update clients command
 	commandHandlers["clients"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, err := http.Get(PlexAPIURL + "/get-clients")
 		if err != nil {
 			respondError(s, i, err)
 			return
 		}
+		defer resp.Body.Close()
 
 		var result struct {
 			Clients []struct {
@@ -466,8 +845,9 @@ func init() {
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Title:  "Plex Clients",
-			Fields: []*discordgo.MessageEmbedField{},
+			Title:       "Plex Clients",
+			Description: fmt.Sprintf("Found %d client(s)", len(result.Clients)),
+			Fields:      make([]*discordgo.MessageEmbedField, 0),
 		}
 
 		for _, client := range result.Clients {
@@ -487,12 +867,14 @@ func init() {
 		})
 	}
 
+	// Update playlists command
 	commandHandlers["playlists"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, err := http.Get(PlexAPIURL + "/get-playlists")
 		if err != nil {
 			respondError(s, i, err)
 			return
 		}
+		defer resp.Body.Close()
 
 		var result struct {
 			Playlists []struct {
@@ -509,8 +891,9 @@ func init() {
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Title:  "Plex Playlists",
-			Fields: []*discordgo.MessageEmbedField{},
+			Title:       "Plex Playlists",
+			Description: fmt.Sprintf("Found %d playlist(s)", len(result.Playlists)),
+			Fields:      make([]*discordgo.MessageEmbedField, 0),
 		}
 
 		for _, playlist := range result.Playlists {
@@ -532,6 +915,138 @@ func init() {
 			},
 		})
 	}
+
+	// Update smart-search command
+	commandHandlers["smart-search"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		term := i.ApplicationCommandData().Options[0].StringValue()
+		mediaType := i.ApplicationCommandData().Options[1].StringValue()
+
+		searchURL := fmt.Sprintf("%s/smart-search?term=%s&type=%s",
+			PlexAPIURL, url.QueryEscape(term), mediaType)
+
+		resp, err := http.Get(searchURL)
+		if err != nil {
+			respondError(s, i, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		var result searchResult
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			respondError(s, i, err)
+			return
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title:       fmt.Sprintf("Search Results: %s", term),
+			Description: fmt.Sprintf("Found %d matches", result.Count),
+			Fields:      make([]*discordgo.MessageEmbedField, 0),
+		}
+
+		for _, item := range result.Results {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("%s (%d)", item.Title, item.Year),
+				Value:  item.Summary,
+				Inline: false,
+			})
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
+	}
+}
+
+func makePostRequest(s *discordgo.Session, i *discordgo.InteractionCreate, endpoint string, data interface{}) {
+	log.Printf("Making POST request to %s with data: %+v\n", endpoint, data)
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Error marshaling data: %v", err)
+		respondError(s, i, err)
+		return
+	}
+
+	resp, err := http.Post(PlexAPIURL+endpoint, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Error making request: %v", err)
+		respondError(s, i, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		respondError(s, i, err)
+		return
+	}
+
+	log.Printf("Raw response: %s", string(body))
+
+	var result PlexResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Error unmarshaling response: %v", err)
+		respondError(s, i, err)
+		return
+	}
+
+	if result.Error != "" {
+		log.Printf("Error in response: %s", result.Error)
+		respondError(s, i, fmt.Errorf(result.Error))
+		return
+	}
+
+	// Create standardized embed response
+	embed := &discordgo.MessageEmbed{
+		Title:       "Plex Command Result",
+		Description: fmt.Sprintf("Operation completed successfully"),
+		Fields:      make([]*discordgo.MessageEmbedField, 0),
+	}
+
+	if result.QueueLength > 0 {
+		embed.Description = fmt.Sprintf("Added %d items to queue", result.QueueLength)
+		for idx, item := range result.Items {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("%d.", idx+1),
+				Value:  item,
+				Inline: true,
+			})
+		}
+	}
+
+	log.Println("Sending response to Discord")
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
+
+	if err != nil {
+		log.Printf("Error sending Discord response: %v", err)
+	}
+}
+
+// Update error response to use embeds
+func respondError(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+	log.Printf("Sending error response: %v", err)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Error",
+		Description: err.Error(),
+		Color:       0xFF0000, // Red color for errors
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
 }
 
 // Separate handler function
@@ -571,47 +1086,6 @@ func handleSmartSearch(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-		},
-	})
-}
-
-func makePostRequest(s *discordgo.Session, i *discordgo.InteractionCreate, endpoint string, data interface{}) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		respondError(s, i, err)
-		return
-	}
-
-	resp, err := http.Post(PlexAPIURL+endpoint, "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		respondError(s, i, err)
-		return
-	}
-
-	var plexResp PlexResponse
-	if err := json.NewDecoder(resp.Body).Decode(&plexResp); err != nil {
-		respondError(s, i, err)
-		return
-	}
-
-	message := fmt.Sprintf("Queue length: %d", plexResp.QueueLength)
-	if len(plexResp.Items) > 0 {
-		message += "\nItems:\n" + strings.Join(plexResp.Items, "\n")
-	}
-
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: message,
-		},
-	})
-}
-
-func respondError(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "Error: " + err.Error(),
 		},
 	})
 }
@@ -657,8 +1131,9 @@ func main() {
 	select {}
 }
 
-
 func handleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	log.Println("Starting handleList function")
+
 	options := i.ApplicationCommandData().Options
 	mediaType := options[0].StringValue()
 	page := 1
@@ -670,36 +1145,74 @@ func handleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		search = options[2].StringValue()
 	}
 
-	url := fmt.Sprintf("%s/list-media?type=%s&page=%d", PlexAPIURL, mediaType, page)
+	log.Printf("List parameters - type: %s, page: %d, search: %s", mediaType, page, search)
+
+	baseURL := fmt.Sprintf("%s/list-media?type=%s&page=%d", PlexAPIURL, mediaType, page)
 	if search != "" {
-		url += "&search=" + url.QueryEscape(search)
+		baseURL += "&search=" + url.QueryEscape(search)
 	}
 
-	resp, err := http.Get(url)
+	log.Printf("Making request to: %s", baseURL)
+	resp, err := http.Get(baseURL)
 	if err != nil {
+		log.Printf("Error making request: %v", err)
 		respondError(s, i, err)
 		return
 	}
 	defer resp.Body.Close()
 
-	var result listMediaResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response: %v", err)
 		respondError(s, i, err)
 		return
 	}
 
+	var result listMediaResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Error unmarshaling response: %v", err)
+		respondError(s, i, err)
+		return
+	}
+
+	log.Printf("Got %d items from response", len(result.Items))
+
+	searchInfo := ""
+	if search != "" {
+		searchInfo = fmt.Sprintf(" - Search: %s", search)
+	}
+
 	embed := &discordgo.MessageEmbed{
-		Title:  fmt.Sprintf("%s (Page %d/%d)", strings.Title(mediaType), result.Page, result.TotalPages),
-		Fields: []*discordgo.MessageEmbedField{},
+		Title:       fmt.Sprintf("%s Library%s", strings.Title(mediaType), searchInfo),
+		Description: fmt.Sprintf("Page %d of %d (Total items: %d)", result.Page, result.TotalPages, result.Total),
+		Fields:      make([]*discordgo.MessageEmbedField, 0),
 	}
 
 	for _, item := range result.Items {
-		description := fmt.Sprintf("Year: %d\nRating: %.1f\nDuration: %d min",
-			item.Year, item.Rating, item.Duration/60000)
+		// Format duration in hours and minutes
+		hours := item.Duration / 3600000
+		minutes := (item.Duration % 3600000) / 60000
+
+		description := fmt.Sprintf("Year: %d\nRating: %.1f\nDuration: ", item.Year, item.Rating)
+		if hours > 0 {
+			description += fmt.Sprintf("%dh ", hours)
+		}
+		description += fmt.Sprintf("%dm", minutes)
+
 		if mediaType == "shows" {
 			description += fmt.Sprintf("\nSeasons: %d\nEpisodes: %d",
 				item.SeasonCount, item.EpisodeCount)
 		}
+
+		if item.Summary != "" {
+			// Truncate summary if it's too long
+			summary := item.Summary
+			if len(summary) > 100 {
+				summary = summary[:97] + "..."
+			}
+			description += fmt.Sprintf("\n\n%s", summary)
+		}
+
 		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 			Name:   item.Title,
 			Value:  description,
@@ -707,63 +1220,150 @@ func handleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 	}
 
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	// Add navigation footer if multiple pages
+	if result.TotalPages > 1 {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Use /list type:%s page:[1-%d] to navigate", mediaType, result.TotalPages),
+		}
+	}
+
+	log.Println("Sending response to Discord")
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
 		},
 	})
+
+	if err != nil {
+		log.Printf("Error sending response: %v", err)
+	}
 }
 
 func handleRandomMedia(s *discordgo.Session, i *discordgo.InteractionCreate, mediaType string) {
-	count := i.ApplicationCommandData().Options[0].IntValue()
+	log.Println("Starting handleRandomMedia function")
+
+	// Immediately acknowledge the interaction
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Processing your request...",
+		},
+	})
+	if err != nil {
+		log.Printf("Error acknowledging interaction: %v", err)
+		return
+	}
+
+	options := i.ApplicationCommandData().Options
+	count := options[0].IntValue()
+	useExistingQueue := false
+	if len(options) > 1 {
+		useExistingQueue = options[1].BoolValue()
+	}
+
+	log.Printf("Parameters - count: %d, mediaType: %s, useExistingQueue: %v", count, mediaType, useExistingQueue)
+
 	data := map[string]interface{}{
-		"number": count,
-		"type":   mediaType,
+		"number":             count,
+		"type":               mediaType,
+		"use_existing_queue": useExistingQueue,
 	}
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		respondError(s, i, err)
+		log.Printf("Error marshaling data: %v", err)
+		sendFollowUpError(s, i, err)
 		return
 	}
 
-	resp, err := http.Post(PlexAPIURL+"/get-random-media", "application/json", bytes.NewBuffer(jsonData))
+	log.Printf("Making POST request to %s/get-random-media with data: %s", PlexAPIURL, string(jsonData))
+
+	req, err := http.NewRequest("POST", PlexAPIURL+"/get-random-media", bytes.NewBuffer(jsonData))
 	if err != nil {
-		respondError(s, i, err)
+		log.Printf("Error creating request: %v", err)
+		sendFollowUpError(s, i, err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("Error making request: %v", err)
+		sendFollowUpError(s, i, fmt.Errorf("failed to make request: %v", err))
 		return
 	}
 	defer resp.Body.Close()
 
-	var result plexResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		respondError(s, i, err)
+	log.Printf("Received response with status code: %d", resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		sendFollowUpError(s, i, fmt.Errorf("failed to read response body: %v", err))
 		return
 	}
+
+	log.Printf("Raw response body: %s", string(body))
+
+	var result PlexResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Error unmarshaling response: %v", err)
+		sendFollowUpError(s, i, fmt.Errorf("failed to parse response: %v\nraw response: %s", err, string(body)))
+		return
+	}
+
+	log.Printf("Parsed response: %+v", result)
 
 	if result.Error != "" {
-		respondError(s, i, fmt.Errorf(result.Error))
+		log.Printf("Error in response: %s", result.Error)
+		sendFollowUpError(s, i, fmt.Errorf(result.Error))
 		return
 	}
 
+	log.Println("Creating embed message")
 	embed := &discordgo.MessageEmbed{
-		Title: fmt.Sprintf("Random %s Queue", strings.Title(mediaType)),
-		Description: fmt.Sprintf("Added %d items to queue:", len(result.Items)),
-		Fields: make([]*discordgo.MessageEmbedField, len(result.Items)),
+		Title:       fmt.Sprintf("Random %s Queue", strings.Title(mediaType)),
+		Description: fmt.Sprintf("Added %d items to queue", result.QueueLength),
+		Fields:      make([]*discordgo.MessageEmbedField, 0),
+		Color:       0x00FF00, // Add green color for success
 	}
 
-	for i, title := range result.Items {
-		embed.Fields[i] = &discordgo.MessageEmbedField{
-			Name: fmt.Sprintf("%d.", i+1),
-			Value: title,
+	for idx, title := range result.Items {
+		log.Printf("Adding item to embed: %s", title)
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:   fmt.Sprintf("%d.", idx+1),
+			Value:  title,
 			Inline: true,
-		}
+		})
 	}
 
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed},
-		},
+	log.Println("Sending follow-up message to Discord")
+	// Use FollowupMessageCreate instead of InteractionRespond
+	_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+		Embeds: []*discordgo.MessageEmbed{embed},
 	})
+
+	if err != nil {
+		log.Printf("Error sending follow-up message: %v", err)
+		sendFollowUpError(s, i, fmt.Errorf("failed to send response: %v", err))
+	} else {
+		log.Println("Successfully sent Discord response")
+	}
+}
+
+func sendFollowUpError(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+	errorEmbed := &discordgo.MessageEmbed{
+		Title:       "Error",
+		Description: err.Error(),
+		Color:       0xFF0000,
+	}
+
+	// Use FollowupMessageCreate instead of InteractionResponseEdit
+	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Embeds: []*discordgo.MessageEmbed{errorEmbed},
+	})
+	if err != nil {
+		log.Printf("Error sending error message: %v", err)
+	}
 }
