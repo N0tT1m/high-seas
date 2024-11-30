@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose the port on which the Django API will run (default is 8000)
-EXPOSE 3232
+EXPOSE 5000
 
 # Run the Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:3232"]
+CMD ["python", "launcher.py"]
