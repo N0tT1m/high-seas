@@ -91,6 +91,7 @@ interface ShowDetails {
   type: string,
   vote_average: number,
   vote_count: number,
+  in_plex: boolean,
 }
 
 interface MovieDetails {
@@ -115,6 +116,7 @@ interface MovieDetails {
   video: boolean,
   vote_average: number,
   vote_count: number,
+  in_plex: boolean,
 }
 
 interface QueryRequest {

@@ -57,21 +57,21 @@ type TMDbResponse struct {
 }
 
 type TMDbResults struct {
-	Adult            bool   `json:"adult"`
-	BackdropPath     string `json:"backdrop_path"`
-	FirstAirDate     string `json:"first_air_date"`
-	GenreIds         []uint `json:"genre_ids"`
-	Id               uint   `json:"id"`
-	Name             string `json:"name"`
-	OriginalLanguage string `json:"original_language"`
-	OriginalName     string `json:"original_name"`
-	Overview         string `json:"overview"`
-	Popularity       uint   `json:"popularity"`
-	PosterPath       string `json:"poster_path"`
-	VoteAverage      uint   `json:"vote_average"`
-	VoteCount        uint   `json:"vote_count"`
-	Video            bool   `json:"video"`
-	InPlex           bool   `json:"in_plex"`
+	Adult            bool    `json:"adult"`
+	BackdropPath     string  `json:"backdrop_path"`
+	FirstAirDate     string  `json:"first_air_date"`
+	GenreIds         []uint  `json:"genre_ids"`
+	Id               uint    `json:"id"`
+	Name             string  `json:"name"`
+	OriginalLanguage string  `json:"original_language"`
+	OriginalName     string  `json:"original_name"`
+	Overview         string  `json:"overview"`
+	Popularity       float64 `json:"popularity"`
+	PosterPath       string  `json:"poster_path"`
+	VoteAverage      float64 `json:"vote_average"`
+	VoteCount        float64 `json:"vote_count"`
+	Video            bool    `json:"video"`
+	InPlex           bool    `json:"in_plex"`
 }
 
 var user = utils.EnvVar("DB_USER", "")

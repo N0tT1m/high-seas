@@ -83,6 +83,7 @@ export class PopularTvShowsComponent {
           vote_average: show['vote_average'],
           vote_count: show['vote_count'],
           video: show['video'],
+          in_plex: show['in_plex'],
         }],
         total_pages: resp['total_pages'],
         total_result: resp['total_results'],

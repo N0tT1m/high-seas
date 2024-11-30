@@ -14,7 +14,7 @@ PLEX_TIMEOUT = 60
 
 # Initialize Flask app
 app = Flask(__name__)
-allowed_origin = os.getenv('CORS_ORIGIN', 'http://localhost:6969')
+allowed_origin = os.getenv('CORS_ORIGIN', '*')
 CORS(app, resources={r"/*": {"origins": allowed_origin}})
 
 # Configure logging

@@ -82,6 +82,7 @@ export class PopularMoviesComponent {
           vote_average: movie['vote_average'],
           vote_count: movie['vote_count'],
           video: movie['video'],
+          in_plex: movie['in_plex']
         }],
         total_pages: resp['total_pages'],
         total_result: resp['total_results'],

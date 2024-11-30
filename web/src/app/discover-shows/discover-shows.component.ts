@@ -55,7 +55,7 @@ import { MatPaginator } from '@angular/material/paginator';
     </div>
 
     <footer class="paginator-container">
-      <mat-paginator 
+      <mat-paginator
         [length]="this.totalShows"
         [pageSize]="this.showsLength"
         aria-label="Select page"
@@ -75,8 +75,8 @@ export class DiscoverShowsComponent {
 
   public show: TvShow;
   public showNames = [{}];
-  public fetchedTvShows: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]
-  public allShows: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false }], total_pages: 0, total_result: 0 }]
+  public fetchedTvShows: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false }], total_pages: 0, total_result: 0 }]
+  public allShows: TvShow[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false }], total_pages: 0, total_result: 0 }]
   filteredShowsList: TvShow[] = [];
   public galleryShowsRef: GalleryRef;
   public genreDetails: Genre[] = [{ id: 0, name: "None" }];
@@ -148,8 +148,9 @@ export class DiscoverShowsComponent {
           let voteCount = show['vote_count'];
           let totalPages = resp['total_pages'];
           let totalResult = resp['total_result'];
+          let in_plex = resp['in_plex'];
 
-          let result: TvShowResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
+          let result: TvShowResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: false}]
 
           this.allShows.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
         })
@@ -192,8 +193,9 @@ export class DiscoverShowsComponent {
         let voteCount = show['vote_count'];
         let totalPages = resp['total_pages'];
         let totalResult = resp['total_result'];
+        let in_plex = resp['in_plex'];
 
-        let result: TvShowResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
+        let result: TvShowResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex }]
 
         this.fetchedTvShows.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
       })

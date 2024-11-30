@@ -113,7 +113,7 @@ import { TvShowService } from '../tv-service.service';
         <span class="show-video-value">{{show!.video}}</span>
       </div>
     </section>
-    <div class="movie-meta-item" *ngIf="show.in_plex">
+    <div class="movie-meta-item" *ngIf="show!.in_plex != undefined">
       <div class="movie-meta-label">Status:</div>
       <div class="movie-meta-value">
         <span class="plex-badge">Available in Plex</span>
@@ -142,9 +142,9 @@ export class TopRatedTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);
-  public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
   public fetchedShow: TvShow | undefined;
-  public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
   public showsLength: number;
   public seasonEpisodeNumbers = [0];
   public totalSeason = [0];
@@ -160,6 +160,7 @@ export class TopRatedTvShowsDetailsComponent {
   public quality = '1080p'; // Default download quality
   public tmdbId: number = 0;
   public overview: string = "";
+  public in_plex: boolean = false;
 
   constructor() {
 
@@ -189,6 +190,7 @@ export class TopRatedTvShowsDetailsComponent {
           let voteCount = show['vote_count'];
           let totalPages = resp['total_pages'];
           let totalResult = resp['total_results'];
+          let in_plex = resp['in_plex'];
 
           let result: TvShowResult[] = [{
             adult: isAdult,
@@ -204,7 +206,8 @@ export class TopRatedTvShowsDetailsComponent {
             poster_path: posterPath,
             vote_average: voteAverage,
             vote_count: voteCount,
-            video: video
+            video: video,
+            in_plex: in_plex,
           }];
 
           this.tvShowList.push({
@@ -242,6 +245,7 @@ export class TopRatedTvShowsDetailsComponent {
         this.tageline = show.tagline;
         this.tmdbId = show.id;
         this.overview = show.overview;
+        this.in_plex = show.in_plex;
       }
 
       this.seasonEpisodeNumbers.splice(0, 1);

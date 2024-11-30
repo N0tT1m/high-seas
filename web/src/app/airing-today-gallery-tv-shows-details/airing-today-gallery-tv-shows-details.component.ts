@@ -127,9 +127,9 @@ export class AiringTodayGalleryTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);
-  public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
   public fetchedShow: TvShow | undefined;
-  public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
   public showsLength: number;
   public seasonEpisodeNumbers = [0];
   public totalSeason = [0];
@@ -175,6 +175,7 @@ export class AiringTodayGalleryTvShowsDetailsComponent {
           let voteCount = show['vote_count'];
           let totalPages = resp['total_pages'];
           let totalResult = resp['total_results'];
+          let in_plex = resp['in_plex']
 
           let result: TvShowResult[] = [{
             adult: isAdult,
@@ -190,7 +191,8 @@ export class AiringTodayGalleryTvShowsDetailsComponent {
             poster_path: posterPath,
             vote_average: voteAverage,
             vote_count: voteCount,
-            video: video
+            video: video,
+            in_plex: in_plex,
           }];
 
           this.tvShowList.push({

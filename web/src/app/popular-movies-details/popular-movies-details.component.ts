@@ -69,6 +69,12 @@ import { MovieService } from '../movies.service';
         <span class="movie-video-value">{{movie!.video}}</span>
       </div>
     </section>
+    <div class="movie-meta-item" *ngIf="movie.in_plex">
+      <div class="movie-meta-label">Status:</div>
+      <div class="movie-meta-value">
+        <span class="plex-badge">Available in Plex</span>
+      </div>
+    </div>
     <div class="movie-actions">
       <div class="movie-download-quality">
         <label for="quality" class="movie-download-quality-label">Download Quality:</label>
@@ -94,7 +100,7 @@ export class PopularMoviesDetailsComponent {
   public movieService = inject(MovieService);
   // public fetchedMovie: MovieResult[] = [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}]
   public fetchedMovie: Movie | undefined;
-  public movieList: Movie[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
+  public movieList: Movie[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
   public tagline: string = "";
   public homepage: string = "";
   public releaseDate: string = "";
@@ -133,8 +139,9 @@ export class PopularMoviesDetailsComponent {
         let voteCount = movie['vote_count'];
         let totalPages = resp['total_pages'];
         let totalResult = resp['total_result'];
+        let in_plex = resp['in_plex'];
 
-        let result: MovieResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
+        let result: MovieResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex}]
 
         this.movieList.push({ page: page, results: result,  total_pages: totalPages, total_result: totalResult });
       })
