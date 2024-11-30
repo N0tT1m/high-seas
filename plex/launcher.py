@@ -97,65 +97,44 @@ def get_shows():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-@app.route("/get-random-movie")
-def get_random_movie():
-    baseurl = 'http://' + config.PLEX_IP + ':' + config.PLEX_PORT
-    token = 'Y7fU6x3PPqr8A-P3WEjq'
-    plex = PlexServer(baseurl, token)
 
-    num = request.form['number']
+@app.route("/get-random-media", methods=['POST'])
+def get_random_media():
+    try:
+        data = request.json
+        count = int(data.get('number', 1))
+        media_type = data.get('type', 'movie')
 
-    devices()
+        logger.info(f"Random {media_type} request - count: {count}")
 
-    device_id = 36
+        plex = login()
+        library = plex.library.section('Movies' if media_type == 'movie' else 'TV Shows')
+        available_media = library.search(unwatched=True)
 
-    movies = plex.library.section('Movies').all()
-    movie_type = random.choice(movies)
-    queue = plex.createPlayQueue(movie_type)
-    print("Num: ", num)
-    for item in range(int(num)):
-        movies = plex.library.section('Movies').all()
-        movie = random.choice(movies)
-        queue.addItem(movie)
-        print(queue.items)
+        if not available_media:
+            return jsonify({'error': 'No unwatched media available'}), 404
 
-    print(plex.clients())
-    client = plex.client("Ryzen-Win")
-    client.playMedia(queue)
+        selected_items = random.sample(available_media, min(count, len(available_media)))
+        queue = plex.createPlayQueue(selected_items[0])
 
-    response = jsonify({'queue length': len(queue.items)})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+        queued_items = [selected_items[0].title]
+        for item in selected_items[1:]:
+            queue.addItem(item)
+            queued_items.append(item.title)
 
-@app.route("/get-random-show")
-def get_random_show():
-    baseurl = 'http://' + config.PLEX_IP + ':' + config.PLEX_PORT
-    token = 'Y7fU6x3PPqr8A-P3WEjq'
-    plex = PlexServer(baseurl, token)
+        client = plex.client("Ryzen-Win")
+        client.playMedia(queue)
 
-    num = request.form['number']
+        response = {
+            'queue_length': len(queued_items),
+            'items': queued_items
+        }
+        logger.info(f"Queued items: {response}")
+        return jsonify(response)
 
-    devices()
-
-    device_id = 36
-
-    movies = plex.library.section('TV Shows').all()
-    movie_type = random.choice(movies)
-    queue = plex.createPlayQueue(movie_type)
-    print("Num: ", num)
-    for item in range(int(num)):
-        movies = plex.library.section('TV Shows').all()
-        movie = random.choice(movies)
-        queue.addItem(movie)
-        print(queue.items)
-
-    print(plex.clients())
-    client = plex.client("Ryzen-Win")
-    client.playMedia(queue)
-
-    response = jsonify({'queue length': len(queue.items)})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    except Exception as e:
+        logger.error(f"Error in get_random_media: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route("/queue-specific", methods=['POST'])
@@ -266,76 +245,84 @@ def add_to_queue():
 
 @app.route("/list-media", methods=['GET'])
 def list_media():
-    plex = login()
-    media_type = request.args.get('type', 'movies')
-    page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 20))
-    search_term = request.args.get('search', '')
+    try:
+        plex = login()
+        media_type = request.args.get('type', 'movies')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+        search_term = request.args.get('search', '')
 
-    section = plex.library.section('Movies' if media_type == 'movies' else 'TV Shows')
-    all_media = section.search(title=search_term) if search_term else section.all()
+        logger.info(f"List media request - type: {media_type}, page: {page}, search: {search_term}")
 
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    page_items = all_media[start_idx:end_idx]
+        library = plex.library.section('Movies' if media_type == 'movies' else 'TV Shows')
+        all_media = library.search(title=search_term) if search_term else library.all()
 
-    items = []
-    for item in page_items:
-        media_item = {
-            "title": item.title,
-            "year": item.year,
-            "summary": item.summary,
-            "rating": item.rating,
-            "duration": item.duration,
-            "thumb": item.thumb
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        page_items = all_media[start_idx:end_idx]
+
+        items = []
+        for item in page_items:
+            media_item = {
+                "title": item.title,
+                "year": item.year,
+                "summary": item.summary,
+                "rating": item.rating,
+                "duration": item.duration
+            }
+            if media_type == 'shows':
+                media_item.update({
+                    "episode_count": len(item.episodes()),
+                    "season_count": len(item.seasons())
+                })
+            items.append(media_item)
+
+        response = {
+            'items': items,
+            'total': len(all_media),
+            'page': page,
+            'total_pages': (len(all_media) + per_page - 1) // per_page
         }
+        logger.info(f"Returning {len(items)} items")
+        return jsonify(response)
 
-        if media_type == 'shows':
-            media_item["episode_count"] = len(item.episodes())
-            media_item["season_count"] = len(item.seasons())
-
-        items.append(media_item)
-
-    return jsonify({
-        'items': items,
-        'total': len(all_media),
-        'page': page,
-        'per_page': per_page,
-        'total_pages': (len(all_media) + per_page - 1) // per_page
-    })
+    except Exception as e:
+        logger.error(f"Error in list_media: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route("/player-controls", methods=['POST'])
 def player_controls():
-    plex = login()
-    action = request.json.get('action')
-    client = plex.client("Ryzen-Win")
-
-    actions = {
-        'play': client.play,
-        'pause': client.pause,
-        'stop': client.stop,
-        'skipNext': client.skipNext,
-        'skipPrevious': client.skipPrevious,
-        'stepForward': client.stepForward,
-        'stepBack': client.stepBack,
-        'seekTo': lambda: client.seekTo(int(request.json.get('time', 0))),
-        'setVolume': lambda: client.setVolume(int(request.json.get('volume', 100))),
-        'setAudioStream': lambda: client.setAudioStream(int(request.json.get('stream', 0))),
-        'setSubtitleStream': lambda: client.setSubtitleStream(int(request.json.get('stream', 0))),
-        'toggleMute': lambda: client.setVolume(0) if client.volume > 0 else client.setVolume(100),
-        'repeat': lambda: client.setRepeat(request.json.get('state', 0)),
-        'shuffle': lambda: client.setShuffle(request.json.get('state', 0))
-    }
-
     try:
+        data = request.json
+        action = data.get('action')
+        logger.info(f"Player control request: {action}")
+
+        plex = login()
+        client = plex.client("Ryzen-Win")
+
+        actions = {
+            'play': client.play,
+            'pause': client.pause,
+            'stop': client.stop,
+            'skipNext': client.skipNext,
+            'skipPrevious': client.skipPrevious,
+            'seekTo': lambda: client.seekTo(int(data.get('time', 0))),
+            'setVolume': lambda: client.setVolume(int(data.get('volume', 100))),
+            'toggleMute': lambda: client.setVolume(0) if client.volume > 0 else client.setVolume(100)
+        }
+
         if action in actions:
             actions[action]()
+            logger.info(f"Action {action} executed successfully")
             return jsonify({'status': 'success'})
-        return jsonify({'error': 'Invalid action'}), 400
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
+        logger.error(f"Invalid action: {action}")
+        return jsonify({'error': 'Invalid action'}), 400
+
+    except Exception as e:
+        logger.error(f"Error in player_controls: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/player-status")
 def player_status():

@@ -18,12 +18,26 @@ const (
 	PlexAPIURL = "http://localhost:5000"
 )
 
-type PlexResponse struct {
-	Movies      int      `json:"movies,omitempty"`
-	Shows       int      `json:"shows,omitempty"`
-	QueueLength int      `json:"queue_length,omitempty"`
-	Items       []string `json:"items,omitempty"`
-	Error       string   `json:"error,omitempty"`
+type plexResponse struct {
+	Status      string   `json:"status"`
+	Error       string   `json:"error"`
+	QueueLength int      `json:"queue_length"`
+	Items       []string `json:"items"`
+}
+
+type listMediaResponse struct {
+	Items []struct {
+		Title        string  `json:"title"`
+		Year         int     `json:"year"`
+		Summary      string  `json:"summary"`
+		Rating       float64 `json:"rating"`
+		Duration     int     `json:"duration"`
+		EpisodeCount int     `json:"episode_count,omitempty"`
+		SeasonCount  int     `json:"season_count,omitempty"`
+	} `json:"items"`
+	Total      int `json:"total"`
+	Page       int `json:"page"`
+	TotalPages int `json:"total_pages"`
 }
 
 // Define result struct globally
@@ -150,7 +164,7 @@ func init() {
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "type",
-					Description: "Media type (movies/shows)",
+					Description: "Media type",
 					Required:    true,
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{Name: "Movies", Value: "movies"},
@@ -275,15 +289,11 @@ func init() {
 	}
 
 	commandHandlers["random_movie"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		count := i.ApplicationCommandData().Options[0].IntValue()
-		data := map[string]int{"number": int(count)}
-		makePostRequest(s, i, "/get-random-movie", data)
+		handleRandomMedia(s, i, "movie")
 	}
 
 	commandHandlers["random_show"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		count := i.ApplicationCommandData().Options[0].IntValue()
-		data := map[string]int{"number": int(count)}
-		makePostRequest(s, i, "/get-random-show", data)
+		handleRandomMedia(s, i, "show")
 	}
 
 	commandHandlers["queue"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -356,69 +366,7 @@ func init() {
 		makePostRequest(s, i, "/add-to-queue", data)
 	}
 
-	commandHandlers["list"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		options := i.ApplicationCommandData().Options
-		mediaType := options[0].StringValue()
-		page := 1
-		if len(options) > 1 {
-			page = int(options[1].IntValue())
-		}
-		search := ""
-		if len(options) > 2 {
-			search = options[2].StringValue()
-		}
-
-		requestURL := fmt.Sprintf("%s/list-media?type=%s&page=%d&per_page=10", PlexAPIURL, mediaType, page)
-		if search != "" {
-			requestURL += "&search=" + url.QueryEscape(search)
-		}
-
-		resp, err := http.Get(requestURL)
-		if err != nil {
-			respondError(s, i, err)
-			return
-		}
-
-		var result struct {
-			Items      []map[string]interface{} `json:"items"`
-			Total      int                      `json:"total"`
-			Page       int                      `json:"page"`
-			TotalPages int                      `json:"total_pages"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			respondError(s, i, err)
-			return
-		}
-
-		embed := &discordgo.MessageEmbed{
-			Title:  fmt.Sprintf("%s List (Page %d/%d)", strings.Title(mediaType), page, result.TotalPages),
-			Fields: []*discordgo.MessageEmbedField{},
-		}
-
-		for _, item := range result.Items {
-			title := fmt.Sprintf("%s (%v)", item["title"], item["year"])
-			details := fmt.Sprintf("Rating: %.1f", item["rating"])
-			if mediaType == "shows" {
-				details += fmt.Sprintf("\nSeasons: %v\nEpisodes: %v",
-					item["season_count"], item["episode_count"])
-			}
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-				Name:  title,
-				Value: details,
-			})
-		}
-
-		embed.Footer = &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Total %s: %d", mediaType, result.Total),
-		}
-
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{embed},
-			},
-		})
-	}
+	"list": handleList,
 
 	commandHandlers["smart-search"] = handleSmartSearch
 
@@ -707,4 +655,115 @@ func main() {
 
 	log.Println("Bot is running. Press CTRL-C to exit.")
 	select {}
+}
+
+
+func handleList(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	options := i.ApplicationCommandData().Options
+	mediaType := options[0].StringValue()
+	page := 1
+	if len(options) > 1 {
+		page = int(options[1].IntValue())
+	}
+	search := ""
+	if len(options) > 2 {
+		search = options[2].StringValue()
+	}
+
+	url := fmt.Sprintf("%s/list-media?type=%s&page=%d", PlexAPIURL, mediaType, page)
+	if search != "" {
+		url += "&search=" + url.QueryEscape(search)
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		respondError(s, i, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var result listMediaResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		respondError(s, i, err)
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:  fmt.Sprintf("%s (Page %d/%d)", strings.Title(mediaType), result.Page, result.TotalPages),
+		Fields: []*discordgo.MessageEmbedField{},
+	}
+
+	for _, item := range result.Items {
+		description := fmt.Sprintf("Year: %d\nRating: %.1f\nDuration: %d min",
+			item.Year, item.Rating, item.Duration/60000)
+		if mediaType == "shows" {
+			description += fmt.Sprintf("\nSeasons: %d\nEpisodes: %d",
+				item.SeasonCount, item.EpisodeCount)
+		}
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:   item.Title,
+			Value:  description,
+			Inline: true,
+		})
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
+}
+
+func handleRandomMedia(s *discordgo.Session, i *discordgo.InteractionCreate, mediaType string) {
+	count := i.ApplicationCommandData().Options[0].IntValue()
+	data := map[string]interface{}{
+		"number": count,
+		"type":   mediaType,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		respondError(s, i, err)
+		return
+	}
+
+	resp, err := http.Post(PlexAPIURL+"/get-random-media", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		respondError(s, i, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var result plexResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		respondError(s, i, err)
+		return
+	}
+
+	if result.Error != "" {
+		respondError(s, i, fmt.Errorf(result.Error))
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: fmt.Sprintf("Random %s Queue", strings.Title(mediaType)),
+		Description: fmt.Sprintf("Added %d items to queue:", len(result.Items)),
+		Fields: make([]*discordgo.MessageEmbedField, len(result.Items)),
+	}
+
+	for i, title := range result.Items {
+		embed.Fields[i] = &discordgo.MessageEmbedField{
+			Name: fmt.Sprintf("%d.", i+1),
+			Value: title,
+			Inline: true,
+		}
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
 }
