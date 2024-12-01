@@ -30,7 +30,7 @@ export class TvShowService {
 
   getTopRated(page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/top_rated?page=' + page.toString()
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/top-rated-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/top-rated-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -40,7 +40,7 @@ export class TvShowService {
 
   getInitialTopRatedPage() {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/top_rated?page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-top-rated-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-top-rated-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -50,7 +50,7 @@ export class TvShowService {
 
   getOnTheAir(page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=' + page.toString()
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/on-the-air-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/on-the-air-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -60,7 +60,7 @@ export class TvShowService {
 
   getInitialOnTheAirPage() {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-on-the-air-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-on-the-air-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -70,7 +70,7 @@ export class TvShowService {
 
   getPopular(page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/popular?page=' + page.toString();
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/popular-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/popular-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -81,7 +81,7 @@ export class TvShowService {
 
   getInitialPopularPage() {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/popular?page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-popular-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-popular-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -91,7 +91,7 @@ export class TvShowService {
 
   getAiringToday(page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=' + page.toString()
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/airing-today-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/airing-today-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -101,7 +101,7 @@ export class TvShowService {
 
   getInitialAiringTodayPage() {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-airing-today-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-airing-today-tv-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -116,7 +116,7 @@ export class TvShowService {
     // with_people=Shah%20Rukh%20Khan%20AND%20Shah%20Rukh%20Khan
 
     var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=' + page.toString();
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/all-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -126,7 +126,7 @@ export class TvShowService {
 
   getInitialPage(query: string) {
     var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/initial-all-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-all-shows';
 
     setTimeout(function () {
     }, 4000000);
@@ -188,14 +188,14 @@ export class TvShowService {
   }
 
   getGenres() {
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/genres';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/genres';
 
     return this.http.post<GenreRequest>(tvShowUrl, {"url": this.genreUrl}, { headers: this.headers })
   }
 
   getShowDetails(id) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/'+ id +'?language=en-US';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/tv-show-details';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/tv-show-details';
 
      return this.http.post<ShowDetails>(tvShowUrl, {"url": tmdbUrl, "request_id": id}, { headers: this.headers })
   }
@@ -203,7 +203,7 @@ export class TvShowService {
   // Movie[] {
   getAllTvShows(genre: number, airDate: string, page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/all-shows';
 
 
     return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers })
@@ -211,7 +211,7 @@ export class TvShowService {
 
   getAllShowsForDetails(genre: number, airDate: string, page: number) {
     var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&language=en-US&sort_by=popularity.desc&with_release_type=4|5|6';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/tv-show-details';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/tv-show-details';
 
 
     // const options = { method: 'GET', headers: this.headers };
@@ -228,7 +228,7 @@ export class TvShowService {
     // TODO: Add multiple people filter.
     // with_people=Shah%20Rukh%20Khan%20AND%20Shah%20Rukh%20Khan
     var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows-from-date';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/all-shows-from-date';
 
     setTimeout(function () {
     }, 4000000);

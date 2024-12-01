@@ -227,7 +227,7 @@ export class SearchTvShowDetailsComponent {
       }
     });
 
-    this.tvShowService.getShowDetails(tvShowId).subscribe(show => {
+    this.tvShowService.getTvShowDetails(tvShowId).subscribe(show => {
       this.showsLength = show.seasons.length;
       for (var i = 0; i < this.showsLength; i++) {
         this.seasonEpisodeNumbers.push(show.seasons[i]['episode_count'])
@@ -260,7 +260,7 @@ export class SearchTvShowDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      this.tvShowService.makeAnimeDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request))
+      this.tvShowService.makeAnimeShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
       this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
