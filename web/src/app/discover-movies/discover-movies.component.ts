@@ -84,8 +84,8 @@ export class DiscoverMoviesComponent {
 
   public movie: Movie;
   public movieTitles = [{}];
-  public fetchedMovies: Movie[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false }], total_pages: 0, total_result: 0 }]
-  public allMovies: Movie[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false }], total_pages: 0, total_result: 0 }]
+  public fetchedMovies: Movie[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0 }]
+  public allMovies: Movie[] = [{ page: 0, results: [{ adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0 }]
   public filteredMovieList: Movie[] = [];
   public galleryMoviesRef: GalleryRef;
   public genreDetails: Genre[] = [{ id: 0, name: "None" }];
@@ -166,7 +166,7 @@ export class DiscoverMoviesComponent {
           let totalResult = resp['total_result'];
           let in_plex = resp['in_plex'];
 
-          let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex }]
+          let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
 
           this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
         })
@@ -215,7 +215,7 @@ export class DiscoverMoviesComponent {
         let totalResult = resp['total_result'];
         let in_plex = resp['in_plex'];
 
-        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex }]
+        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
 
         this.fetchedMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
       })

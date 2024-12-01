@@ -54,7 +54,6 @@ interface MovieResult {
   vote_average: number,
   vote_count: number,
   video: boolean,
-  in_plex: boolean,
 }
 
 interface ShowDetails {

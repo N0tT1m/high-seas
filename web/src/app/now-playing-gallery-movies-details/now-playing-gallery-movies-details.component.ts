@@ -69,7 +69,7 @@ import { MovieService } from '../movies.service';
         <span class="movie-video-value">{{movie!.video}}</span>
       </div>
     </section>
-    <div class="movie-meta-item" *ngIf="movie.in_plex">
+    <div class="movie-meta-item" *ngIf="this.in_plex != false">
       <div class="movie-meta-label">Status:</div>
       <div class="movie-meta-value">
         <span class="plex-badge">Available in Plex</span>
@@ -100,7 +100,7 @@ export class NowPlayingGalleryMoviesDetails {
   public movieService = inject(MovieService);
   // public fetchedMovie: MovieResult[] = [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}]
   public fetchedMovie: Movie | undefined;
-  public movieList: Movie[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
+  public movieList: Movie[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
   public tagline: string = "";
   public homepage: string = "";
   public releaseDate: string = "";
@@ -110,6 +110,7 @@ export class NowPlayingGalleryMoviesDetails {
   public belongsToCollection: boolean = false;
   public overview: string = "";
   public quality = '1080p'; // Default download quality
+  public in_plex = false;
 
   constructor() {
 
@@ -139,9 +140,8 @@ export class NowPlayingGalleryMoviesDetails {
         let voteCount = movie['vote_count'];
         let totalPages = resp['total_pages'];
         let totalResult = resp['total_result'];
-        let in_plex = resp['in_plex'];
 
-        let result: MovieResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex}]
+        let result: MovieResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
 
         this.movieList.push({ page: page, results: result,  total_pages: totalPages, total_result: totalResult });
       })
@@ -173,7 +173,7 @@ export class NowPlayingGalleryMoviesDetails {
       this.movieService.makeAnimeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request))
     } else {
       console.log('Movie');
-      this.movieService.makeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(
+      this.movieService.makeMovieDownloadRequest(title, this.quality, Number(this.tmdbId), this.overview).subscribe(
         request => {
           console.log(request);
           // Show the pop-up when the request is successful

@@ -71,6 +71,27 @@ type Genre struct {
 	Name string `json:"name"`
 }
 
+// MovieDetails represents the movie details response
+type MovieDetails struct {
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Overview    string  `json:"overview"`
+	ReleaseDate string  `json:"release_date"`
+	VoteAverage float64 `json:"vote_average"`
+	InPlex      bool    `json:"in_plex"`
+}
+
+// TMDbMovieRequest represents the request structure for TMDb movie endpoints
+type TMDbMovieRequest struct {
+	URL string `json:"url"`
+}
+
+// TMDbDetailedMovieRequest includes request ID for detailed movie queries
+type TMDbDetailedMovieRequest struct {
+	URL       string `json:"url"`
+	RequestID int    `json:"request_id"`
+}
+
 type TMDbResults struct {
 	Adult            bool    `json:"adult"`
 	BackdropPath     string  `json:"backdrop_path"`

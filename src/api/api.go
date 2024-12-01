@@ -510,3 +510,198 @@ func QueryDetailedTopRatedTvShows(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func processMovieTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {
+	header := c.Request.Header.Get("Authorization")
+
+	client := &http.Client{Timeout: time.Second * 30}
+	req, err := http.NewRequest("GET", strings.TrimSpace(url), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Authorization", header)
+	req.Header.Add("accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response db.TMDbResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	return &response, nil
+}
+
+func processDetailedMovieTMDbRequest(c *gin.Context, url string, requestID int) (*db.MovieDetails, error) {
+	header := c.Request.Header.Get("Authorization")
+
+	client := &http.Client{Timeout: time.Second * 30}
+	req, err := http.NewRequest("GET", strings.TrimSpace(url), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Authorization", header)
+	req.Header.Add("accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response db.MovieDetails
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	if response.ID == requestID {
+		response.InPlex = CheckPlexStatus(response.Title)
+	}
+
+	return &response, nil
+}
+
+// Movie endpoints
+func QueryTopRatedMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryPopularMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryNowPlayingMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryUpcomingMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryMovieDetails(c *gin.Context) {
+	var request db.TMDbDetailedMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processDetailedMovieTMDbRequest(c, request.URL, request.RequestID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryMoviesByGenre(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryMovieSearch(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryMovieGenres(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}

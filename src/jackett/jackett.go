@@ -497,7 +497,7 @@ func tryAddTorrentWithFallback(results []searchResult) bool {
 	return false
 }
 
-// MakeAnimeMovieQuery handles searching and downloading anime movies
+// MakeAnimeMovieQuery handles searching and downloading anime movies with improved validation
 func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
@@ -505,54 +505,45 @@ func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
+	// Try with specific anime movie categories
 	queryString := fmt.Sprintf("%s %s", query, quality)
 	logger.WriteInfo(fmt.Sprintf("Searching for anime movie: %s", queryString))
 
-	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: animeMovieCategories,
-		Query:      queryString,
-	})
-	if err != nil {
-		logger.WriteFatal("Failed to fetch from Jackett.", err)
-		return err
+	// First attempt with strict anime movie categories
+	if err := searchAnimeMovie(ctx, j, queryString, tmdbID, quality); err == nil {
+		return nil
 	}
 
-	results := processResults(resp.Results, tmdbID, quality, query)
-	if len(results) > 0 {
-		if addTorrentToDeluge(results[0].result) {
-			return nil
-		}
-		return fmt.Errorf("failed to add anime movie torrent to Deluge")
+	// Fallback to broader categories if needed
+	fallbackCategories := [][]uint{
+		{2000, 2010, 100001}, // Anime-specific
+		{2000, 2010, 2020},   // General movies
 	}
 
-	// If no results found with preferred quality, try alternative qualities
-	alternativeQualities := []string{"1080p", "720p", "480p"}
-	for _, altQuality := range alternativeQualities {
-		if altQuality == quality {
-			continue
-		}
-
-		queryString := fmt.Sprintf("%s %s", query, altQuality)
+	for _, categories := range fallbackCategories {
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-			Categories: animeMovieCategories,
+			Categories: categories,
 			Query:      queryString,
 		})
 		if err != nil {
 			continue
 		}
 
-		results := processResults(resp.Results, tmdbID, altQuality, query)
-		if len(results) > 0 && addTorrentToDeluge(results[0].result) {
-			return nil
+		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			// Try each result until we find one that works
+			for _, result := range results {
+				if validateAndAddAnimeTorrent(result.result) {
+					return nil
+				}
+				time.Sleep(searchDelay)
+			}
 		}
-
-		time.Sleep(searchDelay)
 	}
 
-	return fmt.Errorf("no suitable matches found for anime movie: %s", query)
+	return fmt.Errorf("no valid anime movie downloads found for: %s", query)
 }
 
-// MakeAnimeShowQuery handles searching and downloading anime series
 func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
@@ -568,52 +559,400 @@ func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string)
 	logger.WriteInfo(fmt.Sprintf("Starting search for anime series: %s with %d total episodes",
 		query, totalEpisodes))
 
-	// Try complete series bundle first
-	if searchAnimeSeriesBundle(ctx, j, query, tmdbID, quality) {
+	// Try batch downloads first
+	if found := tryAnimeBatchDownloads(ctx, j, query, tmdbID, quality); found {
 		return nil
 	}
 
-	// Search episode by episode if bundle not found
-	return searchAnimeEpisodesByOne(ctx, j, query, tmdbID, quality, totalEpisodes)
+	// If batch download fails, try episode by episode
+	return searchAnimeEpisodesByOne(ctx, j, query, tmdbID, quality, seasons)
 }
 
-func searchAnimeSeriesBundle(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) bool {
-	bundleQuery := fmt.Sprintf("%s complete series", query)
-	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: animeSeriesCategories,
-		Query:      bundleQuery,
-	})
-	if err != nil {
-		return false
+func isAnimeTimeRelease(title string) bool {
+	return strings.Contains(title, "[Anime Time]")
+}
+
+func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) bool {
+	// Exact Anime Time pattern matching the format
+	animeTimePatterns := []string{
+		`[Anime Time] %s (Series+Movies) 2011 [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		// Slightly more generic fallbacks but still maintaining Anime Time format
+		`[Anime Time] %s [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		`[Anime Time] %s [Batch]`,
 	}
 
-	results := processResults(resp.Results, tmdbID, quality, query)
-	return len(results) > 0 && addTorrentToDeluge(results[0].result)
-}
-
-func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, totalEpisodes int) error {
-	for episode := 1; episode <= totalEpisodes; episode++ {
-		queryString := fmt.Sprintf("%s episode %d", query, episode)
-		logger.WriteInfo(fmt.Sprintf("Searching episode %d/%d", episode, totalEpisodes))
+	// Try Anime Time patterns first
+	for _, pattern := range animeTimePatterns {
+		queryString := fmt.Sprintf(pattern, query)
+		logger.WriteInfo(fmt.Sprintf("Trying Anime Time batch search with query: %s", queryString))
 
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
 			Categories: animeSeriesCategories,
 			Query:      queryString,
 		})
-		if err != nil {
-			logger.WriteWarning(fmt.Sprintf("Failed to fetch episode %d: %v", episode, err))
-			continue
-		}
 
-		results := processResults(resp.Results, tmdbID, quality, query)
-		if len(results) > 0 {
-			if !addTorrentToDeluge(results[0].result) {
-				logger.WriteWarning(fmt.Sprintf("Failed to add episode %d", episode))
+		if err == nil && len(resp.Results) > 0 {
+			results := processAnimeResults(resp.Results, tmdbID, quality, query)
+			for _, result := range results {
+				if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
+					logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time batch: %s", result.result.Title))
+					return true
+				}
 			}
 		}
 
 		time.Sleep(searchDelay)
 	}
 
+	// Fallback patterns if Anime Time isn't found
+	fallbackPatterns := []string{
+		`[AnimeSkulls] %s (2011) [Batch] [Dual Audio][1080p][HEVC 10bit x265]`,
+		`%s complete series`,
+		`%s batch`,
+	}
+
+	for _, pattern := range fallbackPatterns {
+		queryString := fmt.Sprintf(pattern, query)
+		logger.WriteInfo(fmt.Sprintf("Trying fallback batch search with query: %s", queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeSeriesCategories,
+			Query:      queryString,
+		})
+
+		if err != nil {
+			continue
+		}
+
+		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			for _, result := range results {
+				if addTorrentMagnetToDeluge(result.result) {
+					logger.WriteInfo(fmt.Sprintf("Successfully added batch: %s", result.result.Title))
+					return true
+				}
+			}
+		}
+
+		time.Sleep(searchDelay)
+	}
+
+	return false
+}
+
+func calculateAnimeSize(size uint, quality string) float64 {
+	sizeGB := float64(size) / 1024 / 1024 / 1024
+
+	// Size ranges for different qualities (in GB)
+	ranges := map[string]struct{ min, max, ideal float64 }{
+		"2160p": {2.0, 8.0, 4.0},  // 4K releases
+		"1080p": {0.4, 2.0, 0.8},  // Standard episode size
+		"720p":  {0.2, 1.0, 0.4},  // Smaller HD
+		"480p":  {0.1, 0.5, 0.25}, // SD
+	}
+
+	if range_, exists := ranges[quality]; exists {
+		if sizeGB < range_.min || sizeGB > range_.max {
+			return 0.3 // Penalize sizes outside expected range
+		}
+
+		// Calculate how close we are to ideal size
+		deviation := math.Abs(sizeGB-range_.ideal) / range_.ideal
+		return math.Max(0.0, 1.0-deviation)
+	}
+
+	return 0.5 // Default score for unknown quality
+}
+
+func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, seasons []int) error {
+	episodeTotal := 0
+	for _, count := range seasons {
+		episodeTotal += count
+	}
+
+	for episode := 1; episode <= episodeTotal; episode++ {
+		// Anime Time episode patterns matching their format
+		animeTimePatterns := []string{
+			`[Anime Time] %s - %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+			`[Anime Time] %s - Episode %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+		}
+
+		// Fallback patterns
+		fallbackPatterns := []string{
+			`[AnimeSkulls] %s (2011) Episode %d [1080p] [Dual.Audio] [x265] [RD]`,
+			`%s Episode %d`,
+		}
+
+		var foundEpisode bool
+
+		// Try Anime Time patterns first
+		for _, pattern := range animeTimePatterns {
+			queryString := fmt.Sprintf(pattern, query, episode)
+			logger.WriteInfo(fmt.Sprintf("Searching Anime Time for episode %d/%d using query: %s",
+				episode, episodeTotal, queryString))
+
+			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+				Categories: animeSeriesCategories,
+				Query:      queryString,
+			})
+
+			if err == nil {
+				results := processAnimeResults(resp.Results, tmdbID, quality, query)
+				for _, result := range results {
+					if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
+						logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time episode %d: %s",
+							episode, result.result.Title))
+						foundEpisode = true
+						break
+					}
+				}
+			}
+
+			if foundEpisode {
+				break
+			}
+			time.Sleep(searchDelay)
+		}
+		// If Anime Time release not found, try fallback patterns
+		if !foundEpisode {
+			for _, pattern := range fallbackPatterns {
+				queryString := fmt.Sprintf(pattern, query, episode)
+				logger.WriteInfo(fmt.Sprintf("Searching fallback for episode %d/%d using query: %s",
+					episode, episodeTotal, queryString))
+
+				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+					Categories: animeSeriesCategories,
+					Query:      queryString,
+				})
+
+				if err != nil {
+					continue
+				}
+
+				results := processAnimeResults(resp.Results, tmdbID, quality, query)
+				if len(results) > 0 {
+					for _, result := range results {
+						if addTorrentMagnetToDeluge(result.result) {
+							logger.WriteInfo(fmt.Sprintf("Successfully added episode %d: %s",
+								episode, result.result.Title))
+							foundEpisode = true
+							break
+						}
+					}
+				}
+
+				if foundEpisode {
+					break
+				}
+				time.Sleep(searchDelay)
+			}
+		}
+
+		if !foundEpisode {
+			logger.WriteWarning(fmt.Sprintf("No valid results found for episode %d", episode))
+		}
+	}
+
 	return nil
+}
+
+func searchAnimeMovie(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) error {
+	// Try different search patterns
+	searchPatterns := []string{
+		"%s %s [1080p]",
+		"[Anime] %s %s",
+		"%s [BD] %s",
+	}
+
+	for _, pattern := range searchPatterns {
+		formattedQuery := fmt.Sprintf(pattern, query, quality)
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeMovieCategories,
+			Query:      formattedQuery,
+		})
+		if err != nil {
+			continue
+		}
+
+		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		for _, result := range results {
+			if validateAndAddAnimeTorrent(result.result) {
+				return nil
+			}
+		}
+		time.Sleep(searchDelay)
+	}
+
+	return fmt.Errorf("no suitable matches found")
+}
+
+func validateAndAddAnimeTorrent(result *jackett.Result) bool {
+	if result == nil {
+		return false
+	}
+
+	// Log detailed information about the torrent
+	logger.WriteInfo(fmt.Sprintf("Validating anime torrent: %s", result.Title))
+	logger.WriteInfo(fmt.Sprintf("Size: %.2f GB", float64(result.Size)/1024/1024/1024))
+	logger.WriteInfo(fmt.Sprintf("Seeders: %d", result.Seeders))
+
+	// Check for valid size
+	if result.Size == 0 {
+		logger.WriteWarning(fmt.Sprintf("Skipping zero-size torrent: %s", result.Title))
+		return false
+	}
+
+	// Prefer magnet links but fall back to regular links if needed
+	downloadLink := result.MagnetUri
+	if downloadLink == "" {
+		downloadLink = result.Link
+		if downloadLink == "" {
+			logger.WriteWarning(fmt.Sprintf("No valid download link found for: %s", result.Title))
+			return false
+		}
+	}
+
+	// Additional validation for magnet links
+	if strings.HasPrefix(downloadLink, "magnet:") {
+		if !strings.Contains(downloadLink, "xt=urn:btih:") {
+			logger.WriteWarning(fmt.Sprintf("Invalid magnet link format for: %s", result.Title))
+			return false
+		}
+	}
+
+	// Try to add the torrent
+	err := deluge.AddTorrent(downloadLink)
+	if err != nil {
+		if strings.Contains(err.Error(), "Torrent already in session") {
+			logger.WriteInfo(fmt.Sprintf("Torrent already exists in Deluge: %s", result.Title))
+			return true
+		}
+		logger.WriteError(fmt.Sprintf("Failed to add torrent: %s, Error: %v", result.Title, err), err)
+		return false
+	}
+
+	// Verify the torrent was added successfully
+	logger.WriteInfo(fmt.Sprintf("Successfully added to Deluge: %s", result.Title))
+	return true
+}
+
+func processAnimeResults(results []jackett.Result, tmdbID int, quality string, query string) []searchResult {
+	var scoredResults []searchResult
+	logger.WriteInfo(fmt.Sprintf("Processing %d anime results", len(results)))
+
+	for _, result := range results {
+		// Skip invalid results
+		if result.Size == 0 {
+			logger.WriteInfo(fmt.Sprintf("Skipping zero-size result: %s", result.Title))
+			continue
+		}
+
+		if result.MagnetUri == "" && result.Link == "" {
+			logger.WriteInfo(fmt.Sprintf("Skipping result with no download link: %s", result.Title))
+			continue
+		}
+
+		score := calculateAnimeScore(&result, tmdbID, quality)
+
+		// Additional scoring for preferred release groups
+		score += getAnimeReleaseGroupScore(result.Title)
+
+		if score >= 0.3 {
+			scoredResults = append(scoredResults, searchResult{
+				result: &result,
+				score:  score,
+			})
+			logger.WriteInfo(fmt.Sprintf("Added candidate: %s (Score: %.2f, Size: %.2f GB, Seeders: %d)",
+				result.Title, score, float64(result.Size)/1024/1024/1024, result.Seeders))
+		}
+	}
+
+	// Sort results by score and then seeders
+	sort.Slice(scoredResults, func(i, j int) bool {
+		if scoredResults[i].score == scoredResults[j].score {
+			return scoredResults[i].result.Seeders > scoredResults[j].result.Seeders
+		}
+		return scoredResults[i].score > scoredResults[j].score
+	})
+
+	return scoredResults
+}
+
+func getAnimeReleaseGroupScore(title string) float64 {
+	title = strings.ToLower(title)
+
+	// Preferred release groups and their scores
+	releaseGroups := map[string]float64{
+		"[anime time]":   0.7,
+		"[animeskulls]":  0.5,
+		"[subsplease]":   0.4,
+		"[horriblesubs]": 0.3,
+		"[erai-raws]":    0.3,
+	}
+
+	for group, score := range releaseGroups {
+		if strings.Contains(title, group) {
+			return score
+		}
+	}
+
+	return 0.0
+}
+
+func calculateAnimeScore(result *jackett.Result, tmdbID int, quality string) float64 {
+	score := 0.0
+
+	// Base score
+	score += 0.1
+
+	// Quality and format preferences
+	if strings.Contains(strings.ToLower(result.Title), "1080p") {
+		score += 0.2
+	}
+	if strings.Contains(strings.ToLower(result.Title), "x265") ||
+		strings.Contains(strings.ToLower(result.Title), "hevc") {
+		score += 0.1
+	}
+	if strings.Contains(strings.ToLower(result.Title), "dual.audio") ||
+		strings.Contains(strings.ToLower(result.Title), "dual audio") {
+		score += 0.2
+	}
+
+	// Seeder score (if available)
+	seedersScore := math.Min(float64(result.Seeders)/50.0, 1.0)
+	score += seedersScore * 0.2
+
+	return score
+}
+
+func addTorrentMagnetToDeluge(result *jackett.Result) bool {
+	if result == nil {
+		logger.WriteError("No valid result to add to Deluge", nil)
+		return false
+	}
+
+	if result.MagnetUri == "" {
+		logger.WriteError(fmt.Sprintf("No magnet URI available for: %s", result.Title), nil)
+		return false
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Attempting to add to Deluge: %s", result.Title))
+	logger.WriteInfo(fmt.Sprintf("Magnet URI: %s", result.MagnetUri))
+	logger.WriteInfo(fmt.Sprintf("Size: %.2f GB", float64(result.Size)/1024/1024/1024))
+	logger.WriteInfo(fmt.Sprintf("Seeders: %d", result.Seeders))
+
+	err := deluge.AddTorrent(result.MagnetUri)
+	if err != nil {
+		if strings.Contains(err.Error(), "Torrent already in session") {
+			// If we get "already in session", consider it a success since it means
+			// we already have this episode
+			logger.WriteInfo(fmt.Sprintf("Torrent already exists in Deluge: %s", result.Title))
+			return true
+		}
+		logger.WriteError(fmt.Sprintf("Failed to add magnet to Deluge for %s. Error: %v", result.Title, err), err)
+		return false
+	}
+
+	logger.WriteInfo(fmt.Sprintf("Successfully sent to Deluge: %s", result.Title))
+	return true
 }
