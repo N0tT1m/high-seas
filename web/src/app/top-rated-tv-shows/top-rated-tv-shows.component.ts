@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ViewChild } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import {ActivatedRoute, RouterModule} from '@angular/router';
 import { GalleryModule, Gallery, GalleryRef } from 'ng-gallery';
 import { TvShow, TvShowResult, Genre } from '../http-service/http-service.component';
 import { MovieService } from '../movies.service';
@@ -45,6 +45,8 @@ export class TopRatedTvShowsComponent {
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
+  public route: ActivatedRoute = inject(ActivatedRoute);
+
   public show: TvShow;
   public showNames = [{}];
   public allShows: TvShow[] = [];
@@ -61,6 +63,8 @@ export class TopRatedTvShowsComponent {
   constructor() {}
 
   ngOnInit() {
+    const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
+    const page = parseInt(this.route.snapshot.params['page'], 10);
     this.getShows(this.currentPage);
   }
 

@@ -19,7 +19,7 @@ export class TvShowService {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
 
   public results: TvShowResult[] = [];
-  public tvShowsList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false, in_plex: false}], total_pages: 0, total_result: 0}]
+  public tvShowsList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
   public singleTvShow: TvShow | undefined
   public respData: TvShowResult[] = [];
   public  tvShow: any;
@@ -192,9 +192,10 @@ export class TvShowService {
   }
 
   getShowDetails(id) {
-    var tvUrl = 'https://api.themoviedb.org/3/tv/'+ id +'?language=en-US';
+    var tmdbUrl = 'https://api.themoviedb.org/3/tv/'+ id +'?language=en-US';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/detailed-top-rated-tv-shows';
 
-    return this.http.get<ShowDetails>(tvUrl, { headers: this.headers })
+    return this.http.post<ShowDetails>(tvShowUrl, {"url": tmdbUrl, "request_id": id}, { headers: this.headers })
   }
 
   // Movie[] {
@@ -252,9 +253,8 @@ export class TvShowService {
         let voteCount = show['vote_count'];
         let totalPages = resp['total_pages'];
         let totalResult = resp['total_result'];
-        let in_plex = resp['in_plex'];
 
-        let result: TvShowResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video, in_plex: in_plex}]
+        let result: TvShowResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
 
         this.tvShowsList.push({ page: page, results: result,  total_pages: totalPages, total_result: totalResult });
       })
