@@ -49,6 +49,12 @@ type TMDbRequest struct {
 	Url string `json:"url"`
 }
 
+type TMDbTvShowsRequest struct {
+	ID        uint   `gorm:"primaryKey"`
+	Url       string `json:"url"`
+	RequestID int    `json:"request_id"`
+}
+
 type TMDbResponse struct {
 	Page         uint          `json:"page"`
 	Results      []TMDbResults `json:"results"`
@@ -56,12 +62,21 @@ type TMDbResponse struct {
 	TotalResults uint          `json:"total_results"`
 }
 
+type TMDbGenreResponse struct {
+	Genres []Genre `json:"genres"`
+}
+
+type Genre struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 type TMDbResults struct {
 	Adult            bool    `json:"adult"`
 	BackdropPath     string  `json:"backdrop_path"`
 	FirstAirDate     string  `json:"first_air_date"`
 	GenreIds         []uint  `json:"genre_ids"`
-	Id               uint    `json:"id"`
+	ID               int     `json:"id"`
 	Name             string  `json:"name"`
 	OriginalLanguage string  `json:"original_language"`
 	OriginalName     string  `json:"original_name"`
@@ -71,7 +86,49 @@ type TMDbResults struct {
 	VoteAverage      float64 `json:"vote_average"`
 	VoteCount        float64 `json:"vote_count"`
 	Video            bool    `json:"video"`
-	InPlex           bool    `json:"in_plex"`
+}
+
+type TVShow struct {
+	Page         uint            `json:"page"`
+	Results      []TVShowDetails `json:"results"`
+	TotalPages   uint            `json:"total_pages"`
+	TotalResults uint            `json:"total_results"`
+}
+
+type TVShowDetails struct {
+	Adult               bool                     `json:"adult"`
+	BackdropPath        string                   `json:"backdrop_path"`
+	CreatedBy           []map[string]interface{} `json:"created_by"`
+	EpisodeRunTime      []interface{}            `json:"episode_run_time"`
+	FirstAirDate        string                   `json:"first_air_date"`
+	Genres              []interface{}            `json:"genres"`
+	Homepage            string                   `json:"homepage"`
+	ID                  int                      `json:"id"`
+	InProduction        bool                     `json:"in_production"`
+	Languages           []string                 `json:"languages"`
+	LastAirDate         string                   `json:"last_air_date"`
+	LastEpisodeToAir    map[string]interface{}   `json:"last_episode_to_air"`
+	Name                string                   `json:"name"`
+	NextEpisodeToAir    map[string]interface{}   `json:"next_episode_to_air"`
+	Networks            []map[string]interface{} `json:"networks"`
+	NumberOfEpisodes    int                      `json:"number_of_episodes"`
+	NumberOfSeasons     int                      `json:"number_of_seasons"`
+	OriginCountry       []string                 `json:"origin_country"`
+	OriginalLanguage    string                   `json:"original_language"`
+	OriginalName        string                   `json:"original_name"`
+	Overview            string                   `json:"overview"`
+	Popularity          float64                  `json:"popularity"` // Assuming it can be a decimal
+	PosterPath          string                   `json:"poster_path"`
+	ProductionCompanies []map[string]interface{} `json:"production_companies"`
+	ProductionCountries []map[string]interface{} `json:"production_countries"`
+	Seasons             []map[string]interface{} `json:"seasons"`
+	SpokenLanguages     []map[string]interface{} `json:"spoken_languages"`
+	Status              string                   `json:"status"`
+	Tagline             string                   `json:"tagline"`
+	Type                string                   `json:"type"`
+	VoteAverage         float64                  `json:"vote_average"` // Assuming it can be a decimal
+	VoteCount           int                      `json:"vote_count"`
+	InPlex              bool                     `json:"in_plex"`
 }
 
 var user = utils.EnvVar("DB_USER", "")

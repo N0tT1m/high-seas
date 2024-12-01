@@ -23,51 +23,34 @@ func login() *plex.Plex {
 		logger.WriteError("Failed to connect to Plex:", err)
 	}
 
-	results, err := plexConnection.Test()
+	_, err = plexConnection.Test()
 	if err != nil {
 		logger.WriteError("Failed to connect to Plex:", err)
 	}
 
-	logger.WriteInfo(fmt.Sprintf("Plex results: %v", results))
-
 	return plexConnection
 }
 
-func CheckPlexStatus(isMovie bool, title string) bool {
-	if isMovie {
-		plex := login()
+func CheckPlexStatus(title string) bool {
+	plex := login()
 
-		libraries, err := plex.GetLibraries()
+	fmt.Println(fmt.Sprintf("Checking Plex Status: %s", title))
 
-		if err != nil {
-			logger.WriteError("failed fetching libraries: ", err)
-		}
-
-		for _, dir := range libraries.MediaContainer.Directory {
-			fmt.Println(dir.Title)
-		}
-
-		logger.WriteInfo(fmt.Sprintf("Libraries: %v", libraries))
-
-		//results := shows.search(title=name, year=firstAirDate[:4])
-		//return len(results) > 0
-
-		return true
-	} else {
-		plex := login()
-
-		searchResults, err := plex.Search(title)
-		if err != nil {
-			logger.WriteError("search failed for title: ", err)
-		}
-
-		logger.WriteInfo(fmt.Sprintf("Search results: %v", searchResults))
-
-		//results := shows.search(title=name, year=firstAirDate[:4])
-		//return len(results) > 0
-
-		return true
+	searchResults, err := plex.Search(title)
+	if err != nil {
+		logger.WriteError("search failed for title: ", err)
 	}
+
+	for _, v := range searchResults.MediaContainer.Metadata {
+		if v.ParentTitle == "" && v.GrandparentTitle == "" {
+			return true
+		}
+	}
+
+	//results := shows.search(title=name, year=firstAirDate[:4])
+	//return len(results) > 0
+
+	return false
 }
 
 func QueryMovieRequest(c *gin.Context) {
@@ -171,7 +154,7 @@ func MakeAnimeShowQuery(c *gin.Context) {
 	})
 }
 
-func processShowTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {
+func processTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {
 	header := c.Request.Header.Get("Authorization")
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -199,9 +182,35 @@ func processShowTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
-	// Add Plex status for each show
-	for i := range response.Results {
-		response.Results[i].InPlex = CheckPlexStatus(false, response.Results[i].Name)
+	return &response, nil
+}
+
+func processTMDbGenreRequest(c *gin.Context, url string) (*db.TMDbGenreResponse, error) {
+	header := c.Request.Header.Get("Authorization")
+
+	client := &http.Client{Timeout: time.Second * 30}
+	req, err := http.NewRequest("GET", strings.TrimSpace(url), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Authorization", header)
+	req.Header.Add("accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response db.TMDbGenreResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
 	return &response, nil
@@ -215,7 +224,7 @@ func QueryTopRatedTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -233,7 +242,7 @@ func QueryInitialTopRatedTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -251,7 +260,7 @@ func QueryOnTheAirTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -269,7 +278,7 @@ func QueryInitialOnTheAirTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -287,7 +296,7 @@ func QueryPopularTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -305,7 +314,7 @@ func QueryInitialPopularTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -323,7 +332,7 @@ func QueryAiringTodayTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -341,7 +350,7 @@ func QueryInitialAiringTodayTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -359,7 +368,7 @@ func QueryAllTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -377,7 +386,122 @@ func QueryInitialAllTvShows(c *gin.Context) {
 		return
 	}
 
-	response, err := processShowTMDbRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryGenres(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbGenreRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryAllShowsForDetails(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbGenreRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func QueryAllShowsFromSelectedDate(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbGenreRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func processDetailedTMDbRequest(c *gin.Context, url string, requestId int) (*db.TVShowDetails, error) {
+	header := c.Request.Header.Get("Authorization")
+
+	client := &http.Client{Timeout: time.Second * 30}
+	req, err := http.NewRequest("GET", strings.TrimSpace(url), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Authorization", header)
+	req.Header.Add("accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response db.TVShowDetails
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	fmt.Println(response.InPlex)
+
+	fmt.Println(response.ID, requestId)
+
+	if response.ID == requestId {
+		response.InPlex = CheckPlexStatus(response.Name)
+	}
+
+	fmt.Println(response.InPlex)
+
+	fmt.Println(response)
+
+	return &response, nil
+}
+
+func QueryDetailedTopRatedTvShows(c *gin.Context) {
+	var request db.TMDbTvShowsRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processDetailedTMDbRequest(c, request.Url, request.RequestID)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

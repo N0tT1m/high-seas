@@ -50,10 +50,14 @@ func SetupRouter() {
 	r.POST("/tmdb/initial-on-the-air-tv-shows", api.QueryInitialOnTheAirTvShows)
 	r.POST("/tmdb/popular-tv-shows", api.QueryPopularTvShows)
 	r.POST("/tmdb/initial-popular-tv-shows", api.QueryInitialPopularTvShows)
-	r.POST("/tmdb/airing-today", api.QueryAiringTodayTvShows)
-	r.POST("/tmdb/initial-airing-today", api.QueryInitialAiringTodayTvShows)
+	r.POST("/tmdb/airing-today-tv-shows", api.QueryAiringTodayTvShows)
+	r.POST("/tmdb/initial-airing-today-tv-shows", api.QueryInitialAiringTodayTvShows)
 	r.POST("/tmdb/all-shows", api.QueryAllTvShows)
-	r.POST("/tmdb/initial-all-shows", api.QueryInitialAllTvShows)
+	r.POST("/tmdb/all-show-details", api.QueryInitialAllTvShows)
+	r.POST("/tmdb/tv-show-details", api.QueryDetailedTopRatedTvShows)
+	r.POST("/tmdb/genres", api.QueryGenres)
+	r.POST("/tmdb/tv-show-details", api.QueryAllShowsForDetails)
+	r.POST("/tmdb/all-shows-from-date", api.QueryAllShowsFromSelectedDate)
 
 	// // Define routes based on the domain name
 	// r.POST("/movie/query", func(c *gin.Context) {

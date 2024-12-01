@@ -188,25 +188,30 @@ export class TvShowService {
   }
 
   getGenres() {
-    return this.http.get<GenreRequest>(this.genreUrl, { headers: this.headers })
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/genres';
+
+    return this.http.post<GenreRequest>(tvShowUrl, {"url": this.genreUrl}, { headers: this.headers })
   }
 
   getShowDetails(id) {
     var tmdbUrl = 'https://api.themoviedb.org/3/tv/'+ id +'?language=en-US';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/detailed-top-rated-tv-shows';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/tv-show-details';
 
-    return this.http.post<ShowDetails>(tvShowUrl, {"url": tmdbUrl, "request_id": id}, { headers: this.headers })
+     return this.http.post<ShowDetails>(tvShowUrl, {"url": tmdbUrl, "request_id": id}, { headers: this.headers })
   }
 
   // Movie[] {
   getAllTvShows(genre: number, airDate: string, page: number) {
-      var tvUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows';
 
-      return this.http.get<TvShow>(tvUrl, { headers: this.headers })
+
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers })
   }
 
   getAllShowsForDetails(genre: number, airDate: string, page: number) {
-    var tvUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&language=en-US&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&language=en-US&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/tv-show-details';
 
 
     // const options = { method: 'GET', headers: this.headers };
@@ -214,23 +219,21 @@ export class TvShowService {
     // const data = await fetch(`${this.movieUrl}`, options);
     // return await data.json() ?? {};
 
-    return this.http.get<TvShow>(tvUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers })
   }
 
   getAllShowsFromSelectedDate(genre: number, airDate: string, page: number) {
-    console.log(genre);
-
-
     // TODO: Add multiple genres filter.
     // with_genres=Action%20AND%20Comedy
     // TODO: Add multiple people filter.
     // with_people=Shah%20Rukh%20Khan%20AND%20Shah%20Rukh%20Khan
-    var tvUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
+    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/all-shows-from-date';
 
     setTimeout(function () {
     }, 4000000);
 
-    return this.http.get<TvShow>(tvUrl, { headers: this.headers });
+    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers })
   }
 
   getTvShowById(id: number, genre: number, page: number, airDate: string): TvShow | undefined {
