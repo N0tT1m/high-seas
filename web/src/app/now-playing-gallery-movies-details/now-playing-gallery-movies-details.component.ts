@@ -163,6 +163,7 @@ export class NowPlayingGalleryMoviesDetails {
       this.budget = movie.budget;
       this.belongsToCollection = movie.belongs_to_collection;
       this.overview = movie.overview;
+      this.in_plex = movie.in_plex;
     })
   }
 
