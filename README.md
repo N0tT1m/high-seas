@@ -4,8 +4,6 @@ A web application for searching and downloading shows/movies including anime.
 
 > **Note**: This application is for educational purposes only.
 
-ADDED MOBILE APP DESKTOP FOR WINDOWS AND MAC
-
 ## Prerequisites
 
 - Docker and Docker Compose (for managing the application)
