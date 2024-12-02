@@ -28,7 +28,17 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          surface: Colors.deepPurple.shade900,
+          brightness: Brightness.dark,
+          primary: const Color.fromRGBO(229, 226, 233, 100),
+          secondary: Colors.deepPurpleAccent,
+          onPrimary: Colors.black12,
+          onSecondary: Colors.cyanAccent,
+          error: Colors.red.shade300,
+          onError: Colors.teal.shade900,
+          onSurface: Color.fromRGBO(253,245,201, 100),
+        ),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'High Seas Home Page'),
@@ -97,17 +107,30 @@ class _MyHomePageState extends State<MyHomePage> {
                     height: MediaQuery.of(context).size.height * 500,
                   ),
                   decoration: BoxDecoration(
-                    color: Color.fromRGBO(229, 226, 233, 100),
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                 ),
                 ListTile(
-                  tileColor: Color.fromRGBO(229, 226, 233, 100),
-                  title: const Text(
+                  tileColor: Theme.of(context).colorScheme.surface,
+                  title: Text(
+                      "Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 32,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                  ),
+                ),
+                ListTile(
+                  tileColor: Theme.of(context).colorScheme.surface,
+                  title: Text(
                     "Discover Movies",
                     style: TextStyle(
                       fontFamily: 'JetBrainsMono',
                       fontStyle: FontStyle.normal,
                       fontSize: 18,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   onTap: () {
@@ -118,6 +141,238 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     );
                   }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Search Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Now Playing Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Popular Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Top Rated Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Upcoming Movies",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                  tileColor: Theme.of(context).colorScheme.surface,
+                  title: Text(
+                    "Shows",
+                    style: TextStyle(
+                      fontFamily: 'JetBrainsMono',
+                      fontStyle: FontStyle.normal,
+                      fontSize: 32,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Discover Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Search Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Airing Today Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Popular Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "Top Rated Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
+                ),
+                ListTile(
+                    tileColor: Theme.of(context).colorScheme.surface,
+                    title: Text(
+                      "On The Air Shows",
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontStyle: FontStyle.normal,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Placeholder(),
+                        ),
+                      );
+                    }
                 ),
               ],
             ),
