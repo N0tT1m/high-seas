@@ -1,6 +1,6 @@
 # High Seas
 
-A web application for searching and downloading shows/movies.
+A web application for searching and downloading shows/movies including anime.
 
 > **Note**: This application is for educational purposes only.
 
