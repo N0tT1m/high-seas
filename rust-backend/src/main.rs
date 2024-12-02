@@ -1,15 +1,13 @@
-mod api;
-mod db;
-mod models;
+mod internal;
 
 use std::sync::Arc;
 use axum::{
-    routing::{post},
+    routing::post,
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
 use log::error;
-use tracing_subscriber::{fmt::{self, format::FmtSpan}, prelude::*, filter::LevelFilter, EnvFilter};
+use tracing_subscriber::{filter::LevelFilter, fmt::{self, format::FmtSpan}, prelude::*, EnvFilter};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use std::net::SocketAddr;
 use axum::http::Method;
@@ -66,7 +64,7 @@ async fn main() {
         .allow_headers(Any);
 
     let app = Router::new()
-        .route("/movie/query", post(api::movie))
+        .route("/movie/query", post(internal::api::query_movie_request))
 
         .layer(cors);
 
