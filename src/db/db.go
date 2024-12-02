@@ -117,19 +117,27 @@ type TMDbResults struct {
 }
 
 type TMDbMovieResults struct {
-	Adult            bool    `json:"adult"`
-	BackdropPath     string  `json:"backdrop_path"`
-	GenreIds         []uint  `json:"genre_ids"`
-	ID               int     `json:"id"`
-	Title            string  `json:"title"`
-	OriginalLanguage string  `json:"original_language"`
-	OriginalTitle    string  `json:"original_title"`
-	Overview         string  `json:"overview"`
-	Popularity       float64 `json:"popularity"`
-	PosterPath       string  `json:"poster_path"`
-	VoteAverage      float64 `json:"vote_average"`
-	VoteCount        float64 `json:"vote_count"`
-	Video            bool    `json:"video"`
+	Adult               bool                     `json:"adult"`
+	BackdropPath        string                   `json:"backdrop_path"`
+	BelongsToCollect    bool                     `json:"belongs_to_collect"`
+	Budget              int                      `json:"budget"`
+	GenreIds            []uint                   `json:"genre_ids"`
+	Homepage            string                   `json:"homepage"`
+	ID                  int                      `json:"id"`
+	IMDbID              int                      `json:"imdb_id"`
+	Title               string                   `json:"title"`
+	ReleaseDate         string                   `json:"release_date"`
+	OriginalLanguage    string                   `json:"original_language"`
+	OriginalTitle       string                   `json:"original_title"`
+	Overview            string                   `json:"overview"`
+	Popularity          float64                  `json:"popularity"`
+	PosterPath          string                   `json:"poster_path"`
+	ProductionCompanies []map[string]interface{} `json:"production_companies"`
+	ProductionCountries []map[string]interface{} `json:"production_countries"`
+	Tagline             string                   `json:"tagline"`
+	VoteAverage         float64                  `json:"vote_average"`
+	VoteCount           float64                  `json:"vote_count"`
+	Video               bool                     `json:"video"`
 }
 
 type TVShow struct {
