@@ -106,7 +106,7 @@ interface MovieDetails {
   overview: string,
   popularity: number,
   poster_path: string,
-  production_companires: Array<Map<string, any>>,
+  production_companies: Array<Map<string, any>>,
   production_countries: Array<Map<string, any>>,
   release_date: string,
   tagline: string,
