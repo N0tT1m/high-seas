@@ -1,11 +1,13 @@
 pub mod api {
     pub use once_cell::sync::Lazy;
     pub use std::fs::{File, OpenOptions};
+    use std::sync::Mutex;
     use axum::response::IntoResponse;
-    use tokio::sync::Mutex;
     use reqwest;
     use reqwest::{Client, Error};
     use chrono::{Local};
+    use std::io::Write;
+    use tracing_subscriber::fmt::format;
 
     // Make the static variable public
     pub static LOG_FILE: Lazy<Mutex<File>> = Lazy::new(|| {
@@ -17,10 +19,10 @@ pub mod api {
         Mutex::new(file)
     });
 
-    fn log_to_file(message: &str, err: Error) {
+    fn log_to_file(message: &str) {
         if let Ok(mut file) = LOG_FILE.lock() {
             let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
-            let log_message = format!("[{}] {}\n{}\n", timestamp, message, err);
+            let log_message = format!("[{}] {}\n", timestamp, message);
             let _ = file.write_all(log_message.as_bytes());
             println!("{}", log_message.trim()); // Also print to console
         }
@@ -32,10 +34,10 @@ pub mod api {
             .build();
         match client {
             Ok(client) => {
-                client
+                log_to_file("Client was built.");
             },
             Err(err) => {
-                log_to_file("Failed to build client: {}", err);
+                log_to_file(format!("Failed to build client: {err}").as_str());
             }
         }
     }

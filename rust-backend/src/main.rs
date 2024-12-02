@@ -1,10 +1,7 @@
 mod internal;
 
 use std::sync::Arc;
-use axum::{
-    routing::post,
-    Router,
-};
+use axum::{routing::post, Router, ServiceExt};
 use tower_http::cors::{Any, CorsLayer};
 use log::error;
 use tracing_subscriber::{filter::LevelFilter, fmt::{self, format::FmtSpan}, prelude::*, EnvFilter};
@@ -75,19 +72,21 @@ async fn main() {
     // axum::serve(listener, app).await.unwrap();
 
     // Configure the domain and certificate
-    let config = RustlsConfig::from_pem_file(
-        "/usr/local/bin/fullchain.pem",
-        "/usr/local/bin/privkey.pem",
-    )
-        .await
-        .expect("Failed to load certificate and private key");
+    // let config = RustlsConfig::from_pem_file(
+    //     "/usr/local/bin/fullchain.pem",
+    //     "/usr/local/bin/privkey.pem",
+    // )
+    //     .await
+    //     .expect("Failed to load certificate and private key");
 
     // Run the server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8877));
-    axum_server::bind_rustls(addr, config)
-        .serve(app.into_make_service())
-        .await
-        .expect("Failed to start server");
+    // axum_server::bind_rustls(addr, config)
+    //     .serve(app.into_make_service())
+    //     .await
+    //     .expect("Failed to start server");
+
+    axum_server::bind(addr).serve(app.into_make_service()).await.expect("Failed to run server");
 
     // Run the server
 
