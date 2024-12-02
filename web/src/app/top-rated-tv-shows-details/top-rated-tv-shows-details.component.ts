@@ -109,8 +109,7 @@ import { TvShowService } from '../tv-service.service';
         <span class="show-tagline-value">{{this.tageline}}</span>
       </div>
       <div class="show-video" *ngIf="show!.video != false">
-        <span class="show-video-label">Is a video:</span>
-        <span class="show-video-value">{{show!.video}}</span>
+        <span class="show-video-label">Is a video</span>
       </div>
     </section>
     <div class="movie-meta-item" *ngIf="this.in_plex != false">

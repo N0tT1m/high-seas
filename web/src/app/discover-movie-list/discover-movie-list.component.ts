@@ -18,7 +18,7 @@ import { DiscoverMovieDetailsComponent } from '../discover-movie-details/discove
       </a>
       <a [routerLink]="['/discover-movie', movie.id, this.page, this.releaseYear, this.endYear, this.genre]">
         <div>
-          <h2 class="column movie-name">Movie title: {{ movie.title }}</h2>
+          <h2 class="column movie-name">{{ movie.title }}</h2>
         </div>
       </a>
       <p class="column movie-overview">{{ movie.overview}}</p>

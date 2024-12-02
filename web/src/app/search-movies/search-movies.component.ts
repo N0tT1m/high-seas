@@ -81,60 +81,6 @@ export class SearchMoviesComponent {
 
   }
 
-  // async getGenre(page: number) {
-  //   while (this.fetchedMovies.length > 0) {
-  //     this.fetchedMovies.pop()
-  //   }
-
-  //   // this.galleryMoviesRef.reset()
-
-  //   while (this.movieTitles.length > 0) {
-  //     this.movieTitles.pop()
-  //   }
-
-  //   this.movieService.getAllMovies(this.page, text).subscribe((resp) => {
-  //     console.log(resp['results']);
-
-  //     this.moviesLength = resp['results'].length;
-  //     this.totalMovies = resp['total_results'];
-
-  //     resp['results'].forEach((movie) => {
-  //       let page = resp['page'];
-  //       let isAdult = movie['adult'];
-  //       let backdropPath = movie['backdrop_path'];
-  //       let genreIds = movie['genre_ids'];
-  //       let id = movie['id'];
-  //       let releaseDate = movie['release_date'];
-  //       let video = movie['video'];
-  //       let title = movie['title'];
-  //       let originalLanguage = movie['original_language'];
-  //       let originalTitle = movie['original_title'];
-  //       let overview = movie['overview'];
-  //       let popularity = movie['popularity'];
-  //       let posterPath = this.baseUrl + movie['poster_path'];
-  //       let voteAverage = movie['vote_average'];
-  //       let voteCount = movie['vote_count'];
-  //       let totalPages = resp['total_pages'];
-  //       let totalResult = resp['total_result'];
-
-  //       let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video }]
-
-  //       this.fetchedMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-  //     })
-  //   })
-
-  //   this.fetchedMovies.splice(0, 1);
-
-  //   if (this.filteredMovieList.length > 0) {
-  //     while (this.filteredMovieList.length > 0) {
-  //       this.filteredMovieList.pop();
-  //     }
-  //     this.filteredMovieList = this.fetchedMovies;
-  //   } else {
-  //     this.filteredMovieList = this.fetchedMovies;
-  //   }
-  // }
-
   onPageChange(event?: PageEvent) {
     if (event === null) {
 

@@ -108,9 +108,8 @@ import { TvShowService } from '../tv-service.service';
         <span class="show-tagline-label">Tagline for {{show.name}}:</span>
         <span class="show-tagline-value">{{this.tageline}}</span>
       </div>
-      <div class="show-video" *ngIf="show!.video != undefined">
-        <span class="show-video-label">Is a video:</span>
-        <span class="show-video-value">{{show!.video}}</span>
+      <div class="show-video" *ngIf="show!.video != false">
+        <span class="show-video-label">Is a video</span>
       </div>
     </section>
     <div class="movie-meta-item" *ngIf="this.in_plex != false">
@@ -169,8 +168,11 @@ export class TvShowDetailsComponent {
   ngOnInit() {
     const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
     this.tvShowService.getAllShowsForDetails(this.route.snapshot.params['genre'], this.route.snapshot.params['airDate'], this.route.snapshot.params['page']).subscribe((resp) => {
+      console.log(resp);
+
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
+
           let page = resp['page'];
           let isAdult = show['adult'];
           let backdropPath = show['backdrop_path'];

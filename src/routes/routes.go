@@ -56,7 +56,7 @@ func SetupRouter() {
 	r.POST("/tmdb/show/all-shows", api.QueryAllTvShows)
 	r.POST("/tmdb/show/all-show-details", api.QueryInitialAllTvShows)
 	r.POST("/tmdb/show/tv-show-details", api.QueryDetailedTopRatedTvShows)
-	r.POST("/tmdb/show/genres", api.QueryGenres)
+	r.POST("/tmdb/show/genres", api.QueryShowGenres)
 	r.POST("/tmdb/show/all-tv-show-details", api.QueryAllShowsForDetails)
 	r.POST("/tmdb/show/all-shows-from-date", api.QueryAllShowsFromSelectedDate)
 

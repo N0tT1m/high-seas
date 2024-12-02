@@ -396,7 +396,7 @@ func QueryInitialAllTvShows(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func QueryGenres(c *gin.Context) {
+func QueryShowGenres(c *gin.Context) {
 	var request db.TMDbRequest
 	if err := c.BindJSON(&request); err != nil {
 		logger.WriteError("Failed to bind request", err)
@@ -422,7 +422,7 @@ func QueryAllShowsForDetails(c *gin.Context) {
 		return
 	}
 
-	response, err := processTMDbGenreRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -440,7 +440,7 @@ func QueryAllShowsFromSelectedDate(c *gin.Context) {
 		return
 	}
 
-	response, err := processTMDbGenreRequest(c, request.Url)
+	response, err := processTMDbRequest(c, request.Url)
 	if err != nil {
 		logger.WriteError("Failed to process TMDb request", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -511,7 +511,7 @@ func QueryDetailedTopRatedTvShows(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func processMovieTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {
+func processMovieTMDbRequest(c *gin.Context, url string) (*db.TMDbMovieResponse, error) {
 	header := c.Request.Header.Get("Authorization")
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -534,7 +534,9 @@ func processMovieTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, erro
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	var response db.TMDbResponse
+	fmt.Println(string(body))
+
+	var response db.TMDbMovieResponse
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
@@ -697,7 +699,7 @@ func QueryMovieGenres(c *gin.Context) {
 		return
 	}
 
-	response, err := processMovieTMDbRequest(c, request.URL)
+	response, err := processTMDbGenreRequest(c, request.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -64,9 +64,8 @@ import { MovieService } from '../movies.service';
         <span class="movie-tagline-label">Tagline for {{movie.title}}:</span>
         <span class="movie-tagline-value">{{this.tagline}}</span>
       </div>
-      <div class="movie-video" *ngIf="movie!.video != undefined">
-        <span class="movie-video-label">Is a video:</span>
-        <span class="movie-video-value">{{movie!.video}}</span>
+      <div class="movie-video" *ngIf="movie!.video != false">
+        <span class="movie-video-label">Is a video</span>
       </div>
     </section>
     <div class="movie-meta-item" *ngIf="this.in_plex != false">
@@ -138,7 +137,6 @@ export class DiscoverMovieDetailsComponent {
         let voteCount = movie['vote_count'];
         let totalPages = resp['total_pages'];
         let totalResult = resp['total_result'];
-        let in_plex = resp['in_plex'];
 
         let result: MovieResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
 

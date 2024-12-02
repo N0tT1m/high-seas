@@ -65,6 +65,8 @@ export class UpcomingMoviesComponent {
 
   getMovies(page: number) {
     this.movieService.getUpcoming(page).subscribe((resp) => {
+      console.log(resp)
+
       this.allMovies = resp['results'].map((movie) => ({
         page: resp['page'],
         results: [{

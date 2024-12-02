@@ -10,13 +10,18 @@ import { Movie } from '../http-service/http-service.component';
   template: `
   <div>
     <section class="listing" *ngFor="let movie of movie?.results; index as i;">
-      <div class="show-image">
-        <img [src]="movie.poster_path" alt="Show Poster" class="poster-image">
-      </div>
-      <h2 class="show-name">Show name: {{ movie.title }}</h2>
+      <a [routerLink]="['/now-playing/movies/details', movie.id, this.page]">
+        <div class="show-image">
+          <img [src]="movie.poster_path" alt="Show Poster" class="poster-image">
+        </div>
+      </a>
+      <a [routerLink]="['/now-playing/movies/details', movie.id, this.page]">
+        <div>
+            <h2 class="show-name">{{ movie.title }}</h2>
+        </div>
+      </a>
       <p class="show-overview">{{ movie.overview}}</p>
       <p class="show-vote-average">The vote average for this show is: {{movie.vote_average }} </p>
-      <a [routerLink]="['/now-playing/movies/details', movie.id, this.page]">Link to {{ movie.title }}</a>
     </section>
   </div>
   `,

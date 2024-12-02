@@ -17,7 +17,7 @@ import { TvShow } from '../http-service/http-service.component';
       </a>
       <a [routerLink]="['/airing-today/shows/details', show.id, this.page]">
         <div>
-          <h2 class="show-name">Show name: {{ show.name }}</h2>
+          <h2 class="show-name">{{ show.name }}</h2>
         </div>
       </a>
       <p class="show-overview">{{ show.overview}}</p>

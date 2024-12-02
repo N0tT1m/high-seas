@@ -10,13 +10,18 @@ import { TvShow } from '../http-service/http-service.component';
   template: `
   <div>
     <section class="listing" *ngFor="let show of tvShow?.results; index as i;">
-      <div class="show-image">
-        <img [src]="show.poster_path" alt="Movie Poster" class="poster-image">
-      </div>
-      <h2 class="show-name">Show name: {{ show.name }}</h2>
+      <a [routerLink]="['/discover-show', show.id, this.page, this.airDate, this.genre]">
+        <div class="show-image">
+          <img [src]="show.poster_path" alt="Movie Poster" class="poster-image">
+        </div>
+      </a>
+      <a [routerLink]="['/discover-show', show.id, this.page, this.airDate, this.genre]">
+        <div>
+            <h2 class="show-name">{{ show.name }}</h2>
+        </div>
+      </a>
       <p class="show-overview">{{ show.overview}}</p>
       <p class="show-vote-average">The vote average for this show is: {{show.vote_average }} </p>
-      <a [routerLink]="['/discover-show', show.id, this.page, this.airDate, this.genre]">Link to {{ show.name }}</a>
     </section>
   </div>
   `,

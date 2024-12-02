@@ -62,9 +62,8 @@ import { FormsModule } from '@angular/forms';
         <span class="movie-tagline-label">Tagline for {{movie.title}}:</span>
         <span class="movie-tagline-value">{{this.tagline}}</span>
       </div>
-      <div class="movie-video" *ngIf="movie!.video != undefined">
-        <span class="movie-video-label">Is a video:</span>
-        <span class="movie-video-value">{{movie!.video}}</span>
+      <div class="movie-video" *ngIf="movie!.video != false">
+        <span class="movie-video-label">Is a video</span>
       </div>
     </section>
     <div class="movie-meta-item" *ngIf="this.in_plex != false">

@@ -62,6 +62,13 @@ type TMDbResponse struct {
 	TotalResults uint          `json:"total_results"`
 }
 
+type TMDbMovieResponse struct {
+	Page         uint               `json:"page"`
+	Results      []TMDbMovieResults `json:"results"`
+	TotalPages   uint               `json:"total_pages"`
+	TotalResults uint               `json:"total_results"`
+}
+
 type TMDbGenreResponse struct {
 	Genres []Genre `json:"genres"`
 }
@@ -101,6 +108,22 @@ type TMDbResults struct {
 	Name             string  `json:"name"`
 	OriginalLanguage string  `json:"original_language"`
 	OriginalName     string  `json:"original_name"`
+	Overview         string  `json:"overview"`
+	Popularity       float64 `json:"popularity"`
+	PosterPath       string  `json:"poster_path"`
+	VoteAverage      float64 `json:"vote_average"`
+	VoteCount        float64 `json:"vote_count"`
+	Video            bool    `json:"video"`
+}
+
+type TMDbMovieResults struct {
+	Adult            bool    `json:"adult"`
+	BackdropPath     string  `json:"backdrop_path"`
+	GenreIds         []uint  `json:"genre_ids"`
+	ID               int     `json:"id"`
+	Title            string  `json:"title"`
+	OriginalLanguage string  `json:"original_language"`
+	OriginalTitle    string  `json:"original_title"`
 	Overview         string  `json:"overview"`
 	Popularity       float64 `json:"popularity"`
 	PosterPath       string  `json:"poster_path"`
