@@ -244,6 +244,7 @@ export class PopularGalleryTvShowsDetailsComponent {
         this.tageline = show.tagline;
         this.tmdbId = show.id;
         this.overview = show.overview;
+        this.in_plex = show.in_plex;
       }
 
       this.seasonEpisodeNumbers.splice(0, 1);
