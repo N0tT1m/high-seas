@@ -214,13 +214,10 @@ export class DiscoverMoviesComponent implements OnInit {
     this.galleryMoviesRef.play();
   }
 
-  onPageChange(event?: PageEvent) {
-    if (event === null) {
-      // Handle null case
-    } else {
-      this.page = event!.pageIndex + 1;
-      this.getGenre(this.page);
-    }
+  // Fix for DiscoverMoviesComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+    this.getGenre(this.page);
   }
 
   getMoviesFromDate() {

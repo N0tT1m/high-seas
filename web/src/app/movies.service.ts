@@ -414,6 +414,7 @@ export class MovieService {
    * @param filters Filter criteria
    * @returns Updated URL with filter parameters
    */
+  // Similar fix for MovieService appendFilterParams method
   private appendFilterParams(baseUrl: string, filters: MovieFilterOptions): string {
     // Start with the base URL
     let url = baseUrl;
@@ -423,9 +424,19 @@ export class MovieService {
       url += `&with_genres=${filters.genres.join(',')}`;
     }
 
-    // Add year filter
+    // Add year filter - This is the critical part
     if (filters.year) {
-      url += `&primary_release_year=${filters.year}`;
+      // If year is specified, we need to set both start and end dates to that year
+      url += `&primary_release_date.gte=${filters.year}-01-01&primary_release_date.lte=${filters.year}-12-31`;
+    }
+    // Otherwise, use the year range if provided
+    else if (filters.yearRange) {
+      if (filters.yearRange.start) {
+        url += `&primary_release_date.gte=${filters.yearRange.start}-01-01`;
+      }
+      if (filters.yearRange.end) {
+        url += `&primary_release_date.lte=${filters.yearRange.end}-12-31`;
+      }
     }
 
     // Add year range filter

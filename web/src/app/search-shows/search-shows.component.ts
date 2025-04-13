@@ -260,16 +260,7 @@ export class SearchShowsComponent implements OnInit {
     // Initialize with popular shows
     this.getShows(1);
   }
-
-  onPageChange(event?: PageEvent) {
-    if (event === null) {
-      // Handle null event
-    } else {
-      this.page = event!.pageIndex + 1;
-      this.getShows(this.page);
-    }
-  }
-
+  
   async getShows(page: number) {
     // Clear current shows
     while (this.fetchedShows.length > 0) {
@@ -372,6 +363,12 @@ export class SearchShowsComponent implements OnInit {
       this.allShows = [...this.fetchedShows];
       this.filteredShowsList = this.fetchedShows;
     });
+  }
+
+  // Fix for SearchShowsComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+    this.getShows(this.page);
   }
 
   filterResults(text: string) {

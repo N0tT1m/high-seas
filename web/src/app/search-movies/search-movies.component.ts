@@ -183,18 +183,15 @@ export class SearchMoviesComponent implements OnInit {
     });
   }
 
+  // Fix for SearchMoviesComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+    this.getMovies(this.page);
+  }
+
   ngOnInit() {
     // Initialize with popular movies
     this.getMovies(1);
-  }
-
-  onPageChange(event?: PageEvent) {
-    if (event === null) {
-      // Handle null event
-    } else {
-      this.page = event!.pageIndex + 1;
-      this.getMovies(this.page);
-    }
   }
 
   async getMovies(page: number) {

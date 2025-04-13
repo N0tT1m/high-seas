@@ -296,15 +296,6 @@ export class DiscoverShowsComponent implements OnInit {
     this.galleryShowsRef.play();
   }
 
-  onPageChange(event?: PageEvent) {
-    if (event === null) {
-      // Handle null case
-    } else {
-      this.page = event!.pageIndex + 1;
-      this.getGenre(this.page);
-    }
-  }
-
   getMoviesFromDate() {
     while (this.page <= this.totalShows) {
       this.tvShowsService.getAllShowsFromSelectedDate(this.genre, this.airDate, this.page).subscribe((resp) => {
@@ -342,6 +333,12 @@ export class DiscoverShowsComponent implements OnInit {
     }
 
     this.allShows.splice(0, 1);
+  }
+
+  // Fix for DiscoverShowsComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+    this.getGenre(this.page);
   }
 
   async getGenre(page: number) {
