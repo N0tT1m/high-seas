@@ -58,7 +58,7 @@ export class PopularGalleryTvShowsComponent {
 
     let page = 1;
 
-    this.tvShowService.getPopular(page).subscribe((resp) => {
+    this.tvShowService.getPopularShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -94,7 +94,7 @@ export class PopularGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getPopular(page).subscribe((resp) => {
+    this.tvShowService.getPopularShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -127,7 +127,7 @@ export class PopularGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getPopular(page).subscribe((resp) => {
+    this.tvShowService.getPopularShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
       let page = resp['page'];
         let isAdult = show['adult'];

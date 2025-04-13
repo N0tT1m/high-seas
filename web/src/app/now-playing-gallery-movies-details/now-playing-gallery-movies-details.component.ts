@@ -120,7 +120,7 @@ export class NowPlayingGalleryMoviesDetails {
     const page = parseInt(this.route.snapshot.params['page'], 10);
     // this.fetchedMovie = this.movieService.getMovieById(movieId);
 
-    this.movieService.getNowPlaying(page).subscribe((resp) => {
+    this.movieService.getNowPlayingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

@@ -64,7 +64,7 @@ export class TopRatedMoviesComponent {
   }
 
   getMovies(page: number) {
-    this.movieService.getTopRated(page).subscribe((resp) => {
+    this.movieService.getTopRatedMovies(page).subscribe((resp) => {
       this.allMovies = resp['results'].map((movie) => ({
         page: resp['page'],
         results: [{

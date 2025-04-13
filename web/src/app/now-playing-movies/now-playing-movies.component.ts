@@ -64,7 +64,7 @@ export class NowPlayingMoviesComponent {
   }
 
   getMovies(page: number) {
-    this.movieService.getNowPlaying(page).subscribe((resp) => {
+    this.movieService.getNowPlayingMovies(page).subscribe((resp) => {
       this.allMovies = resp['results'].map((movie) => ({
         page: resp['page'],
         results: [{

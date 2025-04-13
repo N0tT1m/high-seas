@@ -57,7 +57,7 @@ export class UpcomingGalleryMoviesComponent {
 
     let page = 1;
 
-    this.movieService.getUpcoming(page).subscribe((resp) => {
+    this.movieService.getUpcomingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -90,7 +90,7 @@ export class UpcomingGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getUpcoming(page).subscribe((resp) => {
+    this.movieService.getUpcomingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -122,7 +122,7 @@ export class UpcomingGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getUpcoming(page).subscribe((resp) => {
+    this.movieService.getUpcomingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

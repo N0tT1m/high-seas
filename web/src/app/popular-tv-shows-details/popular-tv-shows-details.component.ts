@@ -170,7 +170,7 @@ export class PopularTvShowsDetailsComponent {
     const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.tvShowService.getPopular(page).subscribe((resp) => {
+    this.tvShowService.getPopularShows(page).subscribe((resp) => {
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
           let page = resp['page'];

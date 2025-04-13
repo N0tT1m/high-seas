@@ -64,7 +64,7 @@ export class PopularMoviesComponent {
   }
 
   getMovies(page: number) {
-    this.movieService.getPopular(page).subscribe((resp) => {
+    this.movieService.getPopularMovies(page).subscribe((resp) => {
       this.allMovies = resp['results'].map((movie) => ({
         page: resp['page'],
         results: [{

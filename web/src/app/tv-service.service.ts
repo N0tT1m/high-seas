@@ -1,266 +1,672 @@
-import { Injectable, inject, NgModule, Output, EventEmitter, Component } from '@angular/core';
-import { Movie, MovieResult, TvShow, TvShowResult, GenreRequest, QueryRequest, ShowDetails } from './http-service/http-service.component';
-import { Observable, map, of } from 'rxjs';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import {
+  Movie,
+  MovieResult,
+  TvShow,
+  TvShowResult,
+  GenreRequest,
+  QueryRequest,
+  ShowDetails
+} from './http-service/http-service.component';
+import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from './environments/environment.prod';
+
+// Interface for TV show filter options
+export interface TvShowFilterOptions {
+  genres?: number[];       // Array of genre IDs
+  year?: number;           // Specific first air year
+  yearRange?: {            // Range of air years
+    start?: number;
+    end?: number;
+  };
+  minRating?: number;      // Minimum user rating (0-10)
+  maxRating?: number;      // Maximum user rating (0-10)
+  language?: string;       // Original language (ISO 639-1 code)
+  includeAdult?: boolean;  // Include adult content
+  sortBy?: string;         // Sort criteria (popularity.desc, vote_average.desc, etc.)
+  withNetworks?: number[]; // Filter by networks (HBO, ABC, Netflix, etc.)
+  withCompanies?: number[]; // Filter by production companies
+  status?: string;         // Status (returning series, ended, cancelled)
+  keywords?: string[];     // Keywords or tags
+  airDateRange?: {         // Specific air date range
+    start?: string;        // YYYY-MM-DD
+    end?: string;          // YYYY-MM-DD
+  };
+  watchProviders?: number[]; // Filter by available watch providers
+  page?: number;           // Page number for pagination
+  region?: string;         // ISO 3166-1 country code
+  runtime?: {              // Runtime in minutes per episode
+    min?: number;
+    max?: number;
+  };
+  withType?: string;       // TV show type (documentary, scripted, reality, etc.)
+  includeNullFirstAirDates?: boolean; // Include shows with no first air date
+  screened?: {             // TV content ratings
+    US?: string[];         // e.g., ["TV-14", "TV-MA"]
+    country?: string;      // ISO 3166-1 country code
+  };
+  seasonCount?: {          // Number of seasons
+    min?: number;
+    max?: number;
+  };
+}
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class TvShowService {
-  http: HttpClient = inject(HttpClient)
+  http: HttpClient = inject(HttpClient);
 
-  public genreUrl = 'https://api.themoviedb.org/3/genre/tv/list';
-  public   headers = {
-    'Authorization': "Bearer " + environment.envVar.authorization,
-      'accept': 'application/json',
-  }
+  // API configuration
+  private headers = {
+    'Authorization': `Bearer ${environment.envVar.authorization}`,
+    'accept': 'application/json',
+  };
 
   private baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   private apiBaseUrl = `${environment.envVar.transport}${environment.envVar.ip}:${environment.envVar.port}`;
 
-  public results: TvShowResult[] = [];
-  public tvShowsList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
-  public singleTvShow: TvShow | undefined
-  public respData: TvShowResult[] = [];
-  public  tvShow: any;
-  public  tvShowToBeAdded: Movie
+  // Enhanced request headers with CORS support
+  private requestHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST,DELETE'
+  };
 
-  TvShowService() {
-  }
-
-  getAllShows(page: number, query: string) {
-    // TODO: Add multiple genres filter.
-    // with_genres=Action%20AND%20Comedy
-    // TODO: Add multiple people filter.
-    // with_people=Shah%20Rukh%20Khan%20AND%20Shah%20Rukh%20Khan
-
-    var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=' + page.toString();
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/all-shows';
-
-    setTimeout(function () {
-    }, 4000000);
-
-    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
-  }
-
-  getInitialPage(query: string) {
-    var tmdbUrl = 'https://api.themoviedb.org/3/search/tv?query=' + query + '&include_adult=false&language=en-US&&page=1';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/initial-all-shows';
-
-    setTimeout(function () {
-    }, 4000000);
-
-    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers });
-  }
-
-  makePlexRequest() {
-    var queryApiHeaders = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'POST,DELETE',
-    };
-
-    var tvShowUrl = 'http://127.0.0.1:5000/shows/';
-
-    const options = {
-      headers: queryApiHeaders,
-      rejectUnauthorized: false,
-    };
-
-    return this.http.get<QueryRequest>(tvShowUrl, options);
-  }
-
-  getShowDetails(id) {
-    var tmdbUrl = 'https://api.themoviedb.org/3/tv/'+ id +'?language=en-US';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/tv-show-details';
-
-     return this.http.post<ShowDetails>(tvShowUrl, {"url": tmdbUrl, "request_id": id}, { headers: this.headers })
-  }
-
-  // Movie[] {
-  getAllTvShows(genre: number, airDate: string, page: number) {
-    var tmdbUrl = 'https://api.themoviedb.org/3/discover/tv?with_genres=' + genre.toString() + '&page=' + page.toString() +  '&first_air_date.gte=' + airDate + '&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6';
-    var tvShowUrl = environment.envVar.transport + environment.envVar.ip + ':' + environment.envVar.port + '/tmdb/show/all-shows';
-
-
-    return this.http.post<TvShow>(tvShowUrl, {"url": tmdbUrl}, { headers: this.headers })
-  }
-
-  getTvShowById(id: number, genre: number, page: number, airDate: string): TvShow | undefined {
-    this.getAllTvShows(genre, airDate, page).subscribe((resp) => {
-      resp['results'].forEach((show) => {
-        let page = resp['page'];
-        let isAdult = show['adult'];
-        let backdropPath = show['backdrop_path'];
-        let genreIds = show['genre_ids'];
-        let id = show['id'];
-        let firstAirDate = show['first_air_date'];
-        let video = show['video'];
-        let name = show['name'];
-        let originalLanguage = show['original_language'];
-        let originalName = show['original_name'];
-        let overview = show['overview'];
-        let popularity = show['popularity'];
-        let posterPath = this.baseUrl + show['poster_path'];
-        let voteAverage = show['vote_average'];
-        let voteCount = show['vote_count'];
-        let totalPages = resp['total_pages'];
-        let totalResult = resp['total_result'];
-
-        let result: TvShowResult[] = [{adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, name: name, first_air_date: firstAirDate, original_language: originalLanguage, original_name: originalName, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
-
-        this.tvShowsList.push({ page: page, results: result,  total_pages: totalPages, total_result: totalResult });
-      })
-
-      this.tvShowsList.splice(0, 1);
-
-      for (var i = 0; i < this.tvShowsList.length; i++) {
-
-
-        this.singleTvShow = this.tvShowsList.find(movieResult => movieResult.results[i].id === id);
-      }
-
-      return this.singleTvShow;
-    })
-
-    return this.singleTvShow;
-    }
-
-  getGenres() {
+  /**
+   * Get TV show genres list
+   */
+  getGenres(): Observable<GenreRequest> {
     const url = `${this.apiBaseUrl}/tmdb/show/genres`;
     const tmdbUrl = 'https://api.themoviedb.org/3/genre/tv/list';
     return this.http.post<GenreRequest>(url, { url: tmdbUrl }, { headers: this.headers });
   }
 
-  getTopRated(page: number) {
+  /**
+   * Get all TV shows using search query
+   * @param page Page number
+   * @param query Search query
+   */
+  getAllShows(page: number, query: string): Observable<TvShow> {
+    if (!query) {
+      return this.getPopular({ page: page });
+    } else {
+      return this.searchShows(query, { page: page });
+    }
+  }
+
+  /**
+   * Get initial page of search results for pagination
+   * @param query Search query
+   */
+  getInitialPage(query: string): Observable<TvShow> {
+    return this.searchShows(query, { page: 1 });
+  }
+
+  /**
+   * Get top rated TV shows with optional filters
+   * @param filters Optional filter criteria
+   */
+  getTopRated(filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
     const url = `${this.apiBaseUrl}/tmdb/show/top-rated-tv-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/top_rated?page=${page}`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/top_rated?page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getInitialTopRatedPage() {
-    const url = `${this.apiBaseUrl}/tmdb/show/initial-top-rated-tv-shows`;
-    const tmdbUrl = 'https://api.themoviedb.org/3/tv/top_rated?page=1';
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
-  }
-
-  getOnTheAir(page: number) {
+  /**
+   * Get on the air TV shows with optional filters
+   * @param filters Optional filter criteria
+   */
+  getOnTheAir(filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
     const url = `${this.apiBaseUrl}/tmdb/show/on-the-air-tv-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/on_the_air?page=${page}`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/on_the_air?page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getInitialOnTheAirPage() {
-    const url = `${this.apiBaseUrl}/tmdb/show/initial-on-the-air-tv-shows`;
-    const tmdbUrl = 'https://api.themoviedb.org/3/tv/on_the_air?page=1';
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
-  }
-
-  getPopular(page: number) {
+  /**
+   * Get popular TV shows with optional filters
+   * @param filters Optional filter criteria
+   */
+  getPopular(filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
     const url = `${this.apiBaseUrl}/tmdb/show/popular-tv-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/popular?page=${page}`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/popular?page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getInitialPopularPage() {
-    const url = `${this.apiBaseUrl}/tmdb/show/initial-popular-tv-shows`;
-    const tmdbUrl = 'https://api.themoviedb.org/3/tv/popular?page=1';
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
-  }
-
-  getAiringToday(page: number) {
+  /**
+   * Get TV shows airing today with optional filters
+   * @param filters Optional filter criteria
+   */
+  getAiringToday(filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
     const url = `${this.apiBaseUrl}/tmdb/show/airing-today-tv-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/airing_today?page=${page}`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/airing_today?page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getInitialAiringTodayPage() {
-    const url = `${this.apiBaseUrl}/tmdb/show/initial-airing-today-tv-shows`;
-    const tmdbUrl = 'https://api.themoviedb.org/3/tv/airing_today?page=1';
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
-  }
-
-  searchShows(page: number, query: string) {
+  /**
+   * Search TV shows by query string with advanced filters
+   * @param query Search query
+   * @param filters Optional filter criteria
+   */
+  searchShows(query: string, filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
     const url = `${this.apiBaseUrl}/tmdb/show/all-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/search/tv?query=${query}&include_adult=false&language=en-US&page=${page}`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}&include_adult=${filters.includeAdult || false}&language=en-US&page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getInitialSearchPage(query: string) {
-    const url = `${this.apiBaseUrl}/tmdb/show/initial-all-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/search/tv?query=${query}&include_adult=false&language=en-US&page=1`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
-  }
-
-  getTvShowsByGenre(genre: number, airDate: string, page: number) {
+  /**
+   * Discover TV shows with comprehensive filtering options
+   * @param filters Filter criteria
+   */
+  discoverShows(filters: TvShowFilterOptions = {}): Observable<TvShow> {
+    const page = filters.page || 1;
+    // Using all-shows endpoint for discover functionality
     const url = `${this.apiBaseUrl}/tmdb/show/all-shows`;
-    const tmdbUrl = `https://api.themoviedb.org/3/discover/tv?with_genres=${genre}&page=${page}&first_air_date.gte=${airDate}&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+
+    let tmdbUrl = `https://api.themoviedb.org/3/discover/tv?page=${page}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 
-  getTvShowDetails(id: number) {
+  /**
+   * Get TV shows by genre with enhanced filtering
+   * @param filters Filter criteria (must include genres)
+   */
+  getTvShowsByFilters(filters: TvShowFilterOptions): Observable<TvShow> {
+    const page = filters.page || 1;
+    const url = `${this.apiBaseUrl}/tmdb/show/all-shows`;
+
+    // Generate the base URL for discover
+    let tmdbUrl = `https://api.themoviedb.org/3/discover/tv?page=${page}&include_null_first_air_dates=${filters.includeNullFirstAirDates || false}&sort_by=${filters.sortBy || 'popularity.desc'}`;
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
+  }
+
+  /**
+   * Get detailed TV show information
+   * @param id TMDb show ID
+   * @param appendToResponse Additional data to append to the response (videos, credits, similar, etc.)
+   */
+  getTvShowDetails(id: number, appendToResponse: string[] = []): Observable<ShowDetails> {
     const url = `${this.apiBaseUrl}/tmdb/show/tv-show-details`;
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/${id}?language=en-US`;
-    return this.http.post<ShowDetails>(url, {
+
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/${id}?language=en-US`;
+
+    // Add optional append_to_response parameter
+    if (appendToResponse.length > 0) {
+      tmdbUrl += `&append_to_response=${appendToResponse.join(',')}`;
+    }
+
+    return this.http.post<ShowDetails>(
+      url,
+      { url: tmdbUrl, request_id: id },
+      { headers: this.headers }
+    );
+  }
+
+  /**
+   * Get TV show recommendations based on a show ID
+   * @param id TMDb show ID
+   * @param page Page number
+   */
+  getTvShowRecommendations(id: number, page: number = 1): Observable<TvShow> {
+    const url = `${this.apiBaseUrl}/tmdb/show/recommendations`;
+    const tmdbUrl = `https://api.themoviedb.org/3/tv/${id}/recommendations?page=${page}`;
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, show_id: id }, { headers: this.headers });
+  }
+
+  /**
+   * Get similar TV shows based on a show ID
+   * @param id TMDb show ID
+   * @param page Page number
+   */
+  getSimilarTvShows(id: number, page: number = 1): Observable<TvShow> {
+    const url = `${this.apiBaseUrl}/tmdb/show/similar`;
+    const tmdbUrl = `https://api.themoviedb.org/3/tv/${id}/similar?page=${page}`;
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, show_id: id }, { headers: this.headers });
+  }
+
+  /**
+   * Get all TV shows from a selected date
+   * @param filters Filter options including airDateRange
+   */
+  getAllShowsFromDate(filters: TvShowFilterOptions): Observable<TvShow> {
+    const page = filters.page || 1;
+    const url = `${this.apiBaseUrl}/tmdb/show/all-shows-from-date`;
+
+    // Generate the base URL for discover
+    let tmdbUrl = `https://api.themoviedb.org/3/discover/tv?page=${page}&include_adult=${filters.includeAdult || false}&include_null_first_air_dates=${filters.includeNullFirstAirDates || false}&sort_by=${filters.sortBy || 'popularity.desc'}`;
+
+    if (filters.airDateRange?.start) {
+      tmdbUrl += `&first_air_date.gte=${filters.airDateRange.start}`;
+    }
+
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
+  }
+
+  /**
+   * Get TV show seasons and episodes
+   * @param id TMDb show ID
+   * @param seasonNumber Season number (optional - if not provided, returns all seasons info)
+   */
+  getTvShowSeasons(id: number, seasonNumber?: number): Observable<any> {
+    const url = `${this.apiBaseUrl}/tmdb/show/seasons`;
+    let tmdbUrl = `https://api.themoviedb.org/3/tv/${id}`;
+
+    if (seasonNumber !== undefined) {
+      tmdbUrl = `https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}`;
+    }
+
+    return this.http.post<any>(url, {
       url: tmdbUrl,
-      request_id: id
+      show_id: id,
+      season_number: seasonNumber
     }, { headers: this.headers });
   }
 
-  getAllShowsFromSelectedDate(genre: number, airDate: string, page: number) {
-    const url = `${this.apiBaseUrl}/tmdb/show/all-shows-from-date`;
-    const tmdbUrl = `https://api.themoviedb.org/3/discover/tv?with_genres=${genre}&page=${page}&first_air_date.gte=${airDate}&include_adult=false&include_null_first_air_dates=false&sort_by=popularity.desc&with_release_type=4|5|6`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+  /**
+   * Make a request to download a TV show
+   * @param query Show title
+   * @param seasons Array of episode counts per season
+   * @param quality Video quality (e.g., "1080p")
+   * @param tmdb TMDb ID
+   * @param description Show description
+   * @param year First air year (extracted from details if available)
+   */
+  makeTvShowDownloadRequest(
+    query: string,
+    seasons: number[],
+    quality: string,
+    tmdb: number,
+    description: string,
+    year?: number
+  ): Observable<QueryRequest> {
+    const url = `${this.apiBaseUrl}/show/query`;
+
+    // Extract year from query or description if not explicitly provided
+    if (!year) {
+      const yearMatch = query.match(/\((\d{4})\)/) || description.match(/\((\d{4})\)/);
+      if (yearMatch) {
+        year = parseInt(yearMatch[1], 10);
+      }
+    }
+
+    return this.http.post<QueryRequest>(
+      url,
+      {
+        query,
+        seasons,
+        quality,
+        TMDb: tmdb,
+        description,
+        year: year // Add year to the request
+      },
+      { headers: this.requestHeaders }
+    );
   }
 
-  makeTvShowDownloadRequest(query: string, seasons: Array<number>, quality: string, tmdb: number, description: string) {
-    const url = `${this.apiBaseUrl}/show/query`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'POST,DELETE'
-    };
+  /**
+   * Get the Plex data
+   */
+  makePlexRequest(): Observable<QueryRequest> {
+    const tvShowUrl = 'http://127.0.0.1:5000/shows/';
 
-    return this.http.post<QueryRequest>(url, {
-      query,
-      seasons,
-      quality,
-      TMDb: tmdb,
-      description
-    }, {
-      headers,
-      // rejectUnauthorized: false
+    return this.http.get<QueryRequest>(tvShowUrl, {
+      headers: this.requestHeaders,
+      // Angular HttpClient doesn't support rejectUnauthorized
+      // We'll use withCredentials instead for CORS requests
+      withCredentials: true,
     });
   }
 
-  makeAnimeShowDownloadRequest(query: string, seasons: Array<number>, quality: string, tmdb: number, description: string) {
+  /**
+   * Make a request to download an anime show
+   * @param query Show title
+   * @param seasons Array of episode counts per season
+   * @param quality Video quality (e.g., "1080p")
+   * @param tmdb TMDb ID
+   * @param description Show description
+   * @param year First air year (extracted from details if available)
+   */
+  makeAnimeShowDownloadRequest(
+    query: string,
+    seasons: number[],
+    quality: string,
+    tmdb: number,
+    description: string,
+    year?: number
+  ): Observable<QueryRequest> {
     const url = `${this.apiBaseUrl}/anime/show/query`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'POST,DELETE'
-    };
 
-    return this.http.post<QueryRequest>(url, {
-      query,
-      seasons,
-      quality,
-      TMDb: tmdb,
-      description
-    }, { headers });
+    // Extract year from query or description if not explicitly provided
+    if (!year) {
+      const yearMatch = query.match(/\((\d{4})\)/) || description.match(/\((\d{4})\)/);
+      if (yearMatch) {
+        year = parseInt(yearMatch[1], 10);
+      }
+    }
+
+    return this.http.post<QueryRequest>(
+      url,
+      {
+        query,
+        seasons,
+        quality,
+        TMDb: tmdb,
+        description,
+        year: year // Add year to the request
+      },
+      { headers: this.requestHeaders }
+    );
   }
 
-  getAllShowsForDetails(genre: number, airDate: string, page: number) {
-    const url = `${this.apiBaseUrl}/tmdb/show/all-tv-show-details`;
-    const tmdbUrl = `https://api.themoviedb.org/3/discover/tv?with_genres=${genre}&page=${page}&first_air_date.gte=${airDate}&include_adult=false&include_null_first_air_dates=false&language=en-US&sort_by=popularity.desc&with_release_type=4|5|6`;
-    return this.http.post<TvShow>(url, { url: tmdbUrl }, { headers: this.headers });
+  /**
+   * Helper method to append filter parameters to a TMDb URL
+   * @param baseUrl Base TMDb URL
+   * @param filters Filter criteria
+   * @returns Updated URL with filter parameters
+   */
+  private appendFilterParams(baseUrl: string, filters: TvShowFilterOptions): string {
+    // Start with the base URL
+    let url = baseUrl;
+
+    // Add genre filter
+    if (filters.genres && filters.genres.length > 0) {
+      url += `&with_genres=${filters.genres.join(',')}`;
+    }
+
+    // Add year filter
+    if (filters.year) {
+      url += `&first_air_date_year=${filters.year}`;
+    }
+
+    // Add year range filter
+    if (filters.yearRange) {
+      if (filters.yearRange.start) {
+        url += `&first_air_date.gte=${filters.yearRange.start}-01-01`;
+      }
+      if (filters.yearRange.end) {
+        url += `&first_air_date.lte=${filters.yearRange.end}-12-31`;
+      }
+    }
+
+    // Add specific air date range filter
+    if (filters.airDateRange) {
+      if (filters.airDateRange.start && !url.includes('first_air_date.gte')) {
+        url += `&first_air_date.gte=${filters.airDateRange.start}`;
+      }
+      if (filters.airDateRange.end) {
+        url += `&first_air_date.lte=${filters.airDateRange.end}`;
+      }
+    }
+
+    // Add rating filter
+    if (filters.minRating) {
+      url += `&vote_average.gte=${filters.minRating}`;
+    }
+    if (filters.maxRating) {
+      url += `&vote_average.lte=${filters.maxRating}`;
+    }
+
+    // Add language filter
+    if (filters.language) {
+      url += `&with_original_language=${filters.language}`;
+    }
+
+    // Add sort parameter
+    if (filters.sortBy) {
+      url += `&sort_by=${filters.sortBy}`;
+    }
+
+    // Add networks filter
+    if (filters.withNetworks && filters.withNetworks.length > 0) {
+      url += `&with_networks=${filters.withNetworks.join('|')}`;
+    }
+
+    // Add production companies filter
+    if (filters.withCompanies && filters.withCompanies.length > 0) {
+      url += `&with_companies=${filters.withCompanies.join('|')}`;
+    }
+
+    // Add status filter
+    if (filters.status) {
+      url += `&with_status=${filters.status}`;
+    }
+
+    // Add keywords filter
+    if (filters.keywords && filters.keywords.length > 0) {
+      url += `&with_keywords=${filters.keywords.join('|')}`;
+    }
+
+    // Add runtime filter
+    if (filters.runtime) {
+      if (filters.runtime.min) {
+        url += `&with_runtime.gte=${filters.runtime.min}`;
+      }
+      if (filters.runtime.max) {
+        url += `&with_runtime.lte=${filters.runtime.max}`;
+      }
+    }
+
+    // Add watch providers filter
+    if (filters.watchProviders && filters.watchProviders.length > 0) {
+      url += `&with_watch_providers=${filters.watchProviders.join('|')}`;
+    }
+
+    // Add region filter
+    if (filters.region) {
+      url += `&watch_region=${filters.region}`;
+    }
+
+    // Add type filter
+    if (filters.withType) {
+      url += `&with_type=${filters.withType}`;
+    }
+
+    // Add content rating filters
+    if (filters.screened && filters.screened.US && filters.screened.US.length > 0) {
+      const country = filters.screened.country || 'US';
+      url += `&with_content_ratings.${country}=${filters.screened.US.join('|')}`;
+    }
+
+    // Add season count filters
+    if (filters.seasonCount) {
+      if (filters.seasonCount.min) {
+        url += `&with_season_count.gte=${filters.seasonCount.min}`;
+      }
+      if (filters.seasonCount.max) {
+        url += `&with_season_count.lte=${filters.seasonCount.max}`;
+      }
+    }
+
+    return url;
+  }
+
+  /**
+   * Get the initial page of airing today TV shows
+   */
+  getInitialAiringTodayPage(): Observable<TvShow> {
+    return this.getAiringTodayShows(1);
+  }
+
+  /**
+   * Get TV shows airing today by page
+   * @param page Page number
+   */
+  getAiringTodayShows(page: number): Observable<TvShow> {
+    return this.getAiringToday({ page });
+  }
+
+  /**
+   * Get the initial page of on the air TV shows
+   */
+  getInitialOnTheAirPage(): Observable<TvShow> {
+    return this.getOnTheAirShows(1);
+  }
+
+  /**
+   * Get on the air TV shows by page
+   * @param page Page number
+   */
+  getOnTheAirShows(page: number): Observable<TvShow> {
+    return this.getOnTheAir({ page });
+  }
+
+  /**
+   * Get the initial page of top rated TV shows
+   */
+  getInitialTopRatedPage(): Observable<TvShow> {
+    return this.getTopRatedShows(1);
+  }
+
+  /**
+   * Get top rated TV shows by page
+   * @param page Page number
+   */
+  getTopRatedShows(page: number): Observable<TvShow> {
+    return this.getTopRated({ page });
+  }
+
+  /**
+   * Get the initial page of popular TV shows
+   */
+  getInitialPopularPage(): Observable<TvShow> {
+    return this.getPopularShows(1);
+  }
+
+  /**
+   * Get popular TV shows by page
+   * @param page Page number
+   */
+  getPopularShows(page: number): Observable<TvShow> {
+    return this.getPopular({ page });
+  }
+
+  /**
+   * Get all TV shows by genre, air date, and page
+   * @param genre Genre ID
+   * @param airDate Air date
+   * @param page Page number
+   */
+  getAllTvShows(genre: number, airDate: string, page: number): Observable<TvShow> {
+    if (genre === 0 && !airDate) {
+      return this.getPopular({ page });
+    } else {
+      const filters: TvShowFilterOptions = { page };
+
+      if (genre !== 0) {
+        filters.genres = [genre];
+      }
+
+      if (airDate) {
+        filters.airDateRange = {
+          start: airDate
+        };
+      }
+
+      // Using all-shows endpoint instead of discover
+      return this.getTvShowsByFilters(filters);
+    }
+  }
+
+  /**
+   * Get TV show details for the discover section
+   * @param genre Genre ID
+   * @param airDate Air date
+   * @param page Page number
+   */
+  getAllShowsForDetails(genre: number, airDate: string, page: number): Observable<TvShow> {
+    return this.getAllTvShows(genre, airDate, page);
+  }
+
+  /**
+   * Get TV show details
+   * @param id TV show ID
+   */
+  getShowDetails(id: number): Observable<ShowDetails> {
+    return this.getTvShowDetails(id);
+  }
+
+  /**
+   * Get all TV shows from a selected date with optional genre filter
+   * @param genre Genre ID (optional)
+   * @param airDate Air date in YYYY-MM-DD format
+   * @param page Page number
+   * @returns Observable<TvShow>
+   */
+  getAllShowsFromSelectedDate(genre: number, airDate: string, page: number): Observable<TvShow> {
+    const filters: TvShowFilterOptions = {
+      page: page,
+      includeAdult: false,
+      sortBy: 'popularity.desc'
+    };
+
+    // Add genre filter if specified and not 0
+    if (genre && genre !== 0) {
+      filters.genres = [genre];
+    }
+
+    // Add air date if specified
+    if (airDate) {
+      filters.airDateRange = {
+        start: airDate
+      };
+    }
+
+    // Use the existing method that supports the TvShowFilterOptions interface
+    return this._getAllShowsFromSelectedDate(filters);
+  }
+
+  /**
+   * Private implementation of getting shows from date with filter options
+   * @param filters Filter options including airDateRange
+   */
+  private _getAllShowsFromSelectedDate(filters: TvShowFilterOptions): Observable<TvShow> {
+    const page = filters.page || 1;
+    const url = `${this.apiBaseUrl}/tmdb/show/all-shows-from-date`;
+
+    // Generate the base URL for discover
+    let tmdbUrl = `https://api.themoviedb.org/3/discover/tv?page=${page}&include_adult=${filters.includeAdult || false}&include_null_first_air_dates=${filters.includeNullFirstAirDates || false}&sort_by=${filters.sortBy || 'popularity.desc'}`;
+
+    if (filters.airDateRange?.start) {
+      tmdbUrl += `&first_air_date.gte=${filters.airDateRange.start}`;
+    }
+
+    if (filters.airDateRange?.end) {
+      tmdbUrl += `&first_air_date.lte=${filters.airDateRange.end}`;
+    }
+
+    tmdbUrl = this.appendFilterParams(tmdbUrl, filters);
+
+    return this.http.post<TvShow>(url, { url: tmdbUrl, filters }, { headers: this.headers });
   }
 }

@@ -155,7 +155,7 @@ export class AiringTodayGalleryTvShowsDetailsComponent {
     const page = parseInt(this.route.snapshot.params['page'], 10);
     const query = this.route.snapshot.params['query'];
 
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
           let page = resp['page'];

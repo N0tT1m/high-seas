@@ -120,7 +120,7 @@ export class UpcomingMoviesDetailsComponent {
     const page = parseInt(this.route.snapshot.params['page'], 10);
     // this.fetchedMovie = this.movieService.getMovieById(movieId);
 
-    this.movieService.getUpcoming(page).subscribe((resp) => {
+    this.movieService.getUpcomingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

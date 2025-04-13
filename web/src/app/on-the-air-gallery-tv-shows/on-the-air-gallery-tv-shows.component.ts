@@ -58,7 +58,7 @@ export class OnTheAirGalleryTvShowsComponent {
 
     let page = 1;
 
-    this.tvShowService.getOnTheAir(page).subscribe((resp) => {
+    this.tvShowService.getOnTheAirShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -94,7 +94,7 @@ export class OnTheAirGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getOnTheAir(page).subscribe((resp) => {
+    this.tvShowService.getOnTheAirShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -127,7 +127,7 @@ export class OnTheAirGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getOnTheAir(page).subscribe((resp) => {
+    this.tvShowService.getOnTheAirShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
       let page = resp['page'];
         let isAdult = show['adult'];

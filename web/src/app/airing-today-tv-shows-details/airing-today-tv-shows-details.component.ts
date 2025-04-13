@@ -169,7 +169,7 @@ export class AiringTodayTvShowsDetailsComponent {
     const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
           let page = resp['page'];
