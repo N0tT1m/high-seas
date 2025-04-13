@@ -1,4 +1,5 @@
 package db
+
 //
 import (
 	"fmt"
@@ -7,8 +8,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
-
-package db
 
 // Existing models from the application
 
@@ -25,7 +24,7 @@ type TMDbTvShowsRequest struct {
 
 // TMDbMovieRequest represents a request to forward to TMDb API for movies
 type TMDbMovieRequest struct {
-	URL    string                `json:"url"`
+	URL     string                 `json:"url"`
 	Filters map[string]interface{} `json:"filters,omitempty"`
 }
 
@@ -37,10 +36,10 @@ type TMDbDetailedMovieRequest struct {
 
 // TMDbResponse represents a response from TMDb API for TV shows
 type TMDbResponse struct {
-	Page         int         `json:"page"`
-	Results      []TvResult  `json:"results"`
-	TotalPages   int         `json:"total_pages"`
-	TotalResults int         `json:"total_results"`
+	Page         int        `json:"page"`
+	Results      []TvResult `json:"results"`
+	TotalPages   int        `json:"total_pages"`
+	TotalResults int        `json:"total_results"`
 }
 
 // TMDbMovieResponse represents a response from TMDb API for movies
@@ -81,51 +80,51 @@ type TvResult struct {
 
 // MovieResult represents a movie result from TMDb API
 type MovieResult struct {
-	Adult            bool     `json:"adult"`
-	BackdropPath     string   `json:"backdrop_path"`
-	GenreIDs         []int    `json:"genre_ids"`
-	ID               int      `json:"id"`
-	OriginalLanguage string   `json:"original_language"`
-	OriginalTitle    string   `json:"original_title"`
-	Overview         string   `json:"overview"`
-	Popularity       float64  `json:"popularity"`
-	PosterPath       string   `json:"poster_path"`
-	ReleaseDate      string   `json:"release_date"`
-	Title            string   `json:"title"`
-	Video            bool     `json:"video"`
-	VoteAverage      float64  `json:"vote_average"`
-	VoteCount        int      `json:"vote_count"`
+	Adult            bool    `json:"adult"`
+	BackdropPath     string  `json:"backdrop_path"`
+	GenreIDs         []int   `json:"genre_ids"`
+	ID               int     `json:"id"`
+	OriginalLanguage string  `json:"original_language"`
+	OriginalTitle    string  `json:"original_title"`
+	Overview         string  `json:"overview"`
+	Popularity       float64 `json:"popularity"`
+	PosterPath       string  `json:"poster_path"`
+	ReleaseDate      string  `json:"release_date"`
+	Title            string  `json:"title"`
+	Video            bool    `json:"video"`
+	VoteAverage      float64 `json:"vote_average"`
+	VoteCount        int     `json:"vote_count"`
 }
 
 // TVShowDetails represents detailed TV show information
 type TVShowDetails struct {
-	Adult            bool    `json:"adult"`
-	BackdropPath     string  `json:"backdrop_path"`
-	ID               int     `json:"id"`
-	Name             string  `json:"name"`
-	OriginalLanguage string  `json:"original_language"`
-	OriginalName     string  `json:"original_name"`
-	Overview         string  `json:"overview"`
-	PosterPath       string  `json:"poster_path"`
-	MediaType        string  `json:"media_type"`
-	Popularity       float64 `json:"popularity"`
-	FirstAirDate     string  `json:"first_air_date"`
-	VoteAverage      float64 `json:"vote_average"`
-	VoteCount        int     `json:"vote_count"`
-	InPlex           bool    `json:"in_plex"`
-	Seasons          []Season `json:"seasons,omitempty"`
-	NumberOfSeasons  int     `json:"number_of_seasons"`
-	NumberOfEpisodes int     `json:"number_of_episodes"`
-	Status           string  `json:"status"`
-	Genres           []Genre `json:"genres"`
+	Adult            bool      `json:"adult"`
+	BackdropPath     string    `json:"backdrop_path"`
+	ID               int       `json:"id"`
+	Name             string    `json:"name"`
+	OriginalLanguage string    `json:"original_language"`
+	OriginalName     string    `json:"original_name"`
+	Overview         string    `json:"overview"`
+	PosterPath       string    `json:"poster_path"`
+	MediaType        string    `json:"media_type"`
+	Popularity       float64   `json:"popularity"`
+	FirstAirDate     string    `json:"first_air_date"`
+	VoteAverage      float64   `json:"vote_average"`
+	VoteCount        int       `json:"vote_count"`
+	InPlex           bool      `json:"in_plex"`
+	Seasons          []Season  `json:"seasons,omitempty"`
+	NumberOfSeasons  int       `json:"number_of_seasons"`
+	NumberOfEpisodes int       `json:"number_of_episodes"`
+	Status           string    `json:"status"`
+	Genres           []Genre   `json:"genres"`
 	Networks         []Network `json:"networks"`
 }
 
 // Network represents a TV network
 type Network struct {
-	ID          int    `json:"id"`
-	LogoPath    string `json:"logo_path"`
-	Name        string `json:"name"`
+	ID            int    `json:"id"`
+	LogoPath      string `json:"logo_path"`
+	Name          string `json:"name"`
 	OriginCountry string `json:"origin_country"`
 }
 
@@ -159,27 +158,27 @@ type Episode struct {
 
 // MovieDetails represents detailed movie information
 type MovieDetails struct {
-	Adult          bool    `json:"adult"`
-	BackdropPath   string  `json:"backdrop_path"`
-	Budget         int     `json:"budget"`
-	Genres         []Genre `json:"genres"`
-	Homepage       string  `json:"homepage"`
-	ID             int     `json:"id"`
-	ImdbID         string  `json:"imdb_id"`
-	OriginalTitle  string  `json:"original_title"`
-	Overview       string  `json:"overview"`
-	Popularity     float64 `json:"popularity"`
-	PosterPath     string  `json:"poster_path"`
-	ReleaseDate    string  `json:"release_date"`
-	Revenue        int     `json:"revenue"`
-	Runtime        int     `json:"runtime"`
-	Status         string  `json:"status"`
-	Tagline        string  `json:"tagline"`
-	Title          string  `json:"title"`
-	Video          bool    `json:"video"`
-	VoteAverage    float64 `json:"vote_average"`
-	VoteCount      int     `json:"vote_count"`
-	InPlex         bool    `json:"in_plex"`
+	Adult         bool    `json:"adult"`
+	BackdropPath  string  `json:"backdrop_path"`
+	Budget        int     `json:"budget"`
+	Genres        []Genre `json:"genres"`
+	Homepage      string  `json:"homepage"`
+	ID            int     `json:"id"`
+	ImdbID        string  `json:"imdb_id"`
+	OriginalTitle string  `json:"original_title"`
+	Overview      string  `json:"overview"`
+	Popularity    float64 `json:"popularity"`
+	PosterPath    string  `json:"poster_path"`
+	ReleaseDate   string  `json:"release_date"`
+	Revenue       int     `json:"revenue"`
+	Runtime       int     `json:"runtime"`
+	Status        string  `json:"status"`
+	Tagline       string  `json:"tagline"`
+	Title         string  `json:"title"`
+	Video         bool    `json:"video"`
+	VoteAverage   float64 `json:"vote_average"`
+	VoteCount     int     `json:"vote_count"`
+	InPlex        bool    `json:"in_plex"`
 }
 
 // MovieRequest represents a request to download a movie
@@ -193,12 +192,12 @@ type MovieRequest struct {
 
 // ShowRequest represents a request to download a TV show
 type ShowRequest struct {
-	Query       string  `json:"query"`
-	Seasons     []int   `json:"seasons"`
-	Quality     string  `json:"quality"`
-	TMDb        int     `json:"TMDb"`
-	Description string  `json:"description"`
-	Year        int     `json:"year,omitempty"` // Now includes year
+	Query       string `json:"query"`
+	Seasons     []int  `json:"seasons"`
+	Quality     string `json:"quality"`
+	TMDb        int    `json:"TMDb"`
+	Description string `json:"description"`
+	Year        int    `json:"year,omitempty"` // Now includes year
 }
 
 // AnimeMovieRequest represents a request to download an anime movie
@@ -213,12 +212,12 @@ type AnimeMovieRequest struct {
 
 // AnimeTvRequest represents a request to download an anime TV show
 type AnimeTvRequest struct {
-	Query       string  `json:"query"`
-	Seasons     []int   `json:"seasons"`
-	Quality     string  `json:"quality"`
-	TMDb        int     `json:"TMDb"`
-	Description string  `json:"description"`
-	Year        int     `json:"year,omitempty"` // Now includes year
+	Query       string `json:"query"`
+	Seasons     []int  `json:"seasons"`
+	Quality     string `json:"quality"`
+	TMDb        int    `json:"TMDb"`
+	Description string `json:"description"`
+	Year        int    `json:"year,omitempty"` // Now includes year
 }
 
 // TvShowSeasonRequest represents a request for TV show season information
@@ -241,215 +240,218 @@ type MovieRecommendationsRequest struct {
 
 // FilterOptions represents filter options for TMDb API
 type FilterOptions struct {
-	Genres         []int   `json:"genres,omitempty"`
-	Year           int     `json:"year,omitempty"`
-	YearStart      int     `json:"year_start,omitempty"`
-	YearEnd        int     `json:"year_end,omitempty"`
-	MinRating      float64 `json:"min_rating,omitempty"`
-	MaxRating      float64 `json:"max_rating,omitempty"`
-	Language       string  `json:"language,omitempty"`
-	IncludeAdult   bool    `json:"include_adult,omitempty"`
-	SortBy         string  `json:"sort_by,omitempty"`
-	WithNetworks   []int   `json:"with_networks,omitempty"`
-	WithCompanies  []int   `json:"with_companies,omitempty"`
-	Status         string  `json:"status,omitempty"`
+	Genres         []int    `json:"genres,omitempty"`
+	Year           int      `json:"year,omitempty"`
+	YearStart      int      `json:"year_start,omitempty"`
+	YearEnd        int      `json:"year_end,omitempty"`
+	MinRating      float64  `json:"min_rating,omitempty"`
+	MaxRating      float64  `json:"max_rating,omitempty"`
+	Language       string   `json:"language,omitempty"`
+	IncludeAdult   bool     `json:"include_adult,omitempty"`
+	SortBy         string   `json:"sort_by,omitempty"`
+	WithNetworks   []int    `json:"with_networks,omitempty"`
+	WithCompanies  []int    `json:"with_companies,omitempty"`
+	Status         string   `json:"status,omitempty"`
 	Keywords       []string `json:"keywords,omitempty"`
-	WatchProviders []int   `json:"watch_providers,omitempty"`
-	Page           int     `json:"page,omitempty"`
-	Region         string  `json:"region,omitempty"`
-	RuntimeMin     int     `json:"runtime_min,omitempty"`
-	RuntimeMax     int     `json:"runtime_max,omitempty"`
-	WithType       string  `json:"with_type,omitempty"`
+	WatchProviders []int    `json:"watch_providers,omitempty"`
+	Page           int      `json:"page,omitempty"`
+	Region         string   `json:"region,omitempty"`
+	RuntimeMin     int      `json:"runtime_min,omitempty"`
+	RuntimeMax     int      `json:"runtime_max,omitempty"`
+	WithType       string   `json:"with_type,omitempty"`
 }
 
-//type MovieRequest struct {
-//	ID      uint   `gorm:"primaryKey"`
-//	Query   string `json:"query"`
-//	TMDb    int    `json:"TMDb"`
-//	Quality string `json:"quality"`
-//	Year    int    `json:"year"` // Added Year field
-//}
+//	type MovieRequest struct {
+//		ID      uint   `gorm:"primaryKey"`
+//		Query   string `json:"query"`
+//		TMDb    int    `json:"TMDb"`
+//		Quality string `json:"quality"`
+//		Year    int    `json:"year"` // Added Year field
+//	}
 //
-//type ShowRequest struct {
-//	ID      uint   `gorm:"primaryKey"`
-//	Query   string `json:"query"`
-//	Seasons []int  `json:"seasons"`
-//	TMDb    int    `json:"TMDb"`
-//	Quality string `json:"quality"`
-//	Year    int    `json:"year"` // Added Year field
-//}
+//	type ShowRequest struct {
+//		ID      uint   `gorm:"primaryKey"`
+//		Query   string `json:"query"`
+//		Seasons []int  `json:"seasons"`
+//		TMDb    int    `json:"TMDb"`
+//		Quality string `json:"quality"`
+//		Year    int    `json:"year"` // Added Year field
+//	}
 //
-//// SeasonInfo struct to hold season and episode count
-//type SeasonInfo struct {
-//	SeasonNumber int
-//	EpisodeCount int
-//}
+// // SeasonInfo struct to hold season and episode count
 //
-//type AnimeMovieRequest struct {
-//	ID      uint   `gorm:"primaryKey"`
-//	Query   string `json:"query"`
-//	TMDb    int    `json:"TMDb"`
-//	Quality string `json:"quality"`
-//	Year    int    `json:"year"` // Added Year field
-//}
+//	type SeasonInfo struct {
+//		SeasonNumber int
+//		EpisodeCount int
+//	}
 //
-//type AnimeTvRequest struct {
-//	ID      uint   `gorm:"primaryKey"`
-//	Query   string `json:"query"`
-//	Seasons []int  `json:"seasons"`
-//	TMDb    int    `json:"TMDb"`
-//	Quality string `json:"quality"`
-//	Year    int    `json:"year"` // Added Year field
-//}
+//	type AnimeMovieRequest struct {
+//		ID      uint   `gorm:"primaryKey"`
+//		Query   string `json:"query"`
+//		TMDb    int    `json:"TMDb"`
+//		Quality string `json:"quality"`
+//		Year    int    `json:"year"` // Added Year field
+//	}
 //
-//type TMDbRequest struct {
-//	ID  uint   `gorm:"primaryKey"`
-//	Url string `json:"url"`
-//}
+//	type AnimeTvRequest struct {
+//		ID      uint   `gorm:"primaryKey"`
+//		Query   string `json:"query"`
+//		Seasons []int  `json:"seasons"`
+//		TMDb    int    `json:"TMDb"`
+//		Quality string `json:"quality"`
+//		Year    int    `json:"year"` // Added Year field
+//	}
 //
-//type TMDbTvShowsRequest struct {
-//	ID        uint   `gorm:"primaryKey"`
-//	Url       string `json:"url"`
-//	RequestID int    `json:"request_id"`
-//}
+//	type TMDbRequest struct {
+//		ID  uint   `gorm:"primaryKey"`
+//		Url string `json:"url"`
+//	}
 //
-//type TMDbResponse struct {
-//	Page         uint          `json:"page"`
-//	Results      []TMDbResults `json:"results"`
-//	TotalPages   uint          `json:"total_pages"`
-//	TotalResults uint          `json:"total_results"`
-//}
+//	type TMDbTvShowsRequest struct {
+//		ID        uint   `gorm:"primaryKey"`
+//		Url       string `json:"url"`
+//		RequestID int    `json:"request_id"`
+//	}
 //
-//type TMDbMovieResponse struct {
-//	Page         uint               `json:"page"`
-//	Results      []TMDbMovieResults `json:"results"`
-//	TotalPages   uint               `json:"total_pages"`
-//	TotalResults uint               `json:"total_results"`
-//}
+//	type TMDbResponse struct {
+//		Page         uint          `json:"page"`
+//		Results      []TMDbResults `json:"results"`
+//		TotalPages   uint          `json:"total_pages"`
+//		TotalResults uint          `json:"total_results"`
+//	}
 //
-//type TMDbGenreResponse struct {
-//	Genres []Genre `json:"genres"`
-//}
+//	type TMDbMovieResponse struct {
+//		Page         uint               `json:"page"`
+//		Results      []TMDbMovieResults `json:"results"`
+//		TotalPages   uint               `json:"total_pages"`
+//		TotalResults uint               `json:"total_results"`
+//	}
 //
-//type Genre struct {
-//	ID   int    `json:"id"`
-//	Name string `json:"name"`
-//}
+//	type TMDbGenreResponse struct {
+//		Genres []Genre `json:"genres"`
+//	}
 //
-//// MovieDetails represents the movie details response
-//type MovieDetails struct {
-//	ID          int     `json:"id"`
-//	Title       string  `json:"title"`
-//	Overview    string  `json:"overview"`
-//	ReleaseDate string  `json:"release_date"`
-//	VoteAverage float64 `json:"vote_average"`
-//	InPlex      bool    `json:"in_plex"`
-//}
+//	type Genre struct {
+//		ID   int    `json:"id"`
+//		Name string `json:"name"`
+//	}
 //
-//// TMDbMovieRequest represents the request structure for TMDb movie endpoints
-//type TMDbMovieRequest struct {
-//	URL string `json:"url"`
-//}
+// // MovieDetails represents the movie details response
 //
-//// TMDbDetailedMovieRequest includes request ID for detailed movie queries
-//type TMDbDetailedMovieRequest struct {
-//	URL       string `json:"url"`
-//	RequestID int    `json:"request_id"`
-//}
+//	type MovieDetails struct {
+//		ID          int     `json:"id"`
+//		Title       string  `json:"title"`
+//		Overview    string  `json:"overview"`
+//		ReleaseDate string  `json:"release_date"`
+//		VoteAverage float64 `json:"vote_average"`
+//		InPlex      bool    `json:"in_plex"`
+//	}
 //
-//type TMDbResults struct {
-//	Adult            bool    `json:"adult"`
-//	BackdropPath     string  `json:"backdrop_path"`
-//	FirstAirDate     string  `json:"first_air_date"`
-//	GenreIds         []uint  `json:"genre_ids"`
-//	ID               int     `json:"id"`
-//	Name             string  `json:"name"`
-//	OriginalLanguage string  `json:"original_language"`
-//	OriginalName     string  `json:"original_name"`
-//	Overview         string  `json:"overview"`
-//	Popularity       float64 `json:"popularity"`
-//	PosterPath       string  `json:"poster_path"`
-//	VoteAverage      float64 `json:"vote_average"`
-//	VoteCount        float64 `json:"vote_count"`
-//	Video            bool    `json:"video"`
-//}
+// // TMDbMovieRequest represents the request structure for TMDb movie endpoints
 //
-//type TMDbMovieResults struct {
-//	Adult               bool                     `json:"adult"`
-//	BackdropPath        string                   `json:"backdrop_path"`
-//	BelongsToCollect    bool                     `json:"belongs_to_collect"`
-//	Budget              int                      `json:"budget"`
-//	GenreIds            []uint                   `json:"genre_ids"`
-//	Homepage            string                   `json:"homepage"`
-//	ID                  int                      `json:"id"`
-//	IMDbID              int                      `json:"imdb_id"`
-//	Title               string                   `json:"title"`
-//	ReleaseDate         string                   `json:"release_date"`
-//	OriginalLanguage    string                   `json:"original_language"`
-//	OriginalTitle       string                   `json:"original_title"`
-//	Overview            string                   `json:"overview"`
-//	Popularity          float64                  `json:"popularity"`
-//	PosterPath          string                   `json:"poster_path"`
-//	ProductionCompanies []map[string]interface{} `json:"production_companies"`
-//	ProductionCountries []map[string]interface{} `json:"production_countries"`
-//	Tagline             string                   `json:"tagline"`
-//	VoteAverage         float64                  `json:"vote_average"`
-//	VoteCount           float64                  `json:"vote_count"`
-//	Video               bool                     `json:"video"`
-//}
+//	type TMDbMovieRequest struct {
+//		URL string `json:"url"`
+//	}
 //
-//type TVShow struct {
-//	Page         uint            `json:"page"`
-//	Results      []TVShowDetails `json:"results"`
-//	TotalPages   uint            `json:"total_pages"`
-//	TotalResults uint            `json:"total_results"`
-//}
+// // TMDbDetailedMovieRequest includes request ID for detailed movie queries
 //
-//type TVShowDetails struct {
-//	Adult               bool                     `json:"adult"`
-//	BackdropPath        string                   `json:"backdrop_path"`
-//	CreatedBy           []map[string]interface{} `json:"created_by"`
-//	EpisodeRunTime      []interface{}            `json:"episode_run_time"`
-//	FirstAirDate        string                   `json:"first_air_date"`
-//	Genres              []interface{}            `json:"genres"`
-//	Homepage            string                   `json:"homepage"`
-//	ID                  int                      `json:"id"`
-//	InProduction        bool                     `json:"in_production"`
-//	Languages           []string                 `json:"languages"`
-//	LastAirDate         string                   `json:"last_air_date"`
-//	LastEpisodeToAir    map[string]interface{}   `json:"last_episode_to_air"`
-//	Name                string                   `json:"name"`
-//	NextEpisodeToAir    map[string]interface{}   `json:"next_episode_to_air"`
-//	Networks            []map[string]interface{} `json:"networks"`
-//	NumberOfEpisodes    int                      `json:"number_of_episodes"`
-//	NumberOfSeasons     int                      `json:"number_of_seasons"`
-//	OriginCountry       []string                 `json:"origin_country"`
-//	OriginalLanguage    string                   `json:"original_language"`
-//	OriginalName        string                   `json:"original_name"`
-//	Overview            string                   `json:"overview"`
-//	Popularity          float64                  `json:"popularity"` // Assuming it can be a decimal
-//	PosterPath          string                   `json:"poster_path"`
-//	ProductionCompanies []map[string]interface{} `json:"production_companies"`
-//	ProductionCountries []map[string]interface{} `json:"production_countries"`
-//	Seasons             []map[string]interface{} `json:"seasons"`
-//	SpokenLanguages     []map[string]interface{} `json:"spoken_languages"`
-//	Status              string                   `json:"status"`
-//	Tagline             string                   `json:"tagline"`
-//	Type                string                   `json:"type"`
-//	VoteAverage         float64                  `json:"vote_average"` // Assuming it can be a decimal
-//	VoteCount           int                      `json:"vote_count"`
-//	InPlex              bool                     `json:"in_plex"`
-//}
+//	type TMDbDetailedMovieRequest struct {
+//		URL       string `json:"url"`
+//		RequestID int    `json:"request_id"`
+//	}
 //
-//var user = utils.EnvVar("DB_USER", "")
-//var password = utils.EnvVar("DB_PASSWORD", "")
-//var ip = utils.EnvVar("DB_IP", "")
-//var port = utils.EnvVar("DB_PORT", "")
+//	type TMDbResults struct {
+//		Adult            bool    `json:"adult"`
+//		BackdropPath     string  `json:"backdrop_path"`
+//		FirstAirDate     string  `json:"first_air_date"`
+//		GenreIds         []uint  `json:"genre_ids"`
+//		ID               int     `json:"id"`
+//		Name             string  `json:"name"`
+//		OriginalLanguage string  `json:"original_language"`
+//		OriginalName     string  `json:"original_name"`
+//		Overview         string  `json:"overview"`
+//		Popularity       float64 `json:"popularity"`
+//		PosterPath       string  `json:"poster_path"`
+//		VoteAverage      float64 `json:"vote_average"`
+//		VoteCount        float64 `json:"vote_count"`
+//		Video            bool    `json:"video"`
+//	}
 //
-//func ConnectToDb() (*gorm.DB, error) {
-//	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-//	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/cs?charset=utf8mb4&parseTime=True&loc=Local", user, password, ip, port)
-//	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+//	type TMDbMovieResults struct {
+//		Adult               bool                     `json:"adult"`
+//		BackdropPath        string                   `json:"backdrop_path"`
+//		BelongsToCollect    bool                     `json:"belongs_to_collect"`
+//		Budget              int                      `json:"budget"`
+//		GenreIds            []uint                   `json:"genre_ids"`
+//		Homepage            string                   `json:"homepage"`
+//		ID                  int                      `json:"id"`
+//		IMDbID              int                      `json:"imdb_id"`
+//		Title               string                   `json:"title"`
+//		ReleaseDate         string                   `json:"release_date"`
+//		OriginalLanguage    string                   `json:"original_language"`
+//		OriginalTitle       string                   `json:"original_title"`
+//		Overview            string                   `json:"overview"`
+//		Popularity          float64                  `json:"popularity"`
+//		PosterPath          string                   `json:"poster_path"`
+//		ProductionCompanies []map[string]interface{} `json:"production_companies"`
+//		ProductionCountries []map[string]interface{} `json:"production_countries"`
+//		Tagline             string                   `json:"tagline"`
+//		VoteAverage         float64                  `json:"vote_average"`
+//		VoteCount           float64                  `json:"vote_count"`
+//		Video               bool                     `json:"video"`
+//	}
 //
-//	return db, err
-//}
+//	type TVShow struct {
+//		Page         uint            `json:"page"`
+//		Results      []TVShowDetails `json:"results"`
+//		TotalPages   uint            `json:"total_pages"`
+//		TotalResults uint            `json:"total_results"`
+//	}
+//
+//	type TVShowDetails struct {
+//		Adult               bool                     `json:"adult"`
+//		BackdropPath        string                   `json:"backdrop_path"`
+//		CreatedBy           []map[string]interface{} `json:"created_by"`
+//		EpisodeRunTime      []interface{}            `json:"episode_run_time"`
+//		FirstAirDate        string                   `json:"first_air_date"`
+//		Genres              []interface{}            `json:"genres"`
+//		Homepage            string                   `json:"homepage"`
+//		ID                  int                      `json:"id"`
+//		InProduction        bool                     `json:"in_production"`
+//		Languages           []string                 `json:"languages"`
+//		LastAirDate         string                   `json:"last_air_date"`
+//		LastEpisodeToAir    map[string]interface{}   `json:"last_episode_to_air"`
+//		Name                string                   `json:"name"`
+//		NextEpisodeToAir    map[string]interface{}   `json:"next_episode_to_air"`
+//		Networks            []map[string]interface{} `json:"networks"`
+//		NumberOfEpisodes    int                      `json:"number_of_episodes"`
+//		NumberOfSeasons     int                      `json:"number_of_seasons"`
+//		OriginCountry       []string                 `json:"origin_country"`
+//		OriginalLanguage    string                   `json:"original_language"`
+//		OriginalName        string                   `json:"original_name"`
+//		Overview            string                   `json:"overview"`
+//		Popularity          float64                  `json:"popularity"` // Assuming it can be a decimal
+//		PosterPath          string                   `json:"poster_path"`
+//		ProductionCompanies []map[string]interface{} `json:"production_companies"`
+//		ProductionCountries []map[string]interface{} `json:"production_countries"`
+//		Seasons             []map[string]interface{} `json:"seasons"`
+//		SpokenLanguages     []map[string]interface{} `json:"spoken_languages"`
+//		Status              string                   `json:"status"`
+//		Tagline             string                   `json:"tagline"`
+//		Type                string                   `json:"type"`
+//		VoteAverage         float64                  `json:"vote_average"` // Assuming it can be a decimal
+//		VoteCount           int                      `json:"vote_count"`
+//		InPlex              bool                     `json:"in_plex"`
+//	}
+var user = utils.EnvVar("DB_USER", "")
+var password = utils.EnvVar("DB_PASSWORD", "")
+var ip = utils.EnvVar("DB_IP", "")
+var port = utils.EnvVar("DB_PORT", "")
+
+func ConnectToDb() (*gorm.DB, error) {
+	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/cs?charset=utf8mb4&parseTime=True&loc=Local", user, password, ip, port)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	return db, err
+}
