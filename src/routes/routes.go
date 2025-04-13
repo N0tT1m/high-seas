@@ -41,11 +41,13 @@ func SetupRouter() {
 
 	r.Use(CORS)
 
-	// Existing routes
+	// Existing movie query routes
 	r.POST("/movie/query", api.QueryMovieRequest)
 	r.POST("/show/query", api.QueryShowRequest)
 	r.POST("/anime/movie/query", api.QueryAnimeMovieRequest)
 	r.POST("/anime/show/query", api.MakeAnimeShowQuery)
+
+	// Existing TV show routes
 	r.POST("/tmdb/show/top-rated-tv-shows", api.QueryTopRatedTvShows)
 	r.POST("/tmdb/show/initial-top-rated-tv-shows", api.QueryInitialTopRatedTvShows)
 	r.POST("/tmdb/show/on-the-air-tv-shows", api.QueryOnTheAirTvShows)
@@ -61,7 +63,7 @@ func SetupRouter() {
 	r.POST("/tmdb/show/all-tv-show-details", api.QueryAllShowsForDetails)
 	r.POST("/tmdb/show/all-shows-from-date", api.QueryAllShowsFromSelectedDate)
 
-	// New movie routes
+	// Existing movie routes
 	r.POST("/tmdb/movie/top-rated", api.QueryTopRatedMovies)
 	r.POST("/tmdb/movie/popular", api.QueryPopularMovies)
 	r.POST("/tmdb/movie/now-playing", api.QueryNowPlayingMovies)
@@ -70,6 +72,20 @@ func SetupRouter() {
 	r.POST("/tmdb/movie/by-genre", api.QueryMoviesByGenre)
 	r.POST("/tmdb/movie/search", api.QueryMovieSearch)
 	r.POST("/tmdb/movie/genres", api.QueryMovieGenres)
+
+	// NEW TV show routes to match movie capabilities
+	r.POST("/tmdb/show/seasons", api.QueryTvShowSeasons)
+	r.POST("/tmdb/show/recommendations", api.QueryTvShowRecommendations)
+	r.POST("/tmdb/show/similar", api.QuerySimilarTvShows)
+	r.POST("/tmdb/show/by-genre", api.QueryShowsByGenre)
+	r.POST("/tmdb/show/search", api.QueryShowSearch)
+
+	// NEW movie routes to match TV capabilities
+	r.POST("/tmdb/movie/recommendations", api.QueryMovieRecommendations)
+	r.POST("/tmdb/movie/similar", api.QuerySimilarMovies)
+	r.POST("/tmdb/movie/all-movies", api.QueryAllMovies)
+	r.POST("/tmdb/movie/all-movie-details", api.QueryAllMoviesForDetails)
+	r.POST("/tmdb/movie/all-movies-from-date", api.QueryAllMoviesFromSelectedDate)
 
 	// // Define routes based on the domain name
 	// r.POST("/movie/query", func(c *gin.Context) {

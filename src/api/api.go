@@ -749,3 +749,198 @@ func QueryMovieGenres(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+// New TV show endpoint handlers
+
+// QueryTvShowSeasons handles requests for TV show seasons and episodes
+func QueryTvShowSeasons(c *gin.Context) {
+	var request db.TMDbTvShowsRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processDetailedTMDbRequest(c, request.Url, request.RequestID)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryTvShowRecommendations handles requests for TV show recommendations
+func QueryTvShowRecommendations(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QuerySimilarTvShows handles requests for similar TV shows
+func QuerySimilarTvShows(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryShowsByGenre handles requests for TV shows filtered by genre
+func QueryShowsByGenre(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryShowSearch handles search requests for TV shows
+func QueryShowSearch(c *gin.Context) {
+	var request db.TMDbRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processTMDbRequest(c, request.Url)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// New movie endpoint handlers
+
+// QueryMovieRecommendations handles requests for movie recommendations
+func QueryMovieRecommendations(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QuerySimilarMovies handles requests for similar movies
+func QuerySimilarMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryAllMovies handles requests for all movies with filters
+func QueryAllMovies(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryAllMoviesForDetails handles requests for movie details in discover section
+func QueryAllMoviesForDetails(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// QueryAllMoviesFromSelectedDate handles requests for movies from specific dates
+func QueryAllMoviesFromSelectedDate(c *gin.Context) {
+	var request db.TMDbMovieRequest
+	if err := c.BindJSON(&request); err != nil {
+		logger.WriteError("Failed to bind request", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Process TMDb URL with date filters
+	response, err := processMovieTMDbRequest(c, request.URL)
+	if err != nil {
+		logger.WriteError("Failed to process TMDb request", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
