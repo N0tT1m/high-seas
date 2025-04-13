@@ -142,6 +142,14 @@ http {
 
 ```
 .
+├── plex/                   # Plex API
+├── rust-backend/           # Rust backend
+├── src/                    # Golang backend
+├── where-stream/           # Discord bot in Golang
+├── high_seas_mobile        # Flutter mobile app for the backend
+├── high_seas_desktop        # Flutter desktop app for the backend
+├── high-seas-tvos          # Swift tvOS app
+├── high-seas-macOS         # Swift macOS app
 ├── web/                    # Frontend application
 ├── install-scripts/        # Setup scripts
 ├── docker-compose.yml      # Docker composition

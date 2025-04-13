@@ -10,6 +10,7 @@ import (
 	"math"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,13 +19,14 @@ var apiKey = utils.EnvVar("JACKETT_API_KEY", "")
 var ip = utils.EnvVar("JACKETT_IP", "")
 var port = utils.EnvVar("JACKETT_PORT", "")
 
-// Result scoring constants
+// Result scoring constants - adjusted to prioritize exact matches
 const (
-	TITLE_MATCH_WEIGHT   = 0.35 // Reduced from 0.4
-	SEEDERS_WEIGHT       = 0.35 // Increased from 0.3
-	QUALITY_WEIGHT       = 0.2  // Kept the same
-	SIZE_WEIGHT          = 0.1  // Kept the same
-	MIN_ACCEPTABLE_SCORE = 0.5  // Reduced from 0.6
+	TITLE_MATCH_WEIGHT   = 0.5 // Increased to prioritize exact title matches
+	YEAR_MATCH_WEIGHT    = 0.1 // New weight for year matching
+	SEEDERS_WEIGHT       = 0.2 // Decreased slightly
+	QUALITY_WEIGHT       = 0.1 // Decreased slightly
+	SIZE_WEIGHT          = 0.1 // Kept the same
+	MIN_ACCEPTABLE_SCORE = 0.7 // Increased to require better matches
 )
 
 // Common constants and categories
@@ -43,14 +45,15 @@ type searchResult struct {
 }
 
 // Make sure MakeMovieQuery uses the same pattern as MakeShowQuery
-func MakeMovieQuery(query string, tmdbID int, quality string) error {
+func MakeMovieQuery(query string, tmdbID int, quality string, year int) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
-	queryString := fmt.Sprintf("%s %s", query, quality)
+	// Add year to query for more specific matching
+	queryString := fmt.Sprintf("%s %d %s", query, year, quality)
 	logger.WriteInfo(fmt.Sprintf("Searching for movie: %s", queryString))
 
 	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
@@ -62,7 +65,7 @@ func MakeMovieQuery(query string, tmdbID int, quality string) error {
 		return err
 	}
 
-	results := processResults(resp.Results, tmdbID, quality, query)
+	results := processResults(resp.Results, tmdbID, quality, query, year)
 	if len(results) > 0 {
 		if addTorrentToDeluge(results[0].result) {
 			return nil
@@ -70,10 +73,30 @@ func MakeMovieQuery(query string, tmdbID int, quality string) error {
 		return fmt.Errorf("failed to add movie torrent to Deluge")
 	}
 
+	// Fallback to search without year if no results found
+	queryString = fmt.Sprintf("%s %s", query, quality)
+	logger.WriteInfo(fmt.Sprintf("Fallback search for movie without year: %s", queryString))
+
+	resp, err = j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080},
+		Query:      queryString,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch from Jackett: %v", err)
+	}
+
+	results = processResults(resp.Results, tmdbID, quality, query, year)
+	if len(results) > 0 {
+		if addTorrentToDeluge(results[0].result) {
+			return nil
+		}
+	}
+
 	return fmt.Errorf("no suitable matches found for movie: %s", query)
 }
 
-func MakeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
+func MakeShowQuery(query string, seasons []int, tmdbID int, quality string, year int) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
@@ -81,27 +104,27 @@ func MakeShowQuery(query string, seasons []int, tmdbID int, quality string) erro
 	})
 
 	totalSeasons := len(seasons)
-	logger.WriteInfo(fmt.Sprintf("Starting search for %s with %d total seasons", query, totalSeasons))
+	logger.WriteInfo(fmt.Sprintf("Starting search for %s (%d) with %d total seasons", query, year, totalSeasons))
 
 	// Print out the episode counts for each season for debugging
 	for i, count := range seasons {
 		logger.WriteInfo(fmt.Sprintf("Season %d has %d episodes", i+1, count))
 	}
 
-	// Step 1: Try complete series bundle
-	if searchFullSeriesBundle(ctx, j, query, seasons, tmdbID, quality) {
+	// Step 1: Try complete series bundle with year
+	if searchFullSeriesBundle(ctx, j, query, seasons, tmdbID, quality, year) {
 		return nil
 	}
 
 	// Step 2: Try season bundles or individual episodes
 	currentSeason := 1
 	for currentSeason <= totalSeasons {
-		// Try to find season pack first
-		if found := searchCompleteSeason(ctx, j, query, currentSeason, seasons[currentSeason-1], tmdbID, quality); !found {
+		// Try to find season pack first with year
+		if found := searchCompleteSeason(ctx, j, query, currentSeason, seasons[currentSeason-1], tmdbID, quality, year); !found {
 			// If season pack not found, search episode by episode
 			logger.WriteInfo(fmt.Sprintf("No season pack found for season %d, searching %d individual episodes",
 				currentSeason, seasons[currentSeason-1]))
-			searchSeasonEpisodesByOne(ctx, j, query, currentSeason, tmdbID, quality, seasons[currentSeason-1])
+			searchSeasonEpisodesByOne(ctx, j, query, currentSeason, tmdbID, quality, seasons[currentSeason-1], year)
 		}
 		currentSeason++
 	}
@@ -109,9 +132,11 @@ func MakeShowQuery(query string, seasons []int, tmdbID int, quality string) erro
 	return nil
 }
 
-func searchCompleteSeason(ctx context.Context, j *jackett.Jackett, query string, season, episodeCount, tmdbID int, quality string) bool {
+func searchCompleteSeason(ctx context.Context, j *jackett.Jackett, query string, season, episodeCount, tmdbID int, quality string, year int) bool {
 	seasonFormat := fmt.Sprintf("S%02d", season)
 	searchQueries := []string{
+		// Include year in search queries for more specificity
+		fmt.Sprintf("%s (%d) %s season %s", query, year, seasonFormat, quality),
 		fmt.Sprintf("%s %s season %s", query, seasonFormat, quality),
 		fmt.Sprintf("%s complete %s %s", query, seasonFormat, quality),
 		fmt.Sprintf("%s %s complete %s", query, seasonFormat, quality),
@@ -129,7 +154,7 @@ func searchCompleteSeason(ctx context.Context, j *jackett.Jackett, query string,
 			continue
 		}
 
-		results := processResults(resp.Results, tmdbID, quality, query)
+		results := processResults(resp.Results, tmdbID, quality, query, year)
 		if len(results) > 0 {
 			seasonResults := filterSeasonPacks(results, season, episodeCount)
 			if len(seasonResults) > 0 {
@@ -168,9 +193,12 @@ func filterSeasonPacks(results []searchResult, season, expectedEpisodeCount int)
 	return seasonPacks
 }
 
-func searchFullSeriesBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, tmdbID int, quality string) bool {
+func searchFullSeriesBundle(ctx context.Context, j *jackett.Jackett, query string, seasons []int, tmdbID int, quality string, year int) bool {
 	searchQueries := []string{
+		// Include year in search queries
+		fmt.Sprintf("%s (%d) complete series %s", query, year, quality),
 		fmt.Sprintf("%s complete series %s", query, quality),
+		fmt.Sprintf("%s (%d) season 1-%d %s", query, year, len(seasons), quality),
 		fmt.Sprintf("%s season 1-%d %s", query, len(seasons), quality),
 	}
 
@@ -185,7 +213,7 @@ func searchFullSeriesBundle(ctx context.Context, j *jackett.Jackett, query strin
 			continue
 		}
 
-		results := processResults(resp.Results, tmdbID, quality, query)
+		results := processResults(resp.Results, tmdbID, quality, query, year)
 		if len(results) > 0 {
 			bestResult := selectBestResult(results)
 			if bestResult != nil && addTorrentToDeluge(bestResult) {
@@ -199,39 +227,26 @@ func searchFullSeriesBundle(ctx context.Context, j *jackett.Jackett, query strin
 }
 
 // Modified searchSeasonEpisodesByOne to ensure we get every episode
-func searchSeasonEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, season, tmdbID int, quality string, episodeCount int) bool {
+func searchSeasonEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, season, tmdbID int, quality string, episodeCount int, year int) bool {
 	logger.WriteInfo(fmt.Sprintf("Searching for %d individual episodes of season %d", episodeCount, season))
 	successCount := 0
 	var missingEpisodes []int
 
 	for episode := 1; episode <= episodeCount; episode++ {
 		episodeFormat := fmt.Sprintf("S%02dE%02d", season, episode)
-		// Add quotes around the show title to ensure exact matching
+		// More specific query with year and double quotes for exact matching
 		queryString := fmt.Sprintf("\"%s\" %s %s", query, episodeFormat, quality)
+		yearQueryString := fmt.Sprintf("\"%s\" (%d) %s %s", query, year, episodeFormat, quality)
 
-		logger.WriteInfo(fmt.Sprintf("Searching for episode: %s", queryString))
-
-		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-			Categories: []uint{5000, 5020, 5030, 5040, 5045},
-			Query:      queryString,
-		})
-		if err != nil {
-			missingEpisodes = append(missingEpisodes, episode)
+		// Try with year first
+		logger.WriteInfo(fmt.Sprintf("Searching for episode with year: %s", yearQueryString))
+		if tryFetchEpisode(ctx, j, yearQueryString, tmdbID, quality, query, year, episodeFormat, &successCount, episodeCount) {
 			continue
 		}
 
-		results := processResults(resp.Results, tmdbID, quality, query)
-		if len(results) > 0 {
-			bestResult := selectBestResult(results)
-			if bestResult != nil && addTorrentToDeluge(bestResult) {
-				successCount++
-				logger.WriteInfo(fmt.Sprintf("Successfully added %s (%d/%d)",
-					episodeFormat, successCount, episodeCount))
-			} else {
-				missingEpisodes = append(missingEpisodes, episode)
-			}
-		} else {
-			logger.WriteWarning(fmt.Sprintf("No results found for %s", episodeFormat))
+		// Fallback to without year
+		logger.WriteInfo(fmt.Sprintf("Searching for episode without year: %s", queryString))
+		if !tryFetchEpisode(ctx, j, queryString, tmdbID, quality, query, year, episodeFormat, &successCount, episodeCount) {
 			missingEpisodes = append(missingEpisodes, episode)
 		}
 
@@ -247,50 +262,139 @@ func searchSeasonEpisodesByOne(ctx context.Context, j *jackett.Jackett, query st
 	return successCount > 0
 }
 
-// Modify processResults to include more logging
-func processResults(results []jackett.Result, tmdbID int, quality string, exactTitle string) []searchResult {
+func tryFetchEpisode(ctx context.Context, j *jackett.Jackett, queryString string, tmdbID int, quality string,
+	query string, year int, episodeFormat string, successCount *int, episodeCount int) bool {
+	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+		Categories: []uint{5000, 5020, 5030, 5040, 5045},
+		Query:      queryString,
+	})
+	if err != nil {
+		return false
+	}
+
+	results := processResults(resp.Results, tmdbID, quality, query, year)
+	if len(results) > 0 {
+		// Filter results to ensure exact episode match
+		var episodeResults []searchResult
+		for _, result := range results {
+			if isExactEpisodeMatch(result.result.Title, episodeFormat, query) {
+				episodeResults = append(episodeResults, result)
+			}
+		}
+
+		if len(episodeResults) > 0 {
+			bestResult := selectBestResult(episodeResults)
+			if bestResult != nil && addTorrentToDeluge(bestResult) {
+				*successCount++
+				logger.WriteInfo(fmt.Sprintf("Successfully added %s (%d/%d)",
+					episodeFormat, *successCount, episodeCount))
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// New function to check for exact episode matches
+func isExactEpisodeMatch(resultTitle, episodeFormat, showTitle string) bool {
+	cleanTitle := cleanTitleForComparison(resultTitle)
+	cleanShowTitle := cleanExactTitle(showTitle)
+
+	// Check if title contains both the show name and the exact episode format
+	return strings.Contains(cleanTitle, cleanShowTitle) &&
+		strings.Contains(strings.ToLower(resultTitle), strings.ToLower(episodeFormat))
+}
+
+// Modify processResults to include more logging and year matching
+func processResults(results []jackett.Result, tmdbID int, quality string, exactTitle string, year int) []searchResult {
 	var scoredResults []searchResult
 
 	logger.WriteInfo(fmt.Sprintf("Processing %d results", len(results)))
 
 	for _, result := range results {
 		// Skip results that don't match the exact show title
-		if !isExactShowMatch(result.Title, exactTitle) {
+		if !isExactTitleMatch(result.Title, exactTitle) {
 			logger.WriteInfo(fmt.Sprintf("Skipping non-matching title: %s", result.Title))
 			continue
 		}
 
-		score := calculateScore(&result, tmdbID, quality)
+		// Calculate score including year match
+		score := calculateScore(&result, tmdbID, quality, exactTitle, year)
 		if score >= MIN_ACCEPTABLE_SCORE {
 			scoredResults = append(scoredResults, searchResult{
 				result: &result,
 				score:  score,
 			})
 			logger.WriteInfo(fmt.Sprintf("Added to candidates: %s (Score: %.2f)", result.Title, score))
+		} else {
+			logger.WriteInfo(fmt.Sprintf("Score too low (%.2f < %.2f): %s", score, MIN_ACCEPTABLE_SCORE, result.Title))
 		}
 	}
 
-	// Sort by size in descending order
+	// Sort by score in descending order, then by size
 	sort.Slice(scoredResults, func(i, j int) bool {
-		return scoredResults[i].result.Size > scoredResults[j].result.Size
+		if math.Abs(scoredResults[i].score-scoredResults[j].score) < 0.05 {
+			// If scores are very close, prefer larger file sizes
+			return scoredResults[i].result.Size > scoredResults[j].result.Size
+		}
+		return scoredResults[i].score > scoredResults[j].score
 	})
 
 	if len(scoredResults) > 0 {
-		logger.WriteInfo(fmt.Sprintf("Selected best match: %s (Size: %.2f GB)",
+		logger.WriteInfo(fmt.Sprintf("Selected best match: %s (Score: %.2f, Size: %.2f GB)",
 			scoredResults[0].result.Title,
+			scoredResults[0].score,
 			float64(scoredResults[0].result.Size)/1024/1024/1024))
 	}
 
 	return scoredResults
 }
 
-func isExactShowMatch(resultTitle, exactTitle string) bool {
+// Enhanced title matching with more strict comparisons
+func isExactTitleMatch(resultTitle, exactTitle string) bool {
 	// Clean both titles for comparison
 	cleanResultTitle := cleanTitleForComparison(resultTitle)
 	cleanExactTitle := cleanExactTitle(exactTitle)
 
-	// The result title should start with the exact title we're looking for
-	return strings.HasPrefix(cleanResultTitle, cleanExactTitle)
+	// Get words from the exact title as a set for checking
+	exactTitleWords := getSignificantWords(cleanExactTitle)
+
+	// The result title should contain all the significant words from the exact title
+	// and ideally in the same order (using HasPrefix)
+	allWordsPresent := true
+	for word := range exactTitleWords {
+		if !strings.Contains(cleanResultTitle, word) {
+			allWordsPresent = false
+			break
+		}
+	}
+
+	// Either all words are present OR the cleaned result starts with the exact title
+	// This handles both exact matches and minor variations
+	return allWordsPresent || strings.HasPrefix(cleanResultTitle, cleanExactTitle)
+}
+
+// Get significant words from a title (no common words/articles)
+func getSignificantWords(title string) map[string]bool {
+	words := strings.Fields(title)
+	result := make(map[string]bool)
+
+	// Articles and common words to skip
+	skipWords := map[string]bool{
+		"the": true, "a": true, "an": true,
+		"and": true, "or": true, "of": true,
+		"in": true, "on": true, "at": true,
+	}
+
+	for _, word := range words {
+		word = strings.ToLower(word)
+		if !skipWords[word] && len(word) > 1 {
+			result[word] = true
+		}
+	}
+
+	return result
 }
 
 func cleanTitleForComparison(title string) string {
@@ -309,6 +413,10 @@ func cleanTitleForComparison(title string) string {
 	for _, suffix := range suffixesToRemove {
 		title = strings.ReplaceAll(title, suffix, "")
 	}
+
+	// Remove year patterns (e.g., "(2020)" or "2020")
+	yearPattern := regexp.MustCompile(`\(\d{4}\)|\d{4}`)
+	title = yearPattern.ReplaceAllString(title, "")
 
 	// Remove season/episode information (e.g., S01E01, 1x01)
 	seasonEpPattern := regexp.MustCompile(`\b[Ss]\d{1,2}[Ee]\d{1,2}\b|\b\d{1,2}x\d{1,2}\b`)
@@ -337,24 +445,24 @@ func selectBestResult(results []searchResult) *jackett.Result {
 		return nil
 	}
 
-	// Sort by size in descending order
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].result.Size > results[j].result.Size
-	})
-
+	// Already sorted by score, return the highest
 	return results[0].result
 }
 
-func calculateScore(result *jackett.Result, tmdbID int, quality string) float64 {
+func calculateScore(result *jackett.Result, tmdbID int, quality string, exactTitle string, year int) float64 {
 	score := 0.0
 
-	// Title match score (NEW)
-	titleScore := calculateTitleMatch(result.Title)
+	// Title match score (enhanced)
+	titleScore := calculateTitleMatch(result.Title, exactTitle)
 	score += titleScore * TITLE_MATCH_WEIGHT
 
-	// TMDb match bonus (reduced since we now have title matching)
+	// Year match score (new)
+	yearScore := calculateYearMatch(result.Title, year)
+	score += yearScore * YEAR_MATCH_WEIGHT
+
+	// TMDb match bonus
 	if result.TMDb > 0 && int(result.TMDb) == tmdbID {
-		score += 0.3 // Reduced from 0.5 since we now have title matching
+		score += 0.1 // Reduced impact but still valued
 	}
 
 	// Seeders score
@@ -372,28 +480,21 @@ func calculateScore(result *jackett.Result, tmdbID int, quality string) float64 
 	return score
 }
 
-// New function to calculate title match score
-func calculateTitleMatch(title string) float64 {
+// Enhanced title match function to be more precise
+func calculateTitleMatch(title string, exactTitle string) float64 {
 	// Remove common strings that don't affect title matching
-	cleanTitle := strings.ToLower(title)
-	removeStrings := []string{
-		"2160p", "1080p", "720p", "480p",
-		"webrip", "web-dl", "bluray", "hdtv",
-		"x264", "x265", "hevc", "h264", "h265",
-		"dv", "hdr", "sdr",
-		"aac", "ac3", "dts", "ddp", "eac3",
-		"atmos",
-	}
+	cleanTitle := cleanTitleForComparison(title)
+	cleanExactTitle := cleanExactTitle(exactTitle)
 
-	for _, s := range removeStrings {
-		cleanTitle = strings.ReplaceAll(cleanTitle, strings.ToLower(s), "")
-	}
+	// Check for spinoffs and wrong shows by comparing title words
+	// exactTitleWords := getSignificantWords(cleanExactTitle)
 
-	// Remove special characters and extra spaces
-	cleanTitle = strings.TrimSpace(cleanTitle)
+	// Calculate Levenshtein/edit distance ratio between titles
+	// as a measure of similarity (simplified approach)
+	titleSimilarity := calculateTitleSimilarity(cleanTitle, cleanExactTitle)
 
 	// Basic scoring criteria
-	score := 1.0
+	score := titleSimilarity
 
 	// Penalize for suspicious patterns
 	if strings.Contains(cleanTitle, "sample") {
@@ -409,7 +510,95 @@ func calculateTitleMatch(title string) float64 {
 		score -= 0.8
 	}
 
+	// Check for spinoff indicators - these significantly reduce score
+	spinoffIndicators := []string{"spinoff", "spin-off", "spin off", "special"}
+	for _, indicator := range spinoffIndicators {
+		if strings.Contains(cleanTitle, indicator) && !strings.Contains(cleanExactTitle, indicator) {
+			score -= 0.5
+			break
+		}
+	}
+
 	return math.Max(0.0, score) // Ensure score doesn't go negative
+}
+
+// Calculate similarity ratio between two strings (simplified)
+func calculateTitleSimilarity(str1, str2 string) float64 {
+	// For exact matches
+	if str1 == str2 {
+		return 1.0
+	}
+
+	// If one is prefix of the other
+	if strings.HasPrefix(str1, str2) || strings.HasPrefix(str2, str1) {
+		// Calculate ratio based on length difference
+		minLen := math.Min(float64(len(str1)), float64(len(str2)))
+		maxLen := math.Max(float64(len(str1)), float64(len(str2)))
+		return minLen / maxLen
+	}
+
+	// Count matching words
+	words1 := getSignificantWords(str1)
+	words2 := getSignificantWords(str2)
+
+	matchCount := 0
+	for word := range words1 {
+		if words2[word] {
+			matchCount++
+		}
+	}
+
+	totalWords := len(words1) + len(words2) - matchCount
+	if totalWords == 0 {
+		return 0.0
+	}
+
+	return float64(matchCount) / float64(totalWords)
+}
+
+// New function to score year matches
+func calculateYearMatch(title string, targetYear int) float64 {
+	if targetYear <= 0 {
+		return 0.5 // Neutral score if no year provided
+	}
+
+	// Look for year patterns in title
+	yearPattern := regexp.MustCompile(`\((\d{4})\)|\b(\d{4})\b`)
+	matches := yearPattern.FindAllStringSubmatch(title, -1)
+
+	if len(matches) == 0 {
+		return 0.3 // No year found, slightly negative
+	}
+
+	// Extract years found in the title
+	for _, match := range matches {
+		var yearStr string
+		if match[1] != "" {
+			yearStr = match[1] // (2020) format
+		} else {
+			yearStr = match[2] // 2020 format
+		}
+
+		year, err := strconv.Atoi(yearStr)
+		if err != nil {
+			continue
+		}
+
+		// Exact year match
+		if year == targetYear {
+			return 1.0
+		}
+
+		// Close year match (within 1 year)
+		if math.Abs(float64(year-targetYear)) <= 1 {
+			return 0.8
+		}
+
+		// Wrong year but present
+		return 0.1
+	}
+
+	return 0.3 // No valid year found
 }
 
 func calculateQualityMatch(title, targetQuality string) float64 {
@@ -497,22 +686,26 @@ func tryAddTorrentWithFallback(results []searchResult) bool {
 	return false
 }
 
+// Anime functions below - updated with enhanced title matching
 // MakeAnimeMovieQuery handles searching and downloading anime movies with improved validation
-func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
+func MakeAnimeMovieQuery(query string, tmdbID int, quality string, year int) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
-	// Try with specific anime movie categories
-	queryString := fmt.Sprintf("%s %s", query, quality)
+	// Include year in query
+	queryString := fmt.Sprintf("%s %d %s", query, year, quality)
 	logger.WriteInfo(fmt.Sprintf("Searching for anime movie: %s", queryString))
 
 	// First attempt with strict anime movie categories
-	if err := searchAnimeMovie(ctx, j, queryString, tmdbID, quality); err == nil {
+	if err := searchAnimeMovie(ctx, j, queryString, tmdbID, quality, year); err == nil {
 		return nil
 	}
+
+	// Fallback without year
+	queryString = fmt.Sprintf("%s %s", query, quality)
 
 	// Fallback to broader categories if needed
 	fallbackCategories := [][]uint{
@@ -529,7 +722,7 @@ func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
 			continue
 		}
 
-		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 		if len(results) > 0 {
 			// Try each result until we find one that works
 			for _, result := range results {
@@ -544,7 +737,7 @@ func MakeAnimeMovieQuery(query string, tmdbID int, quality string) error {
 	return fmt.Errorf("no valid anime movie downloads found for: %s", query)
 }
 
-func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
+func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string, year int) error {
 	ctx := context.Background()
 	j := jackett.NewJackett(&jackett.Settings{
 		ApiURL: fmt.Sprintf("http://%s:%s/", ip, port),
@@ -556,35 +749,34 @@ func MakeAnimeShowQuery(query string, seasons []int, tmdbID int, quality string)
 		totalEpisodes += episodeCount
 	}
 
-	logger.WriteInfo(fmt.Sprintf("Starting search for anime series: %s with %d total episodes",
-		query, totalEpisodes))
+	logger.WriteInfo(fmt.Sprintf("Starting search for anime series: %s (%d) with %d total episodes",
+		query, year, totalEpisodes))
 
 	// Try batch downloads first
-	if found := tryAnimeBatchDownloads(ctx, j, query, tmdbID, quality); found {
+	if found := tryAnimeBatchDownloads(ctx, j, query, tmdbID, quality, year); found {
 		return nil
 	}
 
 	// If batch download fails, try episode by episode
-	return searchAnimeEpisodesByOne(ctx, j, query, tmdbID, quality, seasons)
+	return searchAnimeEpisodesByOne(ctx, j, query, tmdbID, quality, seasons, year)
 }
 
 func isAnimeTimeRelease(title string) bool {
 	return strings.Contains(title, "[Anime Time]")
 }
 
-func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) bool {
-	// Exact Anime Time pattern matching the format
-	animeTimePatterns := []string{
-		`[Anime Time] %s (Series+Movies) 2011 [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
-		// Slightly more generic fallbacks but still maintaining Anime Time format
-		`[Anime Time] %s [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
-		`[Anime Time] %s [Batch]`,
+func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, year int) bool {
+	// Try with year first
+	yearQueryPatterns := []string{
+		`[Anime Time] %s (%d) (Series+Movies) [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		`[Anime Time] %s (%d) [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		`[Anime Time] %s (%d) [Batch]`,
 	}
 
-	// Try Anime Time patterns first
-	for _, pattern := range animeTimePatterns {
-		queryString := fmt.Sprintf(pattern, query)
-		logger.WriteInfo(fmt.Sprintf("Trying Anime Time batch search with query: %s", queryString))
+	// Try Anime Time patterns with year first
+	for _, pattern := range yearQueryPatterns {
+		queryString := fmt.Sprintf(pattern, query, year)
+		logger.WriteInfo(fmt.Sprintf("Trying Anime Time batch search with year: %s", queryString))
 
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
 			Categories: animeSeriesCategories,
@@ -592,7 +784,37 @@ func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query strin
 		})
 
 		if err == nil && len(resp.Results) > 0 {
-			results := processAnimeResults(resp.Results, tmdbID, quality, query)
+			results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
+			for _, result := range results {
+				if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
+					logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time batch with year: %s", result.result.Title))
+					return true
+				}
+			}
+		}
+
+		time.Sleep(searchDelay)
+	}
+
+	// Exact Anime Time pattern matching the format - without year
+	animeTimePatterns := []string{
+		`[Anime Time] %s (Series+Movies) [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		`[Anime Time] %s [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub] [Batch]`,
+		`[Anime Time] %s [Batch]`,
+	}
+
+	// Try Anime Time patterns without year
+	for _, pattern := range animeTimePatterns {
+		queryString := fmt.Sprintf(pattern, query)
+		logger.WriteInfo(fmt.Sprintf("Trying Anime Time batch search without year: %s", queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeSeriesCategories,
+			Query:      queryString,
+		})
+
+		if err == nil && len(resp.Results) > 0 {
+			results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 			for _, result := range results {
 				if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
 					logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time batch: %s", result.result.Title))
@@ -604,16 +826,47 @@ func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query strin
 		time.Sleep(searchDelay)
 	}
 
-	// Fallback patterns if Anime Time isn't found
+	// Fallback patterns with year
+	yearFallbackPatterns := []string{
+		`[AnimeSkulls] %s (%d) [Batch] [Dual Audio][1080p][HEVC 10bit x265]`,
+		`%s (%d) complete series`,
+		`%s (%d) batch`,
+	}
+
+	for _, pattern := range yearFallbackPatterns {
+		queryString := fmt.Sprintf(pattern, query, year)
+		logger.WriteInfo(fmt.Sprintf("Trying fallback batch search with year: %s", queryString))
+
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeSeriesCategories,
+			Query:      queryString,
+		})
+
+		if err == nil && len(resp.Results) > 0 {
+			results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
+			if len(results) > 0 {
+				for _, result := range results {
+					if addTorrentMagnetToDeluge(result.result) {
+						logger.WriteInfo(fmt.Sprintf("Successfully added batch with year: %s", result.result.Title))
+						return true
+					}
+				}
+			}
+		}
+
+		time.Sleep(searchDelay)
+	}
+
+	// Fallback patterns without year
 	fallbackPatterns := []string{
-		`[AnimeSkulls] %s (2011) [Batch] [Dual Audio][1080p][HEVC 10bit x265]`,
+		`[AnimeSkulls] %s [Batch] [Dual Audio][1080p][HEVC 10bit x265]`,
 		`%s complete series`,
 		`%s batch`,
 	}
 
 	for _, pattern := range fallbackPatterns {
 		queryString := fmt.Sprintf(pattern, query)
-		logger.WriteInfo(fmt.Sprintf("Trying fallback batch search with query: %s", queryString))
+		logger.WriteInfo(fmt.Sprintf("Trying fallback batch search without year: %s", queryString))
 
 		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
 			Categories: animeSeriesCategories,
@@ -624,7 +877,7 @@ func tryAnimeBatchDownloads(ctx context.Context, j *jackett.Jackett, query strin
 			continue
 		}
 
-		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 		if len(results) > 0 {
 			for _, result := range results {
 				if addTorrentMagnetToDeluge(result.result) {
@@ -664,31 +917,43 @@ func calculateAnimeSize(size uint, quality string) float64 {
 	return 0.5 // Default score for unknown quality
 }
 
-func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, seasons []int) error {
+func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, seasons []int, year int) error {
 	episodeTotal := 0
 	for _, count := range seasons {
 		episodeTotal += count
 	}
 
 	for episode := 1; episode <= episodeTotal; episode++ {
-		// Anime Time episode patterns matching their format
+		// Anime Time episode patterns with year
+		animeTimeYearPatterns := []string{
+			`[Anime Time] %s (%d) - %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+			`[Anime Time] %s (%d) - Episode %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+		}
+
+		// Anime Time episode patterns without year
 		animeTimePatterns := []string{
 			`[Anime Time] %s - %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
 			`[Anime Time] %s - Episode %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
 		}
 
-		// Fallback patterns
+		// Fallback patterns with year
+		yearFallbackPatterns := []string{
+			`[AnimeSkulls] %s (%d) Episode %d [1080p] [Dual.Audio] [x265]`,
+			`%s (%d) Episode %d`,
+		}
+
+		// Fallback patterns without year
 		fallbackPatterns := []string{
-			`[AnimeSkulls] %s (2011) Episode %d [1080p] [Dual.Audio] [x265] [RD]`,
+			`[AnimeSkulls] %s Episode %d [1080p] [Dual.Audio] [x265]`,
 			`%s Episode %d`,
 		}
 
 		var foundEpisode bool
 
-		// Try Anime Time patterns first
-		for _, pattern := range animeTimePatterns {
-			queryString := fmt.Sprintf(pattern, query, episode)
-			logger.WriteInfo(fmt.Sprintf("Searching Anime Time for episode %d/%d using query: %s",
+		// Try Anime Time patterns with year first
+		for _, pattern := range animeTimeYearPatterns {
+			queryString := fmt.Sprintf(pattern, query, year, episode)
+			logger.WriteInfo(fmt.Sprintf("Searching Anime Time for episode %d/%d with year: %s",
 				episode, episodeTotal, queryString))
 
 			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
@@ -697,10 +962,10 @@ func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query str
 			})
 
 			if err == nil {
-				results := processAnimeResults(resp.Results, tmdbID, quality, query)
+				results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 				for _, result := range results {
 					if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
-						logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time episode %d: %s",
+						logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time episode %d with year: %s",
 							episode, result.result.Title))
 						foundEpisode = true
 						break
@@ -713,11 +978,43 @@ func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query str
 			}
 			time.Sleep(searchDelay)
 		}
-		// If Anime Time release not found, try fallback patterns
+
+		// Try Anime Time patterns without year if not found
 		if !foundEpisode {
-			for _, pattern := range fallbackPatterns {
+			for _, pattern := range animeTimePatterns {
 				queryString := fmt.Sprintf(pattern, query, episode)
-				logger.WriteInfo(fmt.Sprintf("Searching fallback for episode %d/%d using query: %s",
+				logger.WriteInfo(fmt.Sprintf("Searching Anime Time for episode %d/%d without year: %s",
+					episode, episodeTotal, queryString))
+
+				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+					Categories: animeSeriesCategories,
+					Query:      queryString,
+				})
+
+				if err == nil {
+					results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
+					for _, result := range results {
+						if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
+							logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time episode %d: %s",
+								episode, result.result.Title))
+							foundEpisode = true
+							break
+						}
+					}
+				}
+
+				if foundEpisode {
+					break
+				}
+				time.Sleep(searchDelay)
+			}
+		}
+
+		// Try fallback patterns with year if still not found
+		if !foundEpisode {
+			for _, pattern := range yearFallbackPatterns {
+				queryString := fmt.Sprintf(pattern, query, year, episode)
+				logger.WriteInfo(fmt.Sprintf("Searching fallback for episode %d/%d with year: %s",
 					episode, episodeTotal, queryString))
 
 				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
@@ -729,7 +1026,42 @@ func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query str
 					continue
 				}
 
-				results := processAnimeResults(resp.Results, tmdbID, quality, query)
+				results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
+				if len(results) > 0 {
+					for _, result := range results {
+						if addTorrentMagnetToDeluge(result.result) {
+							logger.WriteInfo(fmt.Sprintf("Successfully added episode %d with year: %s",
+								episode, result.result.Title))
+							foundEpisode = true
+							break
+						}
+					}
+				}
+
+				if foundEpisode {
+					break
+				}
+				time.Sleep(searchDelay)
+			}
+		}
+
+		// Try fallback patterns without year as last resort
+		if !foundEpisode {
+			for _, pattern := range fallbackPatterns {
+				queryString := fmt.Sprintf(pattern, query, episode)
+				logger.WriteInfo(fmt.Sprintf("Searching fallback for episode %d/%d without year: %s",
+					episode, episodeTotal, queryString))
+
+				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+					Categories: animeSeriesCategories,
+					Query:      queryString,
+				})
+
+				if err != nil {
+					continue
+				}
+
+				results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 				if len(results) > 0 {
 					for _, result := range results {
 						if addTorrentMagnetToDeluge(result.result) {
@@ -756,8 +1088,34 @@ func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query str
 	return nil
 }
 
-func searchAnimeMovie(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string) error {
-	// Try different search patterns
+func searchAnimeMovie(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, year int) error {
+	// Try different search patterns with year
+	yearSearchPatterns := []string{
+		"%s (%d) %s [1080p]",
+		"[Anime] %s (%d) %s",
+		"%s (%d) [BD] %s",
+	}
+
+	for _, pattern := range yearSearchPatterns {
+		formattedQuery := fmt.Sprintf(pattern, query, year, quality)
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: animeMovieCategories,
+			Query:      formattedQuery,
+		})
+		if err != nil {
+			continue
+		}
+
+		results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
+		for _, result := range results {
+			if validateAndAddAnimeTorrent(result.result) {
+				return nil
+			}
+		}
+		time.Sleep(searchDelay)
+	}
+
+	// Fallback to patterns without year
 	searchPatterns := []string{
 		"%s %s [1080p]",
 		"[Anime] %s %s",
@@ -774,7 +1132,7 @@ func searchAnimeMovie(ctx context.Context, j *jackett.Jackett, query string, tmd
 			continue
 		}
 
-		results := processAnimeResults(resp.Results, tmdbID, quality, query)
+		results := processAnimeResults(resp.Results, tmdbID, quality, query, year)
 		for _, result := range results {
 			if validateAndAddAnimeTorrent(result.result) {
 				return nil
@@ -836,7 +1194,7 @@ func validateAndAddAnimeTorrent(result *jackett.Result) bool {
 	return true
 }
 
-func processAnimeResults(results []jackett.Result, tmdbID int, quality string, query string) []searchResult {
+func processAnimeResults(results []jackett.Result, tmdbID int, quality string, query string, year int) []searchResult {
 	var scoredResults []searchResult
 	logger.WriteInfo(fmt.Sprintf("Processing %d anime results", len(results)))
 
@@ -852,7 +1210,8 @@ func processAnimeResults(results []jackett.Result, tmdbID int, quality string, q
 			continue
 		}
 
-		score := calculateAnimeScore(&result, tmdbID, quality)
+		// Enhanced scoring with title and year matching
+		score := calculateAnimeScore(&result, tmdbID, quality, query, year)
 
 		// Additional scoring for preferred release groups
 		score += getAnimeReleaseGroupScore(result.Title)
@@ -867,9 +1226,9 @@ func processAnimeResults(results []jackett.Result, tmdbID int, quality string, q
 		}
 	}
 
-	// Sort results by score and then seeders
+	// Sort results by score in descending order, then by seeders
 	sort.Slice(scoredResults, func(i, j int) bool {
-		if scoredResults[i].score == scoredResults[j].score {
+		if math.Abs(scoredResults[i].score-scoredResults[j].score) < 0.05 {
 			return scoredResults[i].result.Seeders > scoredResults[j].result.Seeders
 		}
 		return scoredResults[i].score > scoredResults[j].score
@@ -899,11 +1258,19 @@ func getAnimeReleaseGroupScore(title string) float64 {
 	return 0.0
 }
 
-func calculateAnimeScore(result *jackett.Result, tmdbID int, quality string) float64 {
+func calculateAnimeScore(result *jackett.Result, tmdbID int, quality string, query string, year int) float64 {
 	score := 0.0
 
 	// Base score
 	score += 0.1
+
+	// Title match score - much more important
+	titleMatch := calculateAnimeTitleMatch(result.Title, query)
+	score += titleMatch * 0.4
+
+	// Year match - added for anime
+	yearScore := calculateYearMatch(result.Title, year)
+	score += yearScore * 0.1
 
 	// Quality and format preferences
 	if strings.Contains(strings.ToLower(result.Title), "1080p") {
@@ -923,6 +1290,35 @@ func calculateAnimeScore(result *jackett.Result, tmdbID int, quality string) flo
 	score += seedersScore * 0.2
 
 	return score
+}
+
+// New function for anime title matching
+func calculateAnimeTitleMatch(title string, exactTitle string) float64 {
+	// Clean both titles
+	cleanResultTitle := cleanTitleForComparison(title)
+	cleanExactTitle := cleanExactTitle(exactTitle)
+
+	// Check for exact match
+	if cleanResultTitle == cleanExactTitle {
+		return 1.0
+	}
+
+	// Check if result contains the exact title as a prefix/subset
+	if strings.HasPrefix(cleanResultTitle, cleanExactTitle) {
+		return 0.9
+	}
+
+	// Calculate similarity
+	titleSimilarity := calculateTitleSimilarity(cleanResultTitle, cleanExactTitle)
+
+	// Check for unwanted content
+	if strings.Contains(strings.ToLower(title), "trailer") ||
+		strings.Contains(strings.ToLower(title), "preview") ||
+		strings.Contains(strings.ToLower(title), "pv") {
+		titleSimilarity *= 0.2
+	}
+
+	return titleSimilarity
 }
 
 func addTorrentMagnetToDeluge(result *jackett.Result) bool {

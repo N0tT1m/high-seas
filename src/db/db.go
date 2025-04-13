@@ -13,6 +13,7 @@ type MovieRequest struct {
 	Query   string `json:"query"`
 	TMDb    int    `json:"TMDb"`
 	Quality string `json:"quality"`
+	Year    int    `json:"year"` // Added Year field
 }
 
 type ShowRequest struct {
@@ -21,6 +22,7 @@ type ShowRequest struct {
 	Seasons []int  `json:"seasons"`
 	TMDb    int    `json:"TMDb"`
 	Quality string `json:"quality"`
+	Year    int    `json:"year"` // Added Year field
 }
 
 // SeasonInfo struct to hold season and episode count
@@ -34,6 +36,7 @@ type AnimeMovieRequest struct {
 	Query   string `json:"query"`
 	TMDb    int    `json:"TMDb"`
 	Quality string `json:"quality"`
+	Year    int    `json:"year"` // Added Year field
 }
 
 type AnimeTvRequest struct {
@@ -42,6 +45,7 @@ type AnimeTvRequest struct {
 	Seasons []int  `json:"seasons"`
 	TMDb    int    `json:"TMDb"`
 	Quality string `json:"quality"`
+	Year    int    `json:"year"` // Added Year field
 }
 
 type TMDbRequest struct {

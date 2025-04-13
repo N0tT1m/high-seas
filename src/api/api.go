@@ -4,18 +4,161 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jrudio/go-plex-client"
+	"high-seas/src/db"
 	"high-seas/src/jackett"
+	"high-seas/src/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
-	"high-seas/src/db"
-	"high-seas/src/logger"
-
 	"github.com/gin-gonic/gin"
 )
+
+// QueryMovieRequest handles requests to search and download movies
+func QueryMovieRequest(c *gin.Context) {
+	respBody := c.Request.Body
+
+	body, err := ioutil.ReadAll(respBody)
+	if err != nil {
+		logger.WriteError("Failed to read the response body.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var request db.MovieRequest
+
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		logger.WriteError("Failed to Unmarshal JSON.", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	// Use the Year field from the request for searching
+	err = jackett.MakeMovieQuery(request.Query, request.TMDb, request.Quality, request.Year)
+	if err != nil {
+		logger.WriteError("Failed to query movie.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process movie query"})
+		return
+	}
+
+	logger.WriteCMDInfo("Read body complete.", "Success")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Query Request was successfully run.",
+	})
+}
+
+// QueryShowRequest handles requests to search and download TV shows
+func QueryShowRequest(c *gin.Context) {
+	respBody := c.Request.Body
+
+	body, err := ioutil.ReadAll(respBody)
+	if err != nil {
+		logger.WriteError("Failed to read the response body.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var request db.ShowRequest
+
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		logger.WriteError("Failed to Unmarshal JSON.", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	// Log request details for debugging
+	logger.WriteInfo(fmt.Sprintf("Processing show request: %s (TMDb ID: %d, Year: %d)",
+		request.Query, request.TMDb, request.Year))
+
+	// Use the Year field from the request for searching
+	err = jackett.MakeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality, request.Year)
+	if err != nil {
+		logger.WriteError("Failed to query show.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process show query"})
+		return
+	}
+
+	logger.WriteCMDInfo("Read body complete.", "Success")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Query Request was successfully run.",
+	})
+}
+
+// QueryAnimeMovieRequest handles requests to search and download anime movies
+func QueryAnimeMovieRequest(c *gin.Context) {
+	respBody := c.Request.Body
+
+	body, err := ioutil.ReadAll(respBody)
+	if err != nil {
+		logger.WriteError("Failed to read the response body.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var request db.AnimeMovieRequest
+
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		logger.WriteError("Failed to Unmarshal JSON.", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	// Use the Year field from the request for searching
+	err = jackett.MakeAnimeMovieQuery(request.Query, request.TMDb, request.Quality, request.Year)
+	if err != nil {
+		logger.WriteError("Failed to Query Anime Movie Request.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process anime movie query"})
+		return
+	}
+
+	logger.WriteCMDInfo("Read body complete.", "Success")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Query Request was successfully run.",
+	})
+}
+
+// MakeAnimeShowQuery handles requests to search and download anime TV shows
+func MakeAnimeShowQuery(c *gin.Context) {
+	respBody := c.Request.Body
+
+	body, err := ioutil.ReadAll(respBody)
+	if err != nil {
+		logger.WriteError("Failed to read the response body.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var request db.AnimeTvRequest
+
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		logger.WriteError("Failed to Unmarshal JSON.", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	// Use the Year field from the request for searching
+	err = jackett.MakeAnimeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality, request.Year)
+	if err != nil {
+		logger.WriteError("Failed to process anime show query.", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process anime show query"})
+		return
+	}
+
+	logger.WriteCMDInfo("Read body complete.", "Success")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Query Request was successfully run.",
+	})
+}
 
 func login() *plex.Plex {
 	plexConnection, err := plex.New("http://192.168.1.78:32400", "Y7fU6x3PPqr8A-P3WEjq")
@@ -51,107 +194,6 @@ func CheckPlexStatus(title string) bool {
 	//return len(results) > 0
 
 	return false
-}
-
-func QueryMovieRequest(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.MovieRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	jackett.MakeMovieQuery(request.Query, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func QueryShowRequest(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.ShowRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	// fmt.Println("{}", request.Query, request.Seasons, request.Name, request.Year, request.Description)
-
-	jackett.MakeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func QueryAnimeMovieRequest(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.AnimeMovieRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	err = jackett.MakeAnimeMovieQuery(request.Query, request.TMDb, request.Quality)
-	if err != nil {
-		logger.WriteError("Failed to Query Anime Movie Request.", err)
-	}
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
-}
-
-func MakeAnimeShowQuery(c *gin.Context) {
-	respBody := c.Request.Body
-
-	body, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		logger.WriteError("Failed to read the response body.", err)
-	}
-
-	var request db.AnimeTvRequest
-
-	err = json.Unmarshal(body, &request)
-	if err != nil {
-		logger.WriteError("Failed to Unmarshal JSON.", err)
-	}
-
-	jackett.MakeAnimeShowQuery(request.Query, request.Seasons, request.TMDb, request.Quality)
-
-	logger.WriteCMDInfo("Read body complete.", "Success")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Query Request was successfully run.",
-	})
 }
 
 func processTMDbRequest(c *gin.Context, url string) (*db.TMDbResponse, error) {

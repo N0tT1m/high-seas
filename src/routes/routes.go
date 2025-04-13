@@ -101,6 +101,9 @@ func SetupRouter() {
 
 	// r.Run(":8782")
 
+	// The commented TLS code below requires the "crypto/tls" import
+	// If you uncomment this code, you'll need to uncomment the import too
+
 	// Load the Let's Encrypt certificate and key
 	certFile := "./fullchain.pem"
 	keyFile := "./privkey.pem"
