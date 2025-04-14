@@ -26,7 +26,7 @@ const (
 	SEEDERS_WEIGHT       = 0.2 // Decreased slightly
 	QUALITY_WEIGHT       = 0.1 // Decreased slightly
 	SIZE_WEIGHT          = 0.1 // Kept the same
-	MIN_ACCEPTABLE_SCORE = 0.7 // Increased to require better matches
+	MIN_ACCEPTABLE_SCORE = 0.5 // Increased to require better matches
 )
 
 // Common constants and categories
