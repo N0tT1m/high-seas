@@ -1,6 +1,6 @@
 import { CommonModule, NgFor } from '@angular/common';
 import { HttpClientModule  } from '@angular/common/http'
-import { Component, OnInit, ViewChild, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { RouterModule } from '@angular/router'
 import { GalleryModule, Gallery, GalleryRef, ImageItem } from 'ng-gallery';
 import { Movie, MovieResult, TvShow, TvShowResult, GenreRequest, Genre } from '../http-service/http-service.component';
@@ -143,8 +143,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
       <footer class="paginator-container">
         <mat-paginator
-          [length]="this.totalMovies"
-          [pageSize]="this.moviesLength"
+          [length]="totalMovies"
+          [pageSize]="moviesLength"
+          [pageIndex]="page - 1"
           aria-label="Select page"
           (page)="onPageChange($event)">
         </mat-paginator>
@@ -153,7 +154,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   `,
   styleUrls: ['./discover-movies.component.sass', '../../styles.sass']
 })
-export class DiscoverMoviesComponent implements OnInit {
+export class DiscoverMoviesComponent implements OnInit, AfterViewInit {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -215,86 +216,113 @@ export class DiscoverMoviesComponent implements OnInit {
     this.galleryMoviesRef.play();
   }
 
-  // EXACTLY match the working pattern
+  // Properly handle the page change event
   onPageChange(event: PageEvent) {
+    console.log('Page changed:', event);
+    // Update the page number (adding 1 since paginator is zero-indexed)
     this.page = event.pageIndex + 1;
+
+    // Call getGenre with the new page number
     this.getGenre(this.page);
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Alternative getGenre implementation using getAllMoviesByGenre
-
+  // Improved getGenre method
   async getGenre(page: number) {
-    // Clear current movies
-    while (this.fetchedMovies.length > 0) {
-      this.fetchedMovies.pop();
-    }
+    console.log('getGenre called with page:', page);
+    console.log('Current genre:', this.genre);
+    console.log('Current releaseYear:', this.releaseYear);
 
-    while (this.movieTitles.length > 0) {
-      this.movieTitles.pop();
-    }
+    // Clear current movies (replace the array instead of popping)
+    this.fetchedMovies = [];
+    this.movieTitles = [];
 
-    // Use getAllMoviesByGenre which is more similar to the working getAllTvShows
-    this.movieService.getAllMoviesByGenre(this.genre, this.releaseYear, this.endYear, page).subscribe((resp) => {
-      this.moviesLength = resp['results'].length;
-      this.totalMovies = resp['total_results'] || resp['total_result'];
+    // Use getAllMoviesByGenre with modern subscription pattern
+    this.movieService.getAllMoviesByGenre(this.genre, this.releaseYear, this.endYear, page).subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
 
-      resp['results'].forEach((movie) => {
-        // Extract movie details using bracket notation
-        let page = resp['page'];
-        let isAdult = movie['adult'];
-        let backdropPath = movie['backdrop_path'];
-        let genreIds = movie['genre_ids'];
-        let id = movie['id'];
-        let releaseDate = movie['release_date'];
-        let video = movie['video'];
-        let title = movie['title'];
-        let originalLanguage = movie['original_language'];
-        let originalTitle = movie['original_title'];
-        let overview = movie['overview'];
-        let popularity = movie['popularity'];
-        let posterPath = this.baseUrl + movie['poster_path'];
-        let voteAverage = movie['vote_average'];
-        let voteCount = movie['vote_count'];
-        let totalPages = resp['total_pages'];
-        let totalResult = resp['total_results'] || resp['total_result'];
-
-        // Create a result object
-        let result: MovieResult[] = [{
-          adult: isAdult,
-          backdrop_path: backdropPath,
-          genre_ids: genreIds,
-          id: id,
-          title: title,
-          release_date: releaseDate,
-          original_language: originalLanguage,
-          original_title: originalTitle,
-          overview: overview,
-          popularity: popularity,
-          poster_path: posterPath,
-          vote_average: voteAverage,
-          vote_count: voteCount,
-          video: video
-        }];
-
-        // Add to fetchedMovies array
-        this.fetchedMovies.push({
-          page: page,
-          results: result,
-          total_pages: totalPages,
-          total_result: totalResult
-        });
-      });
-
-      // Update filtered list
-      if (this.filteredMovieList.length > 0) {
-        while (this.filteredMovieList.length > 0) {
-          this.filteredMovieList.pop();
+        // Check for valid response
+        if (!resp || !resp['results']) {
+          console.error('Invalid response format:', resp);
+          return;
         }
-      }
-      this.filteredMovieList = this.fetchedMovies;
 
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'auto' });
+        this.moviesLength = resp['results'].length;
+        this.totalMovies = resp['total_results'] || resp['total_result'];
+
+        // Process each movie in the results
+        resp['results'].forEach((movie) => {
+          // Extract movie details using bracket notation
+          let page = resp['page'];
+          let isAdult = movie['adult'];
+          let backdropPath = movie['backdrop_path'];
+          let genreIds = movie['genre_ids'];
+          let id = movie['id'];
+          let releaseDate = movie['release_date'];
+          let video = movie['video'];
+          let title = movie['title'];
+          let originalLanguage = movie['original_language'];
+          let originalTitle = movie['original_title'];
+          let overview = movie['overview'];
+          let popularity = movie['popularity'];
+          let posterPath = this.baseUrl + movie['poster_path'];
+          let voteAverage = movie['vote_average'];
+          let voteCount = movie['vote_count'];
+          let totalPages = resp['total_pages'];
+          let totalResult = resp['total_results'] || resp['total_result'];
+
+          // Create a result object
+          let result: MovieResult[] = [{
+            adult: isAdult,
+            backdrop_path: backdropPath,
+            genre_ids: genreIds,
+            id: id,
+            title: title,
+            release_date: releaseDate,
+            original_language: originalLanguage,
+            original_title: originalTitle,
+            overview: overview,
+            popularity: popularity,
+            poster_path: posterPath,
+            vote_average: voteAverage,
+            vote_count: voteCount,
+            video: video
+          }];
+
+          // Add to fetchedMovies array
+          this.fetchedMovies.push({
+            page: page,
+            results: result,
+            total_pages: totalPages,
+            total_result: totalResult
+          });
+        });
+
+        // Update filtered list
+        this.filteredMovieList = this.fetchedMovies;
+
+        // Log status
+        console.log('Movies processed:', this.fetchedMovies.length);
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      },
+      error: (error) => {
+        console.error('Error fetching movies:', error);
+      }
     });
+  }
+
+  // Add ngAfterViewInit to ensure paginator is properly initialized
+  ngAfterViewInit() {
+    // Initialize paginator with current values after view is ready
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+      this.paginator.length = this.totalMovies;
+      this.paginator.pageSize = this.moviesLength;
+    }
   }
 }
