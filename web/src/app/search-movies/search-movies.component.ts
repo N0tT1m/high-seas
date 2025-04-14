@@ -50,9 +50,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
                 </mat-select>
               </div>
 
+              <!-- For SearchMoviesComponent -->
               <div class="filter-group">
                 <label for="year">Release Year:</label>
-                <input type="number" [(ngModel)]="yearFilter" name="year" id="year" min="1900" max="2099">
+                <input type="number" [(ngModel)]="yearFilter" placeholder="YYYY" name="year" id="year" min="1900" max="2099">
+                <span class="input-hint">Enter year only (e.g., 2022)</span>
               </div>
             </div>
 
@@ -121,7 +123,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         <button class="button big-btn filter-button" type="submit">Search</button>
       </form>
 
-      <div class="results" *ngIf="this.filteredMovieList.length != 0">
+      <!-- Update results section to include loading state -->
+      <div class="results" [class.loading]="isLoading" *ngIf="this.filteredMovieList.length != 0">
         <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
           <div class="movie-info">
             <app-search-movie-list
@@ -132,10 +135,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       </div>
     </section>
 
+    <div class="no-results" *ngIf="!isLoading && this.filteredMovieList.length === 0">
+      <p>No movies found matching your criteria. Try adjusting your search filters.</p>
+    </div>
+
+
     <footer class="paginator-container">
       <mat-paginator
-        [length]="this.totalMovies"
-        [pageSize]="this.moviesLength"
+        [length]="totalMovies"
+        [pageSize]="moviesLength"
+        [pageIndex]="page - 1"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -173,6 +182,9 @@ export class SearchMoviesComponent implements OnInit {
   public language: string = '';
   public includeAdult: boolean = false;
 
+  // Optional loading state
+  public isLoading: boolean = false;
+
   public movieService: MovieService = inject(MovieService)
 
   constructor() {
@@ -183,26 +195,39 @@ export class SearchMoviesComponent implements OnInit {
     });
   }
 
-  // Fix for SearchMoviesComponent onPageChange method
-  onPageChange(event: PageEvent) {
-    this.page = event.pageIndex + 1;
-    this.getMovies(this.page);
-  }
-
   ngOnInit() {
     // Initialize with popular movies
     this.getMovies(1);
   }
 
-  async getMovies(page: number) {
-    // Clear current movies
-    while (this.fetchedMovies.length > 0) {
-      this.fetchedMovies.pop();
+  ngAfterViewInit() {
+    // Initialize paginator with current page if available
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+      this.paginator.length = this.totalMovies || 0;
+      this.paginator.pageSize = this.moviesLength || 20;
     }
+  }
 
-    while (this.movieTitles.length > 0) {
-      this.movieTitles.pop();
-    }
+  // Fix for SearchMoviesComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    this.getMovies(this.page);
+  }
+
+  async getMovies(page: number) {
+    console.log('getMovies called with page:', page);
+
+    // Set loading state
+    this.isLoading = true;
+
+    // Clear current movies - using direct assignment instead of pop() loop
+    this.fetchedMovies = [];
+    this.movieTitles = [];
 
     // Build filter options
     const filterOptions: MovieFilterOptions = {
@@ -252,52 +277,78 @@ export class SearchMoviesComponent implements OnInit {
       observable = this.movieService.getPopular(filterOptions);
     }
 
-    observable.subscribe((resp) => {
-      this.moviesLength = resp.results.length;
-      this.totalMovies = resp.total_result;
+    observable.subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
 
-      resp.results.forEach((movie) => {
-        let result: MovieResult[] = [{
-          adult: movie.adult,
-          backdrop_path: movie.backdrop_path,
-          genre_ids: movie.genre_ids,
-          id: movie.id,
-          title: movie.title,
-          release_date: movie.release_date,
-          original_language: movie.original_language,
-          original_title: movie.original_title,
-          overview: movie.overview,
-          popularity: movie.popularity,
-          poster_path: this.baseUrl + movie.poster_path,
-          vote_average: movie.vote_average,
-          vote_count: movie.vote_count,
-          video: movie.video
-        }];
+        if (!resp || !resp.results) {
+          console.error('Invalid response format:', resp);
+          this.isLoading = false;
+          return;
+        }
 
-        this.fetchedMovies.push({
-          page: resp.page,
-          results: result,
-          total_pages: resp.total_pages,
-          total_result: resp.total_result
+        this.moviesLength = resp.results.length;
+        this.totalMovies = resp.total_result;
+
+        resp.results.forEach((movie) => {
+          let result: MovieResult[] = [{
+            adult: movie.adult,
+            backdrop_path: movie.backdrop_path,
+            genre_ids: movie.genre_ids,
+            id: movie.id,
+            title: movie.title,
+            release_date: movie.release_date,
+            original_language: movie.original_language,
+            original_title: movie.original_title,
+            overview: movie.overview,
+            popularity: movie.popularity,
+            poster_path: this.baseUrl + movie.poster_path,
+            vote_average: movie.vote_average,
+            vote_count: movie.vote_count,
+            video: movie.video
+          }];
+
+          this.fetchedMovies.push({
+            page: resp.page,
+            results: result,
+            total_pages: resp.total_pages,
+            total_result: resp.total_result
+          });
+
+          this.pages.push(resp.page);
+          if (movie.release_date) {
+            this.releaseYear.push(movie.release_date);
+            this.endYear.push(movie.release_date);
+          }
         });
 
-        this.pages.push(resp.page);
-        this.releaseYear.push(movie.release_date);
-        this.endYear.push(movie.release_date);
-      });
+        this.allMovies = [...this.fetchedMovies];
+        this.filteredMovieList = this.fetchedMovies;
 
-      this.allMovies = [...this.fetchedMovies];
-      this.filteredMovieList = this.fetchedMovies;
+        // End loading state
+        this.isLoading = false;
+
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'auto' });
+
+        console.log('Movies processed:', this.fetchedMovies.length);
+
+        // Update paginator if available
+        if (this.paginator) {
+          // Only set pageIndex if it's different to avoid infinite loop
+          if (this.paginator.pageIndex !== page - 1) {
+            this.paginator.pageIndex = page - 1;
+          }
+          this.paginator.length = this.totalMovies;
+          this.paginator.pageSize = this.moviesLength;
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching movies:', error);
+        this.isLoading = false;
+      }
     });
   }
 
-  filterResults(text: string) {
-    if (!text) {
-      return this.filteredMovieList = this.allMovies;
-    }
-
-    return this.filteredMovieList = this.allMovies.filter((movie) =>
-      movie.results[0]?.title.toLowerCase().includes(text.toLowerCase())
-    );
-  }
+  protected readonly Math = Math;
 }

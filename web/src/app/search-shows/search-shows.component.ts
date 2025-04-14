@@ -31,6 +31,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   providers: [TvShowService, NgModel],
   template: `
   <div class="container">
+    <!-- Add loading indicator -->
+    <div class="loading-indicator" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <span>Loading shows...</span>
+    </div>
+
     <section class="header-section">
       <form class="search-form" (ngSubmit)="getShows(1)">
         <input type="text" [(ngModel)]="showSearch" name="showSearch" id="showSearch" placeholder="Find Show by Name" #filter />
@@ -53,9 +59,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
                 </mat-select>
               </div>
 
+              <!-- For SearchShowsComponent -->
               <div class="filter-group">
                 <label for="year">First Air Year:</label>
-                <input type="number" [(ngModel)]="yearFilter" name="year" id="year" min="1900" max="2099">
+                <input type="number" [(ngModel)]="yearFilter" placeholder="YYYY" name="year" id="year" min="1900" max="2099">
+                <span class="input-hint">Enter year only (e.g., 2022)</span>
               </div>
             </div>
 
@@ -149,7 +157,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         <button class="button big-btn filter-button" type="submit">Search</button>
       </form>
 
-      <div class="results" *ngIf="this.filteredShowsList.length != 0">
+      <!-- Update results section to include loading state -->
+      <div class="results" [class.loading]="isLoading" *ngIf="this.filteredShowsList.length != 0">
         <div class="show-item" *ngFor="let showItem of this.filteredShowsList; index as i;">
           <div class="show-info">
             <app-search-show-list
@@ -160,10 +169,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       </div>
     </section>
 
+    <!-- No results message -->
+    <div class="no-results" *ngIf="!isLoading && this.filteredShowsList.length === 0">
+      <p>No shows found matching your criteria. Try adjusting your search filters.</p>
+    </div>
+
     <footer class="paginator-container">
       <mat-paginator
-        [length]="this.totalShows"
-        [pageSize]="this.showsLength"
+        [length]="totalShows"
+        [pageSize]="showsLength"
+        [pageIndex]="page - 1"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -260,16 +275,43 @@ export class SearchShowsComponent implements OnInit {
     // Initialize with popular shows
     this.getShows(1);
   }
-  
-  async getShows(page: number) {
-    // Clear current shows
-    while (this.fetchedShows.length > 0) {
-      this.fetchedShows.pop();
-    }
 
-    while (this.showNames.length > 0) {
-      this.showNames.pop();
+  // TODO: IMPLEMENT isLoading
+  // Optional loading state
+  public isLoading: boolean = false;
+
+  ngAfterViewInit() {
+    // Initialize paginator with current page if available
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+      this.paginator.length = this.totalShows || 0;
+      this.paginator.pageSize = this.showsLength || 20;
     }
+  }
+
+  // Fix for SearchShowsComponent onPageChange method
+  onPageChange(event: PageEvent) {
+    this.page = event.pageIndex + 1;
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    this.getShows(this.page);
+  }
+
+  async getShows(page: number) {
+    console.log('getShows called with page:', page);
+
+    // Set loading state
+    this.isLoading = true;
+
+    // Clear current shows - using direct assignment instead of pop() loop
+    this.fetchedShows = [];
+    this.showNames = [];
+
+    // Process year inputs
+    let yearStartValue = this.yearRangeStart;
+    let yearEndValue = this.yearRangeEnd;
 
     // Build filter options
     const filterOptions: TvShowFilterOptions = {
@@ -327,48 +369,76 @@ export class SearchShowsComponent implements OnInit {
       observable = this.tvShowService.getPopular(filterOptions);
     }
 
-    observable.subscribe((resp) => {
-      this.showsLength = resp.results.length;
-      this.totalShows = resp.total_result;
+    observable.subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
 
-      resp.results.forEach((show) => {
-        let result: TvShowResult[] = [{
-          adult: show.adult,
-          backdrop_path: show.backdrop_path,
-          genre_ids: show.genre_ids,
-          id: show.id,
-          name: show.name,
-          first_air_date: show.first_air_date,
-          original_language: show.original_language,
-          original_name: show.original_name,
-          overview: show.overview,
-          popularity: show.popularity,
-          poster_path: this.baseUrl + show.poster_path,
-          vote_average: show.vote_average,
-          vote_count: show.vote_count,
-          video: show.video
-        }];
+        if (!resp || !resp.results) {
+          console.error('Invalid response format:', resp);
+          this.isLoading = false;
+          return;
+        }
 
-        this.fetchedShows.push({
-          page: resp.page,
-          results: result,
-          total_pages: resp.total_pages,
-          total_result: resp.total_result
+        this.showsLength = resp.results.length;
+        this.totalShows = resp.total_result;
+
+        resp.results.forEach((show) => {
+          let result: TvShowResult[] = [{
+            adult: show.adult,
+            backdrop_path: show.backdrop_path,
+            genre_ids: show.genre_ids,
+            id: show.id,
+            name: show.name,
+            first_air_date: show.first_air_date,
+            original_language: show.original_language,
+            original_name: show.original_name,
+            overview: show.overview,
+            popularity: show.popularity,
+            poster_path: this.baseUrl + show.poster_path,
+            vote_average: show.vote_average,
+            vote_count: show.vote_count,
+            video: show.video
+          }];
+
+          this.fetchedShows.push({
+            page: resp.page,
+            results: result,
+            total_pages: resp.total_pages,
+            total_result: resp.total_result
+          });
+
+          this.pages.push(resp.page);
+          if (show.first_air_date) {
+            this.releaseYear.push(show.first_air_date);
+          }
         });
 
-        this.pages.push(resp.page);
-        this.releaseYear.push(show.first_air_date);
-      });
+        this.allShows = [...this.fetchedShows];
+        this.filteredShowsList = this.fetchedShows;
 
-      this.allShows = [...this.fetchedShows];
-      this.filteredShowsList = this.fetchedShows;
+        // End loading state
+        this.isLoading = false;
+
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'auto' });
+
+        console.log('Shows processed:', this.fetchedShows.length);
+
+        // Update paginator if available
+        if (this.paginator) {
+          // Only set pageIndex if it's different to avoid infinite loop
+          if (this.paginator.pageIndex !== page - 1) {
+            this.paginator.pageIndex = page - 1;
+          }
+          this.paginator.length = this.totalShows;
+          this.paginator.pageSize = this.showsLength;
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching shows:', error);
+        this.isLoading = false;
+      }
     });
-  }
-
-  // Fix for SearchShowsComponent onPageChange method
-  onPageChange(event: PageEvent) {
-    this.page = event.pageIndex + 1;
-    this.getShows(this.page);
   }
 
   filterResults(text: string) {
@@ -380,4 +450,6 @@ export class SearchShowsComponent implements OnInit {
       show.results[0]?.name.toLowerCase().includes(text.toLowerCase())
     );
   }
+
+  protected readonly Math = Math;
 }

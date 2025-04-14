@@ -492,7 +492,7 @@ export class TvShowService {
   /**
    * Get all TV shows by genre, air date, and page
    * @param genre Genre ID
-   * @param airDate Air date
+   * @param airDate Air date or year
    * @param page Page number
    */
   getAllTvShows(genre: number, airDate: string, page: number): Observable<TvShow> {
@@ -506,9 +506,21 @@ export class TvShowService {
       }
 
       if (airDate) {
-        filters.airDateRange = {
-          start: airDate
-        };
+        // Check if airDate is just a year (4 digits)
+        if (/^\d{4}$/.test(airDate.trim())) {
+          const year = parseInt(airDate.trim(), 10);
+          // Use year range filter instead of specific date
+          filters.yearRange = {
+            start: year,
+            end: year
+          };
+          console.log(`Searching for shows from ${year}`);
+        } else {
+          // It's a full date, use it as is
+          filters.airDateRange = {
+            start: airDate
+          };
+        }
       }
 
       // Using all-shows endpoint instead of discover

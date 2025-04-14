@@ -178,9 +178,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     </div>
 
     <footer class="paginator-container">
+      <!-- Explicit binding for MatPaginator -->
       <mat-paginator
-        [length]="this.totalShows"
-        [pageSize]="this.showsLength"
+        [length]="totalShows"
+        [pageSize]="showsLength"
+        [pageIndex]="page - 1"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -335,133 +337,139 @@ export class DiscoverShowsComponent implements OnInit {
     this.allShows.splice(0, 1);
   }
 
-  // Fix for DiscoverShowsComponent onPageChange method
+  // Replace your onPageChange and getGenre methods with these versions
+
+  // Update these methods in your component
+
+  /**
+   * Handle page change events from the paginator
+   */
   onPageChange(event: PageEvent) {
+    // Update the page number (adding 1 since paginator is zero-indexed)
     this.page = event.pageIndex + 1;
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Call getGenre with the new page number
     this.getGenre(this.page);
   }
 
+  /**
+   * Get TV shows for the selected genre and air date at the specified page
+   * @param page Page number to retrieve
+   */
   async getGenre(page: number) {
-    // Clear current shows
-    while (this.fetchedTvShows.length > 0) {
-      this.fetchedTvShows.pop();
+    console.log('getGenre called with page:', page);
+    console.log('Current genre:', this.genre);
+    console.log('Current airDate:', this.airDate);
+
+    // Clear existing shows
+    this.fetchedTvShows = [];
+    this.showNames = [];
+
+    // Set loading state if you have one
+    // this.isLoading = true;
+
+    // Process year input if needed
+    let processedAirDate = this.airDate;
+
+    // Check if input is just a year (4 digits)
+    if (this.airDate && /^\d{4}$/.test(this.airDate.trim())) {
+      const year = this.airDate.trim();
+      processedAirDate = year;
+      console.log('Searching for year:', year);
     }
 
-    while (this.showNames.length > 0) {
-      this.showNames.pop();
-    }
+    // Use the original working method that fetches shows
+    this.tvShowsService.getAllTvShows(this.genre, processedAirDate, page).subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
 
-    // Build filter options
-    const filterOptions: TvShowFilterOptions = {
-      page: page,
-      includeAdult: this.includeAdult,
-      sortBy: this.sortBy
-    };
+        // Extract response data using bracket notation (as in your working example)
+        if (!resp || !resp['results']) {
+          console.error('Invalid response format:', resp);
+          return;
+        }
 
-    // Add genre if selected (not 0)
-    if (this.genre !== 0) {
-      filterOptions.genres = [this.genre];
-    }
+        this.showsLength = resp['results'].length;
+        this.totalShows = resp['total_results'] || resp['total_result'];
 
-    // Add specific air date if provided
-    if (this.airDate) {
-      filterOptions.airDateRange = {
-        start: this.airDate
-      };
-    }
-    // Or add year range if specified
-    else if (this.yearRangeStart || this.yearRangeEnd) {
-      filterOptions.yearRange = {};
-      if (this.yearRangeStart) {
-        filterOptions.yearRange.start = this.yearRangeStart;
-      }
-      if (this.yearRangeEnd) {
-        filterOptions.yearRange.end = this.yearRangeEnd;
-      }
-    }
+        // Process each show in the results
+        resp['results'].forEach((show) => {
+          // Extract show details using bracket notation
+          let page = resp['page'];
+          let isAdult = show['adult'];
+          let backdropPath = show['backdrop_path'];
+          let genreIds = show['genre_ids'];
+          let id = show['id'];
+          let firstAirDate = show['first_air_date'];
+          let video = show['video'];
+          let name = show['name'];
+          let originalLanguage = show['original_language'];
+          let originalName = show['original_name'];
+          let overview = show['overview'];
+          let popularity = show['popularity'];
+          let posterPath = this.baseUrl + show['poster_path'];
+          let voteAverage = show['vote_average'];
+          let voteCount = show['vote_count'];
+          let totalPages = resp['total_pages'];
+          let totalResult = resp['total_results'] || resp['total_result'];
 
-    // Add rating filters if specified
-    if (this.minRating) {
-      filterOptions.minRating = this.minRating;
-    }
-    if (this.maxRating) {
-      filterOptions.maxRating = this.maxRating;
-    }
+          // Create a result object
+          let result: TvShowResult[] = [{
+            adult: isAdult,
+            backdrop_path: backdropPath,
+            genre_ids: genreIds,
+            id: id,
+            name: name,
+            first_air_date: firstAirDate,
+            original_language: originalLanguage,
+            original_name: originalName,
+            overview: overview,
+            popularity: popularity,
+            poster_path: posterPath,
+            vote_average: voteAverage,
+            vote_count: voteCount,
+            video: video
+          }];
 
-    // Add language filter if specified
-    if (this.language) {
-      filterOptions.language = this.language;
-    }
-
-    // Add status filter if specified
-    if (this.status) {
-      filterOptions.status = this.status;
-    }
-
-    // Add network filter if specified
-    if (this.networkFilter) {
-      filterOptions.withNetworks = [parseInt(this.networkFilter)];
-    }
-
-    // Add season count filter if specified
-    if (this.seasonCount) {
-      filterOptions.seasonCount = {};
-
-      switch (this.seasonCount) {
-        case '1':
-          filterOptions.seasonCount.min = 1;
-          filterOptions.seasonCount.max = 1;
-          break;
-        case '2-3':
-          filterOptions.seasonCount.min = 2;
-          filterOptions.seasonCount.max = 3;
-          break;
-        case '4-6':
-          filterOptions.seasonCount.min = 4;
-          filterOptions.seasonCount.max = 6;
-          break;
-        case '7+':
-          filterOptions.seasonCount.min = 7;
-          break;
-      }
-    }
-
-    // Use the discover API with the filters
-    this.tvShowsService.discoverShows(filterOptions).subscribe((resp) => {
-      this.showsLength = resp.results.length;
-      this.totalShows = resp.total_result;
-
-      resp.results.forEach((show) => {
-        let result: TvShowResult[] = [{
-          adult: show.adult,
-          backdrop_path: show.backdrop_path,
-          genre_ids: show.genre_ids,
-          id: show.id,
-          name: show.name,
-          first_air_date: show.first_air_date,
-          original_language: show.original_language,
-          original_name: show.original_name,
-          overview: show.overview,
-          popularity: show.popularity,
-          poster_path: this.baseUrl + show.poster_path,
-          vote_average: show.vote_average,
-          vote_count: show.vote_count,
-          video: show.video
-        }];
-
-        this.fetchedTvShows.push({
-          page: resp.page,
-          results: result,
-          total_pages: resp.total_pages,
-          total_result: resp.total_result
+          // Add to fetchedTvShows array
+          this.fetchedTvShows.push({
+            page: page,
+            results: result,
+            total_pages: totalPages,
+            total_result: totalResult
+          });
         });
-      });
 
-      // Update filtered list
-      if (this.filteredShowsList.length > 0) {
-        this.filteredShowsList = [];
+        // Update the filtered list displayed to the user
+        this.filteredShowsList = this.fetchedTvShows;
+
+        // End loading state if you have one
+        // this.isLoading = false;
+
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'auto' });
+
+        console.log('Shows processed:', this.fetchedTvShows.length);
+      },
+      error: (error) => {
+        console.error('Error fetching shows:', error);
+        // this.isLoading = false;
       }
-      this.filteredShowsList = this.fetchedTvShows;
     });
   }
+
+  // 3. Add or modify ngAfterViewInit to ensure paginator is properly initialized
+  ngAfterViewInit() {
+    // Initialize paginator with current values after view is ready
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+      this.paginator.length = this.totalShows;
+      this.paginator.pageSize = this.showsLength;
+    }
+  }
+
+  protected readonly Math = Math;
 }

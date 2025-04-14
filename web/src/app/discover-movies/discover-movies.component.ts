@@ -47,14 +47,18 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
           </select>
         </div>
 
+
+        <!-- For DiscoverMoviesComponent -->
         <div class="filters-div">
           <label for="releaseYear">Release Year:</label>
-          <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" class='select-section' />
+          <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" placeholder="YYYY" class='select-section' />
+          <span class="input-hint">Enter year (e.g., 2022)</span>
         </div>
 
         <div class="filters-div">
           <label for="endYear">End Year:</label>
-          <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" class='select-section' />
+          <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" placeholder="YYYY" class='select-section' />
+          <span class="input-hint">Enter end year for range</span>
         </div>
 
         <!-- Advanced Search Toggle -->
@@ -140,9 +144,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     </div>
 
     <footer class="paginator-container">
+      <!-- Updated paginator with explicit bindings -->
       <mat-paginator
-        [length]="this.totalMovies"
-        [pageSize]="this.moviesLength"
+        [length]="totalMovies"
+        [pageSize]="moviesLength"
+        [pageIndex]="page - 1"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -214,10 +220,147 @@ export class DiscoverMoviesComponent implements OnInit {
     this.galleryMoviesRef.play();
   }
 
-  // Fix for DiscoverMoviesComponent onPageChange method
+  ngAfterViewInit() {
+    // Initialize paginator with current page if available
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+    }
+  }
+
+  /**
+   * Handle page change events from the paginator
+   */
   onPageChange(event: PageEvent) {
+    // Update the page number (adding 1 since paginator is zero-indexed)
     this.page = event.pageIndex + 1;
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Call getGenre with the new page number
     this.getGenre(this.page);
+  }
+
+  async getGenre(page: number) {
+    console.log('getGenre called with page:', page);
+    console.log('Current genre:', this.genre);
+    console.log('Release year:', this.releaseYear);
+    console.log('End year:', this.endYear);
+
+    // Clear current movies - using direct assignment instead of pop() loop
+    this.fetchedMovies = [];
+    this.movieTitles = [];
+
+    // Set loading state if you have one
+    // this.isLoading = true;
+
+    // Process year inputs - handle year-only inputs
+    let processedReleaseYear = this.releaseYear;
+    let processedEndYear = this.endYear;
+
+    // Build filter options
+    const filterOptions: MovieFilterOptions = {
+      page: page,
+      includeAdult: this.includeAdult,
+      sortBy: this.sortBy
+    };
+
+    // Add genre if selected (not 0)
+    if (this.genre !== 0) {
+      filterOptions.genres = [this.genre];
+    }
+
+    // Add year range if specified
+    if (this.releaseYear || this.endYear) {
+      filterOptions.yearRange = {};
+      if (this.releaseYear) {
+        filterOptions.yearRange.start = parseInt(this.releaseYear);
+      }
+      if (this.endYear) {
+        filterOptions.yearRange.end = parseInt(this.endYear);
+      }
+    }
+
+    // Add rating filters if specified
+    if (this.minRating) {
+      filterOptions.minRating = this.minRating;
+    }
+    if (this.maxRating) {
+      filterOptions.maxRating = this.maxRating;
+    }
+
+    // Add language filter if specified
+    if (this.language) {
+      filterOptions.language = this.language;
+    }
+
+    // Use the discover API with the filters
+    this.movieService.discoverMovies(filterOptions).subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
+
+        // Extract response data
+        if (!resp || !resp.results) {
+          console.error('Invalid response format:', resp);
+          return;
+        }
+
+        this.moviesLength = resp.results.length;
+        this.totalMovies = resp.total_result;
+
+        // Process each movie in the results
+        resp.results.forEach((movie) => {
+          let result: MovieResult[] = [{
+            adult: movie.adult,
+            backdrop_path: movie.backdrop_path,
+            genre_ids: movie.genre_ids,
+            id: movie.id,
+            title: movie.title,
+            release_date: movie.release_date,
+            original_language: movie.original_language,
+            original_title: movie.original_title,
+            overview: movie.overview,
+            popularity: movie.popularity,
+            poster_path: this.baseUrl + movie.poster_path,
+            vote_average: movie.vote_average,
+            vote_count: movie.vote_count,
+            video: movie.video
+          }];
+
+          this.fetchedMovies.push({
+            page: resp.page,
+            results: result,
+            total_pages: resp.total_pages,
+            total_result: resp.total_result
+          });
+        });
+
+        // Update filtered list
+        this.filteredMovieList = this.fetchedMovies;
+
+        // End loading state if you have one
+        // this.isLoading = false;
+
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'auto' });
+
+        console.log('Movies processed:', this.fetchedMovies.length);
+
+        // Update paginator if available (after view init)
+        if (this.paginator) {
+          // Only set pageIndex if it's different to avoid infinite loop
+          if (this.paginator.pageIndex !== page - 1) {
+            this.paginator.pageIndex = page - 1;
+          }
+          this.paginator.length = this.totalMovies;
+          this.paginator.pageSize = this.moviesLength;
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching movies:', error);
+        // this.isLoading = false;
+      }
+    });
   }
 
   getMoviesFromDate() {
@@ -259,88 +402,5 @@ export class DiscoverMoviesComponent implements OnInit {
     this.allMovies.splice(0, 1);
   }
 
-  async getGenre(page: number) {
-    // Clear current movies
-    while (this.fetchedMovies.length > 0) {
-      this.fetchedMovies.pop();
-    }
-
-    while (this.movieTitles.length > 0) {
-      this.movieTitles.pop();
-    }
-
-    // Build filter options
-    const filterOptions: MovieFilterOptions = {
-      page: page,
-      includeAdult: this.includeAdult,
-      sortBy: this.sortBy
-    };
-
-    // Add genre if selected (not 0)
-    if (this.genre !== 0) {
-      filterOptions.genres = [this.genre];
-    }
-
-    // Add year range if specified
-    if (this.releaseYear || this.endYear) {
-      filterOptions.yearRange = {};
-      if (this.releaseYear) {
-        filterOptions.yearRange.start = parseInt(this.releaseYear);
-      }
-      if (this.endYear) {
-        filterOptions.yearRange.end = parseInt(this.endYear);
-      }
-    }
-
-    // Add rating filters if specified
-    if (this.minRating) {
-      filterOptions.minRating = this.minRating;
-    }
-    if (this.maxRating) {
-      filterOptions.maxRating = this.maxRating;
-    }
-
-    // Add language filter if specified
-    if (this.language) {
-      filterOptions.language = this.language;
-    }
-
-    // Use the discover API with the filters
-    this.movieService.discoverMovies(filterOptions).subscribe((resp) => {
-      this.moviesLength = resp.results.length;
-      this.totalMovies = resp.total_result;
-
-      resp.results.forEach((movie) => {
-        let result: MovieResult[] = [{
-          adult: movie.adult,
-          backdrop_path: movie.backdrop_path,
-          genre_ids: movie.genre_ids,
-          id: movie.id,
-          title: movie.title,
-          release_date: movie.release_date,
-          original_language: movie.original_language,
-          original_title: movie.original_title,
-          overview: movie.overview,
-          popularity: movie.popularity,
-          poster_path: this.baseUrl + movie.poster_path,
-          vote_average: movie.vote_average,
-          vote_count: movie.vote_count,
-          video: movie.video
-        }];
-
-        this.fetchedMovies.push({
-          page: resp.page,
-          results: result,
-          total_pages: resp.total_pages,
-          total_result: resp.total_result
-        });
-      });
-
-      // Update filtered list
-      if (this.filteredMovieList.length > 0) {
-        this.filteredMovieList = [];
-      }
-      this.filteredMovieList = this.fetchedMovies;
-    });
-  }
+  protected readonly Math = Math;
 }
