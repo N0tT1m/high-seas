@@ -176,9 +176,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
     <footer class="paginator-container">
       <mat-paginator
-        [length]="totalShows"
-        [pageSize]="showsLength"
-        [pageIndex]="page - 1"
+        [length]="this.totalShows"
+        [pageSize]="this.showsLength"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -300,18 +299,14 @@ export class SearchShowsComponent implements OnInit {
   }
 
   async getShows(page: number) {
-    console.log('getShows called with page:', page);
+    // Use while loops to clear arrays
+    while (this.fetchedShows.length > 0) {
+      this.fetchedShows.pop();
+    }
 
-    // Set loading state
-    this.isLoading = true;
-
-    // Clear current shows - using direct assignment instead of pop() loop
-    this.fetchedShows = [];
-    this.showNames = [];
-
-    // Process year inputs
-    let yearStartValue = this.yearRangeStart;
-    let yearEndValue = this.yearRangeEnd;
+    while (this.showNames.length > 0) {
+      this.showNames.pop();
+    }
 
     // Build filter options
     const filterOptions: TvShowFilterOptions = {
@@ -369,75 +364,61 @@ export class SearchShowsComponent implements OnInit {
       observable = this.tvShowService.getPopular(filterOptions);
     }
 
-    observable.subscribe({
-      next: (resp) => {
-        console.log('API response:', resp);
+    // Set loading state if used
+    if (typeof this.isLoading !== 'undefined') {
+      this.isLoading = true;
+    }
 
-        if (!resp || !resp.results) {
-          console.error('Invalid response format:', resp);
-          this.isLoading = false;
-          return;
-        }
+    observable.subscribe((resp) => {
+      // Use bracket notation for accessing ALL properties
+      this.showsLength = resp['results'].length;
+      this.totalShows = resp['total_result'] || resp['total_results'];
 
-        this.showsLength = resp.results.length;
-        this.totalShows = resp.total_result;
+      resp['results'].forEach((show) => {
+        let result: TvShowResult[] = [{
+          adult: show['adult'],
+          backdrop_path: show['backdrop_path'],
+          genre_ids: show['genre_ids'],
+          id: show['id'],
+          name: show['name'],
+          first_air_date: show['first_air_date'],
+          original_language: show['original_language'],
+          original_name: show['original_name'],
+          overview: show['overview'],
+          popularity: show['popularity'],
+          poster_path: this.baseUrl + show['poster_path'],
+          vote_average: show['vote_average'],
+          vote_count: show['vote_count'],
+          video: show['video']
+        }];
 
-        resp.results.forEach((show) => {
-          let result: TvShowResult[] = [{
-            adult: show.adult,
-            backdrop_path: show.backdrop_path,
-            genre_ids: show.genre_ids,
-            id: show.id,
-            name: show.name,
-            first_air_date: show.first_air_date,
-            original_language: show.original_language,
-            original_name: show.original_name,
-            overview: show.overview,
-            popularity: show.popularity,
-            poster_path: this.baseUrl + show.poster_path,
-            vote_average: show.vote_average,
-            vote_count: show.vote_count,
-            video: show.video
-          }];
-
-          this.fetchedShows.push({
-            page: resp.page,
-            results: result,
-            total_pages: resp.total_pages,
-            total_result: resp.total_result
-          });
-
-          this.pages.push(resp.page);
-          if (show.first_air_date) {
-            this.releaseYear.push(show.first_air_date);
-          }
+        this.fetchedShows.push({
+          page: resp['page'],
+          results: result,
+          total_pages: resp['total_pages'],
+          total_result: resp['total_result'] || resp['total_results']
         });
 
-        this.allShows = [...this.fetchedShows];
-        this.filteredShowsList = this.fetchedShows;
-
-        // End loading state
-        this.isLoading = false;
-
-        // Scroll to top of page
-        window.scrollTo({ top: 0, behavior: 'auto' });
-
-        console.log('Shows processed:', this.fetchedShows.length);
-
-        // Update paginator if available
-        if (this.paginator) {
-          // Only set pageIndex if it's different to avoid infinite loop
-          if (this.paginator.pageIndex !== page - 1) {
-            this.paginator.pageIndex = page - 1;
-          }
-          this.paginator.length = this.totalShows;
-          this.paginator.pageSize = this.showsLength;
+        if (this.pages) {
+          this.pages.push(resp['page']);
         }
-      },
-      error: (error) => {
-        console.error('Error fetching shows:', error);
+
+        if (show['first_air_date'] && this.releaseYear) {
+          this.releaseYear.push(show['first_air_date']);
+        }
+      });
+
+      // Simple assignment for lists
+      this.allShows = [...this.fetchedShows];
+      this.filteredShowsList = this.fetchedShows;
+
+      // End loading state if used
+      if (typeof this.isLoading !== 'undefined') {
         this.isLoading = false;
       }
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
   }
 

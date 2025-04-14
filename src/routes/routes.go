@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"crypto/tls"
 	"high-seas/src/api"
 
 	"github.com/gin-gonic/gin"
@@ -115,34 +114,34 @@ func SetupRouter() {
 	// 	}
 	// })
 
-	// r.Run(":8782")
+	r.Run(":8782")
 
 	// The commented TLS code below requires the "crypto/tls" import
 	// If you uncomment this code, you'll need to uncomment the import too
 
 	// Load the Let's Encrypt certificate and key
-	certFile := "./fullchain.pem"
-	keyFile := "./privkey.pem"
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a custom TLS configuration
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
-
-	// Create a custom HTTP server with the TLS configuration
-	server := &http.Server{
-		Addr:      "192.168.1.71:8782",
-		Handler:   r,
-		TLSConfig: tlsConfig,
-	}
-
-	// Start the server with TLS
-	err = server.ListenAndServeTLS("", "")
-	if err != nil {
-		panic(err)
-	}
+	//certFile := "./fullchain.pem"
+	//keyFile := "./privkey.pem"
+	//cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//// Create a custom TLS configuration
+	//tlsConfig := &tls.Config{
+	//	Certificates: []tls.Certificate{cert},
+	//}
+	//
+	//// Create a custom HTTP server with the TLS configuration
+	//server := &http.Server{
+	//	Addr:      "192.168.1.71:8782",
+	//	Handler:   r,
+	//	TLSConfig: tlsConfig,
+	//}
+	//
+	//// Start the server with TLS
+	//err = server.ListenAndServeTLS("", "")
+	//if err != nil {
+	//	panic(err)
+	//}
 }

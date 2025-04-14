@@ -142,9 +142,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
     <footer class="paginator-container">
       <mat-paginator
-        [length]="totalMovies"
-        [pageSize]="moviesLength"
-        [pageIndex]="page - 1"
+        [length]="this.totalMovies"
+        [pageSize]="this.moviesLength"
         aria-label="Select page"
         (page)="onPageChange($event)">
       </mat-paginator>
@@ -220,14 +219,14 @@ export class SearchMoviesComponent implements OnInit {
   }
 
   async getMovies(page: number) {
-    console.log('getMovies called with page:', page);
+    // Use while loops to clear arrays
+    while (this.fetchedMovies.length > 0) {
+      this.fetchedMovies.pop();
+    }
 
-    // Set loading state
-    this.isLoading = true;
-
-    // Clear current movies - using direct assignment instead of pop() loop
-    this.fetchedMovies = [];
-    this.movieTitles = [];
+    while (this.movieTitles.length > 0) {
+      this.movieTitles.pop();
+    }
 
     // Build filter options
     const filterOptions: MovieFilterOptions = {
@@ -277,76 +276,66 @@ export class SearchMoviesComponent implements OnInit {
       observable = this.movieService.getPopular(filterOptions);
     }
 
-    observable.subscribe({
-      next: (resp) => {
-        console.log('API response:', resp);
+    // Set loading state if used
+    if (typeof this.isLoading !== 'undefined') {
+      this.isLoading = true;
+    }
 
-        if (!resp || !resp.results) {
-          console.error('Invalid response format:', resp);
-          this.isLoading = false;
-          return;
-        }
+    observable.subscribe((resp) => {
+      // Use bracket notation for accessing ALL properties
+      this.moviesLength = resp['results'].length;
+      this.totalMovies = resp['total_result'] || resp['total_results'];
 
-        this.moviesLength = resp.results.length;
-        this.totalMovies = resp.total_result;
+      resp['results'].forEach((movie) => {
+        let result: MovieResult[] = [{
+          adult: movie['adult'],
+          backdrop_path: movie['backdrop_path'],
+          genre_ids: movie['genre_ids'],
+          id: movie['id'],
+          title: movie['title'],
+          release_date: movie['release_date'],
+          original_language: movie['original_language'],
+          original_title: movie['original_title'],
+          overview: movie['overview'],
+          popularity: movie['popularity'],
+          poster_path: this.baseUrl + movie['poster_path'],
+          vote_average: movie['vote_average'],
+          vote_count: movie['vote_count'],
+          video: movie['video']
+        }];
 
-        resp.results.forEach((movie) => {
-          let result: MovieResult[] = [{
-            adult: movie.adult,
-            backdrop_path: movie.backdrop_path,
-            genre_ids: movie.genre_ids,
-            id: movie.id,
-            title: movie.title,
-            release_date: movie.release_date,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            popularity: movie.popularity,
-            poster_path: this.baseUrl + movie.poster_path,
-            vote_average: movie.vote_average,
-            vote_count: movie.vote_count,
-            video: movie.video
-          }];
-
-          this.fetchedMovies.push({
-            page: resp.page,
-            results: result,
-            total_pages: resp.total_pages,
-            total_result: resp.total_result
-          });
-
-          this.pages.push(resp.page);
-          if (movie.release_date) {
-            this.releaseYear.push(movie.release_date);
-            this.endYear.push(movie.release_date);
-          }
+        this.fetchedMovies.push({
+          page: resp['page'],
+          results: result,
+          total_pages: resp['total_pages'],
+          total_result: resp['total_result'] || resp['total_results']
         });
 
-        this.allMovies = [...this.fetchedMovies];
-        this.filteredMovieList = this.fetchedMovies;
-
-        // End loading state
-        this.isLoading = false;
-
-        // Scroll to top of page
-        window.scrollTo({ top: 0, behavior: 'auto' });
-
-        console.log('Movies processed:', this.fetchedMovies.length);
-
-        // Update paginator if available
-        if (this.paginator) {
-          // Only set pageIndex if it's different to avoid infinite loop
-          if (this.paginator.pageIndex !== page - 1) {
-            this.paginator.pageIndex = page - 1;
-          }
-          this.paginator.length = this.totalMovies;
-          this.paginator.pageSize = this.moviesLength;
+        if (this.pages) {
+          this.pages.push(resp['page']);
         }
-      },
-      error: (error) => {
-        console.error('Error fetching movies:', error);
+
+        if (movie['release_date']) {
+          if (this.releaseYear) {
+            this.releaseYear.push(movie['release_date']);
+          }
+          if (this.endYear) {
+            this.endYear.push(movie['release_date']);
+          }
+        }
+      });
+
+      // Simple assignment for lists
+      this.allMovies = [...this.fetchedMovies];
+      this.filteredMovieList = this.fetchedMovies;
+
+      // End loading state if used
+      if (typeof this.isLoading !== 'undefined') {
         this.isLoading = false;
       }
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
   }
 

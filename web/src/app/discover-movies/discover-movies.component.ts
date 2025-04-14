@@ -33,127 +33,123 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   ],
   providers: [MovieService, TvShowService, NgModel],
   template: `
-  <!-- DiscoverMoviesComponent -->
-  <div class="container">
-    <div id="filters">
-      <label for="filters" id='filter-label'>Search for Movies:</label>
+    <!-- DiscoverMoviesComponent -->
+    <div class="container">
+      <div id="filters">
+        <label for="filters" id='filter-label'>Search for Movies:</label>
 
-      <form class='filters-form' (ngSubmit)="getGenre(1)">
-        <!-- Basic Filters -->
-        <div class="filters-div">
-          <label for="genre">Genre:</label>
-          <select [(ngModel)]="genre" name="genres" id="genres" class='select-section'>
-            <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
-          </select>
-        </div>
-
-
-        <!-- For DiscoverMoviesComponent -->
-        <div class="filters-div">
-          <label for="releaseYear">Release Year:</label>
-          <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" placeholder="YYYY" class='select-section' />
-          <span class="input-hint">Enter year (e.g., 2022)</span>
-        </div>
-
-        <div class="filters-div">
-          <label for="endYear">End Year:</label>
-          <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" placeholder="YYYY" class='select-section' />
-          <span class="input-hint">Enter end year for range</span>
-        </div>
-
-        <!-- Advanced Search Toggle -->
-        <mat-expansion-panel class="advanced-search-panel">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Advanced Search Options
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <!-- Advanced Search Options -->
-          <div class="advanced-filters">
-            <div class="filter-row">
-              <div class="filter-group">
-                <label for="minRating">Minimum Rating:</label>
-                <input type="number" [(ngModel)]="minRating" name="minRating" id="minRating" min="0" max="10" step="0.1" class='select-section'>
-              </div>
-
-              <div class="filter-group">
-                <label for="maxRating">Maximum Rating:</label>
-                <input type="number" [(ngModel)]="maxRating" name="maxRating" id="maxRating" min="0" max="10" step="0.1" class='select-section'>
-              </div>
-            </div>
-
-            <div class="filter-row">
-              <div class="filter-group">
-                <label for="sortBy">Sort By:</label>
-                <select [(ngModel)]="sortBy" name="sortBy" id="sortBy" class='select-section'>
-                  <option value="popularity.desc">Popularity (Descending)</option>
-                  <option value="popularity.asc">Popularity (Ascending)</option>
-                  <option value="vote_average.desc">Rating (Descending)</option>
-                  <option value="vote_average.asc">Rating (Ascending)</option>
-                  <option value="release_date.desc">Release Date (Newest)</option>
-                  <option value="release_date.asc">Release Date (Oldest)</option>
-                  <option value="revenue.desc">Revenue (Descending)</option>
-                  <option value="title.asc">Title (A-Z)</option>
-                </select>
-              </div>
-
-              <div class="filter-group">
-                <label for="language">Language:</label>
-                <select [(ngModel)]="language" name="language" id="language" class='select-section'>
-                  <option value="">Any</option>
-                  <option value="en">English</option>
-                  <option value="fr">French</option>
-                  <option value="es">Spanish</option>
-                  <option value="de">German</option>
-                  <option value="ja">Japanese</option>
-                  <option value="ko">Korean</option>
-                  <option value="zh">Chinese</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="filter-row">
-              <div class="filter-group">
-                <mat-checkbox [(ngModel)]="includeAdult" name="includeAdult" id="includeAdult">Include Adult Content</mat-checkbox>
-              </div>
-            </div>
+        <form class='filters-form' (ngSubmit)="getGenre(1)">
+          <!-- Basic Filters -->
+          <div class="filters-div">
+            <label for="genre">Genre:</label>
+            <select [(ngModel)]="genre" name="genres" id="genres" class='select-section'>
+              <option id="genre" *ngFor="let genre of genreDetails" value="{{genre.id}}">{{genre.name}}</option>
+            </select>
           </div>
-        </mat-expansion-panel>
 
-        <button class="button big-btn filter-button" type="submit">Search</button>
-      </form>
-    </div>
+          <div class="filters-div">
+            <label for="releaseYear">Release Year:</label>
+            <input type='text' [(ngModel)]="releaseYear" name="releaseYear" id="releaseYear" placeholder="YYYY" class='select-section' />
+            <span class="input-hint">Enter year (e.g., 2022)</span>
+          </div>
 
-    <label for="filters" id='filter-label'>Filters for Movies:</label>
-    <section class="header-section">
-      <form class="search-form">
-        <input type="text" placeholder="Filter Movie by Title" #filter>
-        <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
-      </form>
-    </section>
+          <div class="filters-div">
+            <label for="endYear">End Year:</label>
+            <input type='text' [(ngModel)]="endYear" name="endYear" id="endYear" placeholder="YYYY" class='select-section' />
+            <span class="input-hint">Enter end year for range</span>
+          </div>
 
-    <div class="results" *ngIf="filteredMovieList.length > 0">
-      <div class="movie-item" *ngFor="let movieItem of filteredMovieList">
-        <div class="movie-info">
-          <app-discover-movie-list
-            [movieItem]="movieItem" [page]="this.page" [releaseYear]="this.releaseYear" [endYear]="this.endYear" [genre]="this.genre">
-          </app-discover-movie-list>
+          <!-- Advanced Search Toggle -->
+          <mat-expansion-panel class="advanced-search-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Advanced Search Options
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <!-- Advanced Search Options -->
+            <div class="advanced-filters">
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="minRating">Minimum Rating:</label>
+                  <input type="number" [(ngModel)]="minRating" name="minRating" id="minRating" min="0" max="10" step="0.1" class='select-section'>
+                </div>
+
+                <div class="filter-group">
+                  <label for="maxRating">Maximum Rating:</label>
+                  <input type="number" [(ngModel)]="maxRating" name="maxRating" id="maxRating" min="0" max="10" step="0.1" class='select-section'>
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="sortBy">Sort By:</label>
+                  <select [(ngModel)]="sortBy" name="sortBy" id="sortBy" class='select-section'>
+                    <option value="popularity.desc">Popularity (Descending)</option>
+                    <option value="popularity.asc">Popularity (Ascending)</option>
+                    <option value="vote_average.desc">Rating (Descending)</option>
+                    <option value="vote_average.asc">Rating (Ascending)</option>
+                    <option value="release_date.desc">Release Date (Newest)</option>
+                    <option value="release_date.asc">Release Date (Oldest)</option>
+                    <option value="revenue.desc">Revenue (Descending)</option>
+                    <option value="title.asc">Title (A-Z)</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <label for="language">Language:</label>
+                  <select [(ngModel)]="language" name="language" id="language" class='select-section'>
+                    <option value="">Any</option>
+                    <option value="en">English</option>
+                    <option value="fr">French</option>
+                    <option value="es">Spanish</option>
+                    <option value="de">German</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="zh">Chinese</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <mat-checkbox [(ngModel)]="includeAdult" name="includeAdult" id="includeAdult">Include Adult Content</mat-checkbox>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+
+          <button class="button big-btn filter-button" type="submit">Search</button>
+        </form>
+      </div>
+
+      <label for="filters" id='filter-label'>Filters for Movies:</label>
+      <section class="header-section">
+        <form class="search-form">
+          <input type="text" placeholder="Filter Movie by Title" #filter>
+          <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Filter</button>
+        </form>
+      </section>
+
+      <div class="results" *ngIf="filteredMovieList.length > 0">
+        <div class="movie-item" *ngFor="let movieItem of filteredMovieList">
+          <div class="movie-info">
+            <app-discover-movie-list
+              [movieItem]="movieItem" [page]="this.page" [releaseYear]="this.releaseYear" [endYear]="this.endYear" [genre]="this.genre">
+            </app-discover-movie-list>
+          </div>
         </div>
       </div>
-    </div>
 
-    <footer class="paginator-container">
-      <!-- Updated paginator with explicit bindings -->
-      <mat-paginator
-        [length]="totalMovies"
-        [pageSize]="moviesLength"
-        [pageIndex]="page - 1"
-        aria-label="Select page"
-        (page)="onPageChange($event)">
-      </mat-paginator>
-    </footer>
-  </div>
+      <footer class="paginator-container">
+        <mat-paginator
+          [length]="this.totalMovies"
+          [pageSize]="this.moviesLength"
+          aria-label="Select page"
+          (page)="onPageChange($event)">
+        </mat-paginator>
+      </footer>
+    </div>
   `,
   styleUrls: ['./discover-movies.component.sass', '../../styles.sass']
 })
@@ -185,7 +181,6 @@ export class DiscoverMoviesComponent implements OnInit {
   public includeAdult: boolean = false;
 
   public movieService: MovieService = inject(MovieService);
-
 
   constructor(private gallery: Gallery) {
     this.movieService.getGenres().subscribe((resp) => {
@@ -220,187 +215,86 @@ export class DiscoverMoviesComponent implements OnInit {
     this.galleryMoviesRef.play();
   }
 
-  ngAfterViewInit() {
-    // Initialize paginator with current page if available
-    if (this.paginator) {
-      this.paginator.pageIndex = this.page - 1;
-    }
-  }
-
-  /**
-   * Handle page change events from the paginator
-   */
+  // EXACTLY match the working pattern
   onPageChange(event: PageEvent) {
-    // Update the page number (adding 1 since paginator is zero-indexed)
     this.page = event.pageIndex + 1;
-
-    // Scroll to top of the page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Call getGenre with the new page number
     this.getGenre(this.page);
   }
 
+  // Alternative getGenre implementation using getAllMoviesByGenre
+
   async getGenre(page: number) {
-    console.log('getGenre called with page:', page);
-    console.log('Current genre:', this.genre);
-    console.log('Release year:', this.releaseYear);
-    console.log('End year:', this.endYear);
-
-    // Clear current movies - using direct assignment instead of pop() loop
-    this.fetchedMovies = [];
-    this.movieTitles = [];
-
-    // Set loading state if you have one
-    // this.isLoading = true;
-
-    // Process year inputs - handle year-only inputs
-    let processedReleaseYear = this.releaseYear;
-    let processedEndYear = this.endYear;
-
-    // Build filter options
-    const filterOptions: MovieFilterOptions = {
-      page: page,
-      includeAdult: this.includeAdult,
-      sortBy: this.sortBy
-    };
-
-    // Add genre if selected (not 0)
-    if (this.genre !== 0) {
-      filterOptions.genres = [this.genre];
+    // Clear current movies
+    while (this.fetchedMovies.length > 0) {
+      this.fetchedMovies.pop();
     }
 
-    // Add year range if specified
-    if (this.releaseYear || this.endYear) {
-      filterOptions.yearRange = {};
-      if (this.releaseYear) {
-        filterOptions.yearRange.start = parseInt(this.releaseYear);
-      }
-      if (this.endYear) {
-        filterOptions.yearRange.end = parseInt(this.endYear);
-      }
+    while (this.movieTitles.length > 0) {
+      this.movieTitles.pop();
     }
 
-    // Add rating filters if specified
-    if (this.minRating) {
-      filterOptions.minRating = this.minRating;
-    }
-    if (this.maxRating) {
-      filterOptions.maxRating = this.maxRating;
-    }
+    // Use getAllMoviesByGenre which is more similar to the working getAllTvShows
+    this.movieService.getAllMoviesByGenre(this.genre, this.releaseYear, this.endYear, page).subscribe((resp) => {
+      this.moviesLength = resp['results'].length;
+      this.totalMovies = resp['total_results'] || resp['total_result'];
 
-    // Add language filter if specified
-    if (this.language) {
-      filterOptions.language = this.language;
-    }
+      resp['results'].forEach((movie) => {
+        // Extract movie details using bracket notation
+        let page = resp['page'];
+        let isAdult = movie['adult'];
+        let backdropPath = movie['backdrop_path'];
+        let genreIds = movie['genre_ids'];
+        let id = movie['id'];
+        let releaseDate = movie['release_date'];
+        let video = movie['video'];
+        let title = movie['title'];
+        let originalLanguage = movie['original_language'];
+        let originalTitle = movie['original_title'];
+        let overview = movie['overview'];
+        let popularity = movie['popularity'];
+        let posterPath = this.baseUrl + movie['poster_path'];
+        let voteAverage = movie['vote_average'];
+        let voteCount = movie['vote_count'];
+        let totalPages = resp['total_pages'];
+        let totalResult = resp['total_results'] || resp['total_result'];
 
-    // Use the discover API with the filters
-    this.movieService.discoverMovies(filterOptions).subscribe({
-      next: (resp) => {
-        console.log('API response:', resp);
+        // Create a result object
+        let result: MovieResult[] = [{
+          adult: isAdult,
+          backdrop_path: backdropPath,
+          genre_ids: genreIds,
+          id: id,
+          title: title,
+          release_date: releaseDate,
+          original_language: originalLanguage,
+          original_title: originalTitle,
+          overview: overview,
+          popularity: popularity,
+          poster_path: posterPath,
+          vote_average: voteAverage,
+          vote_count: voteCount,
+          video: video
+        }];
 
-        // Extract response data
-        if (!resp || !resp.results) {
-          console.error('Invalid response format:', resp);
-          return;
-        }
-
-        this.moviesLength = resp.results.length;
-        this.totalMovies = resp.total_result;
-
-        // Process each movie in the results
-        resp.results.forEach((movie) => {
-          let result: MovieResult[] = [{
-            adult: movie.adult,
-            backdrop_path: movie.backdrop_path,
-            genre_ids: movie.genre_ids,
-            id: movie.id,
-            title: movie.title,
-            release_date: movie.release_date,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            popularity: movie.popularity,
-            poster_path: this.baseUrl + movie.poster_path,
-            vote_average: movie.vote_average,
-            vote_count: movie.vote_count,
-            video: movie.video
-          }];
-
-          this.fetchedMovies.push({
-            page: resp.page,
-            results: result,
-            total_pages: resp.total_pages,
-            total_result: resp.total_result
-          });
-        });
-
-        // Update filtered list
-        this.filteredMovieList = this.fetchedMovies;
-
-        // End loading state if you have one
-        // this.isLoading = false;
-
-        // Scroll to top of page
-        window.scrollTo({ top: 0, behavior: 'auto' });
-
-        console.log('Movies processed:', this.fetchedMovies.length);
-
-        // Update paginator if available (after view init)
-        if (this.paginator) {
-          // Only set pageIndex if it's different to avoid infinite loop
-          if (this.paginator.pageIndex !== page - 1) {
-            this.paginator.pageIndex = page - 1;
-          }
-          this.paginator.length = this.totalMovies;
-          this.paginator.pageSize = this.moviesLength;
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching movies:', error);
-        // this.isLoading = false;
-      }
-    });
-  }
-
-  getMoviesFromDate() {
-    while (this.page <= this.totalMovies) {
-      this.movieService.getAllMoviesFromSelectedDate(this.genre, this.releaseYear, this.endYear, this.page).subscribe((resp) => {
-        this.moviesLength = resp.results.length;
-        this.totalMovies = resp.total_pages;
-
-        resp.results.forEach((movie) => {
-          let result: MovieResult[] = [{
-            adult: movie.adult,
-            backdrop_path: movie.backdrop_path,
-            genre_ids: movie.genre_ids,
-            id: movie.id,
-            title: movie.title,
-            release_date: movie.release_date,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            popularity: movie.popularity,
-            poster_path: this.baseUrl + movie.poster_path,
-            vote_average: movie.vote_average,
-            vote_count: movie.vote_count,
-            video: movie.video
-          }];
-
-          this.allMovies.push({
-            page: resp.page,
-            results: result,
-            total_pages: resp.total_pages,
-            total_result: resp.total_result
-          });
+        // Add to fetchedMovies array
+        this.fetchedMovies.push({
+          page: page,
+          results: result,
+          total_pages: totalPages,
+          total_result: totalResult
         });
       });
 
-      this.page++;
-    }
+      // Update filtered list
+      if (this.filteredMovieList.length > 0) {
+        while (this.filteredMovieList.length > 0) {
+          this.filteredMovieList.pop();
+        }
+      }
+      this.filteredMovieList = this.fetchedMovies;
 
-    this.allMovies.splice(0, 1);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
   }
-
-  protected readonly Math = Math;
 }
