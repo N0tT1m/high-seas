@@ -1,4 +1,4 @@
-// pkg/ui/controller.go
+// src/ui/controller.go
 
 package ui
 
@@ -12,8 +12,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/N0tT1m/sync-stream/pkg/player"
-	"github.com/N0tT1m/sync-stream/pkg/plex"
+	"github.com/N0tT1m/sync-stream/src/player"
+	"github.com/N0tT1m/sync-stream/src/plex"
 )
 
 // Controller manages the UI components

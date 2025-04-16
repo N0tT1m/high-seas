@@ -1,4 +1,4 @@
-// pkg/sync/client.go
+// src/sync/client.go
 
 package sync
 

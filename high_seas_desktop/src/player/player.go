@@ -1,4 +1,4 @@
-// pkg/player/player.go
+// src/player/player.go
 
 package player
 

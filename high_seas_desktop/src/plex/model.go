@@ -1,4 +1,4 @@
-// pkg/plex/models.go
+// src/plex/models.go
 
 package plex
 

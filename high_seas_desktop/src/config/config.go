@@ -1,4 +1,4 @@
-// pkg/config/config.go
+// src/config/config.go
 
 package config
 

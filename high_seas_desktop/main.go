@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/N0tT1m/sync-stream/pkg/app"
-	"github.com/N0tT1m/sync-stream/pkg/config"
+	"github.com/N0tT1m/sync-stream/src/app"
+	"github.com/N0tT1m/sync-stream/src/config"
 )
 
 func main() {

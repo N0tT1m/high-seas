@@ -1,4 +1,4 @@
-// pkg/ui/widgets.go
+// src/ui/widgets.go
 
 package ui
 
@@ -13,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/N0tT1m/sync-stream/pkg/plex"
+	"github.com/N0tT1m/sync-stream/src/plex"
 )
 
 // MediaCard creates a card for displaying a media item

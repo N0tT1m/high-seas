@@ -1,4 +1,4 @@
-// pkg/app/app.go
+// src/app/app.go
 
 package app
 
@@ -13,11 +13,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 
-	"github.com/N0tT1m/sync-stream/pkg/config"
-	"github.com/N0tT1m/sync-stream/pkg/player"
-	"github.com/N0tT1m/sync-stream/pkg/plex"
-	"github.com/N0tT1m/sync-stream/pkg/sync"
-	"github.com/N0tT1m/sync-stream/pkg/ui"
+	"github.com/N0tT1m/sync-stream/src/config"
+	"github.com/N0tT1m/sync-stream/src/player"
+	"github.com/N0tT1m/sync-stream/src/plex"
+	"github.com/N0tT1m/sync-stream/src/sync"
+	"github.com/N0tT1m/sync-stream/src/ui"
 )
 
 // Application holds the main application state

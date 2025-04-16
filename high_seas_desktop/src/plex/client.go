@@ -1,4 +1,4 @@
-// pkg/plex/client.go
+// src/plex/client.go
 
 package plex
 
