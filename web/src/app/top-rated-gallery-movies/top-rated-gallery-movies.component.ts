@@ -57,7 +57,7 @@ export class TopRatedGalleryMoviesComponent {
 
     let page = 1;
 
-    this.movieService.getTopRated(page).subscribe((resp) => {
+    this.movieService.getTopRatedMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -92,7 +92,7 @@ export class TopRatedGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getTopRated(page).subscribe((resp) => {
+    this.movieService.getTopRatedMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -124,7 +124,7 @@ export class TopRatedGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getTopRated(page).subscribe((resp) => {
+    this.movieService.getTopRatedMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

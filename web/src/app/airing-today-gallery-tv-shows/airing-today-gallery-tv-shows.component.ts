@@ -58,7 +58,7 @@ export class AiringTodayGalleryTvShowsComponent {
 
     let page = 1;
 
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -93,7 +93,7 @@ export class AiringTodayGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
         let page = resp['page'];
         let isAdult = show['adult'];
@@ -126,7 +126,7 @@ export class AiringTodayGalleryTvShowsComponent {
 
     page++;
 
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       resp['results'].forEach((show) => {
       let page = resp['page'];
         let isAdult = show['adult'];

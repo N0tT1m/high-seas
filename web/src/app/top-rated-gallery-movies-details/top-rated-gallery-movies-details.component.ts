@@ -117,7 +117,7 @@ export class TopRatedGalleryMoviesDetailsComponent {
     const movieId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.movieService.getTopRated(page).subscribe((resp) => {
+    this.movieService.getTopRatedMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

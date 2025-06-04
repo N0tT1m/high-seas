@@ -1,53 +1,159 @@
-import { Component, inject, ViewChild, OnInit } from '@angular/core';
+import { Component, inject, ViewChild, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Movie, MovieResult, Genre } from '../http-service/http-service.component';
-import { MovieService } from '../movies.service';
+import { MovieService, MovieFilterOptions } from '../movies.service';
 import { SearchMovieListComponent } from '../search-movie-list/search-movie-list.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { NgModel, FormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-search-movies',
   standalone: true,
-  imports: [CommonModule, SearchMovieListComponent, MatPaginatorModule, FormsModule],
+  imports: [
+    CommonModule,
+    SearchMovieListComponent,
+    MatPaginatorModule,
+    FormsModule,
+    MatExpansionModule,
+    MatSliderModule,
+    MatSelectModule,
+    MatCheckboxModule
+  ],
   providers: [NgModel],
-  // <button class="big-btn filter-button" type="button" (click)="filterResults(filter.value)">Search</button>
   template: `
-  <!-- SearchMoviesComponent -->
-  <div class="container">
-    <section class="header-section">
-      <form class="search-form" (ngSubmit)="getGenre(1)">
-        <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
-        <button class="button big-btn filter-button" type="submit">Filter</button>
-      </form>
+    <!-- SearchMoviesComponent -->
+    <div class="container">
+      <section class="header-section">
+        <form class="search-form" (ngSubmit)="getMovies(1)">
+          <input type="text" [(ngModel)]="movieSearch" name="movieSearch" id="movieSearch" placeholder="Find Movie by Title" #filter />
 
-      <div class="results" *ngIf="this.filteredMovieList.length != 0">
-        <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
-          <div class="movie-info">
-            <app-search-movie-list
-              [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
-            </app-search-movie-list>
+          <!-- Advanced Search Toggle -->
+          <mat-expansion-panel class="advanced-search-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Advanced Search
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <!-- Advanced Search Options -->
+            <div class="advanced-filters">
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="genres">Genres:</label>
+                  <mat-select [(ngModel)]="selectedGenres" name="genres" id="genres" multiple>
+                    <mat-option *ngFor="let genre of genreDetails" [value]="genre.id">{{genre.name}}</mat-option>
+                  </mat-select>
+                </div>
+
+                <!-- For SearchMoviesComponent -->
+                <div class="filter-group">
+                  <label for="year">Release Year:</label>
+                  <input type="number" [(ngModel)]="yearFilter" placeholder="YYYY" name="year" id="year" min="1900" max="2099">
+                  <span class="input-hint">Enter year only (e.g., 2022)</span>
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="yearRangeStart">Year Range Start:</label>
+                  <input type="number" [(ngModel)]="yearRangeStart" name="yearRangeStart" id="yearRangeStart" min="1900" max="2099">
+                </div>
+
+                <div class="filter-group">
+                  <label for="yearRangeEnd">Year Range End:</label>
+                  <input type="number" [(ngModel)]="yearRangeEnd" name="yearRangeEnd" id="yearRangeEnd" min="1900" max="2099">
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="minRating">Minimum Rating:</label>
+                  <input type="number" [(ngModel)]="minRating" name="minRating" id="minRating" min="0" max="10" step="0.1">
+                </div>
+
+                <div class="filter-group">
+                  <label for="maxRating">Maximum Rating:</label>
+                  <input type="number" [(ngModel)]="maxRating" name="maxRating" id="maxRating" min="0" max="10" step="0.1">
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label for="sortBy">Sort By:</label>
+                  <mat-select [(ngModel)]="sortBy" name="sortBy" id="sortBy">
+                    <mat-option value="popularity.desc">Popularity (Descending)</mat-option>
+                    <mat-option value="popularity.asc">Popularity (Ascending)</mat-option>
+                    <mat-option value="vote_average.desc">Rating (Descending)</mat-option>
+                    <mat-option value="vote_average.asc">Rating (Ascending)</mat-option>
+                    <mat-option value="release_date.desc">Release Date (Newest)</mat-option>
+                    <mat-option value="release_date.asc">Release Date (Oldest)</mat-option>
+                    <mat-option value="revenue.desc">Revenue (Descending)</mat-option>
+                    <mat-option value="title.asc">Title (A-Z)</mat-option>
+                  </mat-select>
+                </div>
+
+                <div class="filter-group">
+                  <label for="language">Language:</label>
+                  <mat-select [(ngModel)]="language" name="language" id="language">
+                    <mat-option value="">Any</mat-option>
+                    <mat-option value="en">English</mat-option>
+                    <mat-option value="fr">French</mat-option>
+                    <mat-option value="es">Spanish</mat-option>
+                    <mat-option value="de">German</mat-option>
+                    <mat-option value="ja">Japanese</mat-option>
+                    <mat-option value="ko">Korean</mat-option>
+                    <mat-option value="zh">Chinese</mat-option>
+                  </mat-select>
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter-group">
+                  <mat-checkbox [(ngModel)]="includeAdult" name="includeAdult" id="includeAdult">Include Adult Content</mat-checkbox>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+
+          <button class="button big-btn filter-button" type="submit">Search</button>
+        </form>
+
+        <!-- Update results section to include loading state -->
+        <div class="results" [class.loading]="isLoading" *ngIf="this.filteredMovieList.length != 0">
+          <div class="movie-item" *ngFor="let movieItem of this.filteredMovieList; index as i;">
+            <div class="movie-info">
+              <app-search-movie-list
+                [movieItem]="movieItem" [page]="movieItem.page" [query]="filter.value">
+              </app-search-movie-list>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <footer class="paginator-container">
-      <mat-paginator
-        [length]="this.totalMovies"
-        [pageSize]="this.moviesLength"
-        aria-label="Select page"
-        (page)="onPageChange($event)">
-      </mat-paginator>
-    </footer>
-  </div>
+      <div class="no-results" *ngIf="!isLoading && this.filteredMovieList.length === 0">
+        <p>No movies found matching your criteria. Try adjusting your search filters.</p>
+      </div>
+
+      <footer class="paginator-container">
+        <mat-paginator
+          [length]="this.totalMovies"
+          [pageSize]="this.moviesLength"
+          [pageIndex]="page - 1"
+          aria-label="Select page"
+          (page)="onPageChange($event)">
+        </mat-paginator>
+      </footer>
+    </div>
   `,
   styleUrls: ['./search-movies.component.sass', '../../styles.sass']
 })
-export class SearchMoviesComponent {
+export class SearchMoviesComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator: MatPaginator;
-
   @ViewChild('paginatorPageSize') paginatorPageSize: MatPaginator;
 
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
@@ -59,158 +165,203 @@ export class SearchMoviesComponent {
   public totalMovies: number;
   public releaseYear: string[] = [""];
   public endYear: string[] = [""];
-  public movieSearch: string;
-  public genreDetails: Genre[] = [{ id: 0, name: "None" }];
-  public genre: number = this.genreDetails[0]['id'];
+  public movieSearch: string = '';
+  public genreDetails: Genre[] = [];
   public pages: number[] = [0];
   public page: number = 1;
+
+  // Advanced search filters
+  public selectedGenres: number[] = [];
+  public yearFilter: number | null = null;
+  public yearRangeStart: number | null = null;
+  public yearRangeEnd: number | null = null;
+  public minRating: number | null = null;
+  public maxRating: number | null = null;
+  public sortBy: string = 'popularity.desc';
+  public language: string = '';
+  public includeAdult: boolean = false;
+
+  // Optional loading state
+  public isLoading: boolean = false;
 
   public movieService: MovieService = inject(MovieService)
 
   constructor() {
     this.movieService.getGenres().subscribe((resp) => {
-      resp['genres'].forEach((genre) => {
-        var item = {id: genre.id, name: genre.name}
-
-        this.genreDetails.push(item)
-      })
-    })
+      if (resp && resp.genres) {
+        this.genreDetails = resp.genres;
+      }
+    });
   }
 
   ngOnInit() {
-
+    // Initialize with popular movies
+    this.getMovies(1);
   }
 
-  onPageChange(event?: PageEvent) {
-    if (event === null) {
-
-    } else {
-      this.page = event!.pageIndex + 1;
-      this.getGenre(this.page);
+  ngAfterViewInit() {
+    // Initialize paginator with current page if available
+    if (this.paginator) {
+      this.paginator.pageIndex = this.page - 1;
+      this.paginator.length = this.totalMovies || 0;
+      this.paginator.pageSize = this.moviesLength || 20;
     }
   }
 
-  async getGenre(page: number) {
-    while (this.fetchedMovies.length > 0) {
-      this.fetchedMovies.pop()
+  // Fixed onPageChange method
+  onPageChange(event: PageEvent) {
+    console.log('Page changed:', event);
+    this.page = event.pageIndex + 1;
+
+    // Call getMovies with the new page number
+    this.getMovies(this.page);
+
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Fixed getMovies method
+  async getMovies(page: number) {
+    console.log('getMovies called with page:', page);
+
+    // Set loading state
+    this.isLoading = true;
+
+    // Clear arrays by reassigning them instead of using pop()
+    this.fetchedMovies = [];
+    this.movieTitles = [];
+
+    // Build filter options
+    const filterOptions: MovieFilterOptions = {
+      page: page,
+      includeAdult: this.includeAdult,
+      sortBy: this.sortBy
+    };
+
+    // Add optional filters if they have values
+    if (this.selectedGenres && this.selectedGenres.length > 0) {
+      filterOptions.genres = this.selectedGenres;
     }
 
-    // this.galleryMoviesRef.reset()
-
-    while (this.movieTitles.length > 0) {
-      this.movieTitles.pop()
-    }
-
-    this.movieService.getAllMovies(page, this.movieSearch).subscribe((resp) => {
-      console.log(resp['results']);
-
-      this.moviesLength = resp['results'].length;
-      this.totalMovies = resp['total_results'];
-
-      resp['results'].forEach((movie) => {
-        let page = resp['page'];
-        let isAdult = movie['adult'];
-        let backdropPath = movie['backdrop_path'];
-        let genreIds = movie['genre_ids'];
-        let id = movie['id'];
-        let releaseDate = movie['release_date'];
-        let video = movie['video'];
-        let title = movie['title'];
-        let originalLanguage = movie['original_language'];
-        let originalTitle = movie['original_title'];
-        let overview = movie['overview'];
-        let popularity = movie['popularity'];
-        let posterPath = this.baseUrl + movie['poster_path'];
-        let voteAverage = movie['vote_average'];
-        let voteCount = movie['vote_count'];
-        let totalPages = resp['total_pages'];
-        let totalResult = resp['total_result'];
-        let in_plex = resp['in_plex'];
-
-        let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
-
-        this.fetchedMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
-
-        this.pages.push(page)
-        this.releaseYear.push(releaseDate)
-        this.endYear.push(releaseDate)
-        this.genre = genreIds[0]
-      })
-
-      this.allMovies.splice(0, 1);
-    })
-
-    if (this.filteredMovieList.length > 0) {
-      while (this.filteredMovieList.length > 0) {
-        this.filteredMovieList.pop();
+    if (this.yearFilter) {
+      filterOptions.year = this.yearFilter;
+    } else if (this.yearRangeStart || this.yearRangeEnd) {
+      filterOptions.yearRange = {};
+      if (this.yearRangeStart) {
+        filterOptions.yearRange.start = this.yearRangeStart;
       }
-      this.filteredMovieList = this.fetchedMovies;
+      if (this.yearRangeEnd) {
+        filterOptions.yearRange.end = this.yearRangeEnd;
+      }
+    }
+
+    // Only add minRating and maxRating if they are not null
+    if (this.minRating !== null) {
+      filterOptions.minRating = this.minRating;
+    }
+
+    if (this.maxRating !== null) {
+      filterOptions.maxRating = this.maxRating;
+    }
+
+    if (this.language) {
+      filterOptions.language = this.language;
+    }
+
+    // Choose which API to call based on search query
+    let observable;
+    if (this.movieSearch) {
+      observable = this.movieService.searchMovies(this.movieSearch, filterOptions);
+    } else if (Object.keys(filterOptions).length > 2) {
+      // If we have filters beyond page and includeAdult, use discover
+      observable = this.movieService.discoverMovies(filterOptions);
     } else {
-      this.filteredMovieList = this.fetchedMovies;
+      // Default to popular movies if no search or filters
+      observable = this.movieService.getPopular(filterOptions);
     }
-    //return this.filteredMovieList = this.fetchedMovies.filter((movie) => movie.results[0]?.title.toLowerCase().includes(this.movieSearch.toLowerCase()));
-  }
 
-  filterResults(text: string) {
+    // Use modern subscription pattern
+    observable.subscribe({
+      next: (resp) => {
+        console.log('API response:', resp);
 
+        // Check for valid response
+        if (!resp || !resp['results']) {
+          console.error('Invalid response format:', resp);
+          this.isLoading = false;
+          return;
+        }
 
-    if (!text) {
-      return this.filteredMovieList = this.allMovies;
-    }
-    this.movieService.getInitialPage(text).subscribe((resp) => {
+        // Use bracket notation for accessing ALL properties
+        this.moviesLength = resp['results'].length;
+        this.totalMovies = resp['total_result'] || resp['total_results'];
 
-      this.moviesLength = resp['results'].length;
-      this.totalMovies = resp['total_pages'];
-      console.log(resp['total_results']);
-      console.log(this.totalMovies);
-      for (let i = 0; i < this.totalMovies; i++) {
-        console.log(this.totalMovies);
+        resp['results'].forEach((movie) => {
+          let result: MovieResult[] = [{
+            adult: movie['adult'],
+            backdrop_path: movie['backdrop_path'],
+            genre_ids: movie['genre_ids'],
+            id: movie['id'],
+            title: movie['title'],
+            release_date: movie['release_date'],
+            original_language: movie['original_language'],
+            original_title: movie['original_title'],
+            overview: movie['overview'],
+            popularity: movie['popularity'],
+            poster_path: this.baseUrl + movie['poster_path'],
+            vote_average: movie['vote_average'],
+            vote_count: movie['vote_count'],
+            video: movie['video']
+          }];
 
+          this.fetchedMovies.push({
+            page: resp['page'],
+            results: result,
+            total_pages: resp['total_pages'],
+            total_result: resp['total_result'] || resp['total_results']
+          });
 
+          if (this.pages) {
+            this.pages.push(resp['page']);
+          }
 
-        this.movieService.getAllMovies(this.page, text).subscribe((resp) => {
-          resp['results'].forEach((movie) => {
-            if (movie['title'] === "Meg 2: The Trench") {
-              console.log(resp['page']);
+          if (movie['release_date']) {
+            if (this.releaseYear) {
+              this.releaseYear.push(movie['release_date']);
             }
+            if (this.endYear) {
+              this.endYear.push(movie['release_date']);
+            }
+          }
+        });
 
-            let page = resp['page'];
-            let isAdult = movie['adult'];
-            let backdropPath = movie['backdrop_path'];
-            let genreIds = movie['genre_ids'];
-            let id = movie['id'];
-            let releaseDate = movie['release_date'];
-            let video = movie['video'];
-            let title = movie['title'];
-            let originalLanguage = movie['original_language'];
-            let originalTitle = movie['original_title'];
-            let overview = movie['overview'];
-            let popularity = movie['popularity'];
-            let posterPath = this.baseUrl + movie['poster_path'];
-            let voteAverage = movie['vote_average'];
-            let voteCount = movie['vote_count'];
-            let totalPages = resp['total_pages'];
-            let totalResult = resp['total_result'];
+        // Simple assignment for lists
+        this.allMovies = [...this.fetchedMovies];
+        this.filteredMovieList = this.fetchedMovies;
 
-            let result: MovieResult[] = [{ adult: isAdult, backdrop_path: backdropPath, genre_ids: genreIds, id: id, title: title, release_date: releaseDate, original_language: originalLanguage, original_title: originalTitle, overview: overview, popularity: popularity, poster_path: posterPath, vote_average: voteAverage, vote_count: voteCount, video: video}]
+        // Update paginator if available
+        if (this.paginator) {
+          this.paginator.pageIndex = this.page - 1;
+          this.paginator.length = this.totalMovies;
+        }
 
-            this.allMovies.push({ page: page, results: result, total_pages: totalPages, total_result: totalResult });
+        // Log status for debugging
+        console.log('Movies processed:', this.fetchedMovies.length);
+        console.log('Total movies:', this.totalMovies);
+        console.log('Current page:', this.page);
 
-            this.pages.push(page)
-            this.releaseYear.push(releaseDate)
-            this.endYear.push(releaseDate)
-            this.genre = genreIds[0]
-          })
+        // End loading state
+        this.isLoading = false;
 
-        })
-        this.allMovies.splice(0, 1);
-        this.releaseYear.splice(0, 1);
-        this.endYear.splice(0, 1);
-        this.pages.splice(0, 1);
-        this.page++;
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      },
+      error: (error) => {
+        console.error('Error fetching movies:', error);
+        this.isLoading = false;
       }
-    })
-
-    return this.filteredMovieList = this.allMovies.filter((show) => show.results[0]?.title.toLowerCase().includes(text.toLowerCase()));
+    });
   }
+
+  protected readonly Math = Math;
 }

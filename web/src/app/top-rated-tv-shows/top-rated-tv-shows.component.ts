@@ -69,7 +69,7 @@ export class TopRatedTvShowsComponent {
   }
 
   getShows(page: number) {
-    this.tvShowService.getTopRated(page).subscribe((resp) => {
+    this.tvShowService.getTopRatedShows(page).subscribe((resp) => {
       this.allShows = resp['results'].map((show) => ({
         page: resp['page'],
         results: [{

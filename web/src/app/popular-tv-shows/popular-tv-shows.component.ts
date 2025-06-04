@@ -65,7 +65,7 @@ export class PopularTvShowsComponent {
   }
 
   getShows(page: number) {
-    this.tvShowService.getPopular(page).subscribe((resp) => {
+    this.tvShowService.getPopularShows(page).subscribe((resp) => {
       this.allShows = resp['results'].map((show) => ({
         page: resp['page'],
         results: [{

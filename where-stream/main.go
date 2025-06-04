@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	PlexAPIURL = "http://localhost:5000"
+	PlexAPIURL = "http://192.168.1.78:5000"
 )
 
 type PlexResponse struct {

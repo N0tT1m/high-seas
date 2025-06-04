@@ -260,10 +260,14 @@ export class TvShowDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      this.tvShowService.makeAnimeShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request))
+      this.tvShowService.makeAnimeShowDownloadRequest(title, this.totalSeason, this.quality, this.tmdbId, this.overview).subscribe(request => {
+        console.log(request);
+        // Show the pop-up when the request is successful
+        alert('Download request submitted successfully!');
+      })
     } else {
       console.log('Movie');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
+      this.tvShowService.makeTvShowDownloadRequest(title, this.totalSeason, this.quality, this.tmdbId, this.overview).subscribe(
         request => {
           console.log(request);
           // Show the pop-up when the request is successful

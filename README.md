@@ -1,3 +1,9 @@
+# High-Seas
+
+![Code Assistant Banner](https://github.com/n0tt1m/code-assistant/raw/main/images/the-girls3.png)
+![Code Assistant Gif](https://github.com/n0tt1m/code-assistant/raw/main/images/tits-out.gif)
+![Code Assistant tongue](https://github.com/n0tt1m/code-assistant/raw/main/images/tongue.jpg)
+
 # High Seas
 
 A web application for searching and downloading shows/movies including anime.
@@ -142,6 +148,14 @@ http {
 
 ```
 .
+├── plex/                   # Plex API
+├── rust-backend/           # Rust backend
+├── src/                    # Golang backend
+├── where-stream/           # Discord bot in Golang
+├── high_seas_mobile        # Flutter mobile app for the backend
+├── high_seas_desktop        # Flutter desktop app for the backend
+├── high-seas-tvos          # Swift tvOS app
+├── high-seas-macOS         # Swift macOS app
 ├── web/                    # Frontend application
 ├── install-scripts/        # Setup scripts
 ├── docker-compose.yml      # Docker composition

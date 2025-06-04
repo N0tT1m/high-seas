@@ -169,7 +169,7 @@ export class TopRatedTvShowsDetailsComponent {
     const tvShowId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.tvShowService.getTopRated(page).subscribe((resp) => {
+    this.tvShowService.getTopRatedShows(page).subscribe((resp) => {
       if (resp && resp['results']) {
         resp['results'].forEach((show) => {
           let page = resp['page'];
@@ -259,14 +259,14 @@ export class TopRatedTvShowsDetailsComponent {
   downloadShow(title: string, lang: string, quality: string) {
     if (lang === 'ja') {
       console.log('ANIME');
-      this.tvShowService.makeAnimeShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => {
+      this.tvShowService.makeAnimeShowDownloadRequest(title, this.totalSeason, this.quality, this.tmdbId, this.overview).subscribe(request => {
         console.log(request);
         // Show the pop-up when the request is successful
         alert('Download request submitted successfully!');
       })
     } else {
       console.log('Movie');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
+      this.tvShowService.makeTvShowDownloadRequest(title, this.totalSeason, this.quality, this.tmdbId, this.overview).subscribe(
         request => {
           console.log(request);
           // Show the pop-up when the request is successful

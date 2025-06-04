@@ -61,7 +61,7 @@ export class AiringTodayTvShowsComponent {
   }
 
   getShows(page: number) {
-    this.tvShowService.getAiringToday(page).subscribe((resp) => {
+    this.tvShowService.getAiringTodayShows(page).subscribe((resp) => {
       this.allShows = resp['results'].map((show) => ({
         page: resp['page'],
         results: [{

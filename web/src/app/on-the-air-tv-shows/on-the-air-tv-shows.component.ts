@@ -65,7 +65,7 @@ export class OnTheAirTvShowsComponent {
   }
 
   getShows(page: number) {
-    this.tvShowService.getOnTheAir(page).subscribe((resp) => {
+    this.tvShowService.getOnTheAirShows(page).subscribe((resp) => {
       this.allShows = resp['results'].map((show) => ({
         page: resp['page'],
         results: [{

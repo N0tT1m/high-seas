@@ -35,6 +35,8 @@ pub mod api {
         match client {
             Ok(client) => {
                 log_to_file("Client was built.");
+                
+                println!("{:#?}", client)
             },
             Err(err) => {
                 log_to_file(format!("Failed to build client: {err}").as_str());

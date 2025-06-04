@@ -57,7 +57,7 @@ export class NowPlayingGalleryMoviesComponent {
 
     let page = 1;
 
-    this.movieService.getNowPlaying(page).subscribe((resp) => {
+    this.movieService.getNowPlayingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -91,7 +91,7 @@ export class NowPlayingGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getNowPlaying(page).subscribe((resp) => {
+    this.movieService.getNowPlayingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];
@@ -123,7 +123,7 @@ export class NowPlayingGalleryMoviesComponent {
 
     page++;
 
-    this.movieService.getNowPlaying(page).subscribe((resp) => {
+    this.movieService.getNowPlayingMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

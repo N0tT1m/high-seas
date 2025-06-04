@@ -114,7 +114,7 @@ export class PopularGalleryMoviesDetailsComponent {
     const movieId = parseInt(this.route.snapshot.params['id'], 10);
     const page = parseInt(this.route.snapshot.params['page'], 10);
 
-    this.movieService.getPopular(page).subscribe((resp) => {
+    this.movieService.getPopularMovies(page).subscribe((resp) => {
       resp['results'].forEach((movie) => {
         let page = resp['page'];
         let isAdult = movie['adult'];

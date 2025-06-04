@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:high_seas_mobile/widgets/drawer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,10 +29,20 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          surface: Colors.deepPurple.shade900,
+          brightness: Brightness.dark,
+          primary: const Color.fromRGBO(229, 226, 233, 100),
+          secondary: Colors.deepPurpleAccent,
+          onPrimary: Colors.black12,
+          onSecondary: Colors.cyanAccent,
+          error: Colors.red.shade300,
+          onError: Colors.teal.shade900,
+          onSurface: const Color.fromRGBO(253,245,201, 100),
+        ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'High Seas Home Page'),
+      home: const MyHomePage(title: 'High Seas'),
     );
   }
 }
@@ -65,12 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
         leading: Builder(
           builder: (BuildContext context) {
@@ -82,68 +88,20 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
       ),
-      drawer: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.75, // 75% of screen will be occupied
-        child: Drawer(
-          backgroundColor: Color.fromRGBO(28, 0, 64, 100),
-            // Your drawer content here
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                DrawerHeader(
-                  child: Image.asset(
-                    "assets/high-seas-1.jpg",
-                    width: MediaQuery.of(context).size.width * 500,
-                    height: MediaQuery.of(context).size.height * 500,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Color.fromRGBO(229, 226, 233, 100),
-                  ),
-                ),
-                ListTile(
-                  tileColor: Color.fromRGBO(229, 226, 233, 100),
-                  title: const Text(
-                    "Discover Movies",
-                    style: TextStyle(
-                      fontFamily: 'JetBrainsMono',
-                      fontStyle: FontStyle.normal,
-                      fontSize: 18,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Placeholder(),
-                      ),
-                    );
-                  }
-                ),
-              ],
-            ),
-          ),
-      ),
+      drawer: const DrawerWidget(),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            Image.asset("assets/high-seas-2.jpg", fit: BoxFit.fill,),
+            Text(
+              "Welcome to High Seas",
+              style: TextStyle(
+                fontFamily: 'JetBrainsMono',
+                fontStyle: FontStyle.normal,
+                fontSize: 28,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),
