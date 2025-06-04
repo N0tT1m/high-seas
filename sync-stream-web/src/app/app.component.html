@@ -1,0 +1,29 @@
+<!-- src/app/app.component.html -->
+<div class="app-container">
+  <header *ngIf="isLoggedIn">
+    <nav class="main-nav">
+      <div class="logo">
+        <a routerLink="/home">
+          <img src="../assets/images/logo.png" alt="Plex Web Player">
+        </a>
+      </div>
+      <div class="nav-links">
+        <a routerLink="/home" routerLinkActive="active">Home</a>
+        <a routerLink="/libraries" routerLinkActive="active">Library</a>
+        <a routerLink="/settings" routerLinkActive="active">Settings</a>
+      </div>
+      <div class="connection-status" [class.connected]="wsConnected" title="Sync status">
+        <span class="status-indicator"></span>
+        <span class="status-text">{{ wsConnected ? 'Connected' : 'Disconnected' }}</span>
+      </div>
+    </nav>
+  </header>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer" *ngIf="isLoggedIn">
+    <p>Plex Web Player &copy; {{ currentYear }}</p>
+  </footer>
+</div>

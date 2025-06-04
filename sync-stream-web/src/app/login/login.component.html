@@ -1,0 +1,71 @@
+<!-- src/app/login/login.component.html -->
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Sign In</h1>
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <label for="username">Email</label>
+        <div class="input-wrapper">
+          <span class="icon">email</span>
+          <input
+            type="email"
+            id="username"
+            formControlName="username"
+            placeholder="Enter your email"
+            autocomplete="email"
+          />
+        </div>
+        <div *ngIf="loginForm.get('username')?.errors?.['required'] &&
+                    loginForm.get('username')?.touched" class="error-text">
+          Email is required
+        </div>
+        <div *ngIf="loginForm.get('username')?.errors?.['email'] &&
+                    loginForm.get('username')?.touched" class="error-text">
+          Please enter a valid email
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <span class="icon">lock</span>
+          <input
+            [type]="hidePassword ? 'password' : 'text'"
+            id="password"
+            formControlName="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-password" (click)="hidePassword = !hidePassword">
+            <span class="icon">{{hidePassword ? 'visibility_off' : 'visibility'}}</span>
+          </button>
+        </div>
+        <div *ngIf="loginForm.get('password')?.errors?.['required'] &&
+                    loginForm.get('password')?.touched" class="error-text">
+          Password is required
+        </div>
+        <div *ngIf="loginForm.get('password')?.errors?.['minlength'] &&
+                    loginForm.get('password')?.touched" class="error-text">
+          Password must be at least 4 characters
+        </div>
+      </div>
+
+      <div class="login-actions">
+        <button type="submit" [disabled]="loginForm.invalid || isLoading" class="login-button">
+          <span *ngIf="isLoading" class="spinner">refresh</span>
+          <span *ngIf="!isLoading">Sign In</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="login-footer">
+      Don't have an account? <a routerLink="/signup">Sign Up</a>
+    </div>
+  </div>
+</div>

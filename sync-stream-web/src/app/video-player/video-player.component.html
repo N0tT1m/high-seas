@@ -1,0 +1,88 @@
+<!-- video-player.component.html -->
+<div class="video-player-container"
+     [class.fullscreen]="fullscreen"
+     [class.controls-hidden]="!showControls"
+     (mousemove)="showPlayerControls()"
+     (mouseleave)="showControls = false">
+
+  <!-- Video Element -->
+  <video #videoElement class="video-element" preload="auto"></video>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Error Overlay -->
+  <div class="error-overlay" *ngIf="error">
+    <div class="error-message">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage || 'An error occurred while playing the video.' }}</span>
+      <button (click)="stop()" class="control-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-overlay" [class.visible]="showControls || !playing">
+    <!-- Progress Bar -->
+    <div class="progress-container" (click)="seek($event)">
+      <div class="progress-buffered" [style.width.%]="buffered"></div>
+      <div class="progress-played" [style.width.%]="progress"></div>
+      <div class="progress-handle" [style.left.%]="progress"></div>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="main-controls">
+      <div class="left-controls">
+        <!-- Play/Pause Button -->
+        <button (click)="togglePlayPause()" class="control-button">
+          <mat-icon *ngIf="!playing">play_arrow</mat-icon>
+          <mat-icon *ngIf="playing">pause</mat-icon>
+        </button>
+
+        <!-- Skip Back Button -->
+        <button (click)="skipBackward()" class="control-button">
+          <mat-icon>replay_10</mat-icon>
+        </button>
+
+        <!-- Skip Forward Button -->
+        <button (click)="skipForward()" class="control-button">
+          <mat-icon>forward_30</mat-icon>
+        </button>
+
+        <!-- Volume Control -->
+        <div class="volume-control">
+          <button (click)="toggleMute()" class="control-button">
+            <mat-icon *ngIf="!muted && volume > 0.5">volume_up</mat-icon>
+            <mat-icon *ngIf="!muted && volume > 0 && volume <= 0.5">volume_down</mat-icon>
+            <mat-icon *ngIf="muted || volume === 0">volume_off</mat-icon>
+          </button>
+
+          <div class="volume-slider-container" *ngIf="showVolumeSlider">
+            <input
+              type="range"
+              class="volume-slider"
+              min="0"
+              max="1"
+              step="0.1"
+              [value]="volume"
+              (input)="setVolume($event)">
+          </div>
+        </div>
+
+        <!-- Time Display -->
+        <div class="time-display">
+          {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+        </div>
+      </div>
+
+      <div class="right-controls">
+        <!-- Fullscreen Button -->
+        <button (click)="toggleFullscreen()" class="control-button">
+          <mat-icon *ngIf="!fullscreen">fullscreen</mat-icon>
+          <mat-icon *ngIf="fullscreen">fullscreen_exit</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

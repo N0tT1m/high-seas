@@ -296,11 +296,11 @@ export class TvShowService {
   /**
    * Make a request to download a TV show
    * @param query Show title
-   * @param seasons Array of episode counts per season
+   * @param seasons Array of seasons to download
    * @param quality Video quality (e.g., "1080p")
    * @param tmdb TMDb ID
    * @param description Show description
-   * @param year First air year (extracted from details if available)
+   * @param year First air year
    */
   makeTvShowDownloadRequest(
     query: string,
@@ -310,7 +310,8 @@ export class TvShowService {
     description: string,
     year?: number
   ): Observable<QueryRequest> {
-    const url = `${this.apiBaseUrl}/show/query`;
+    // Use the new V2 endpoint
+    const url = `${this.apiBaseUrl}/v2/download/tv`;
 
     // Extract year from query or description if not explicitly provided
     if (!year) {
@@ -320,15 +321,20 @@ export class TvShowService {
       }
     }
 
+    // Use the new API format while maintaining backward compatibility
     return this.http.post<QueryRequest>(
       url,
       {
         query,
         seasons,
         quality,
-        TMDb: tmdb,
+        tmdb_id: tmdb, // New API uses tmdb_id instead of TMDb
+        TMDb: tmdb,    // Keep for backward compatibility
         description,
-        year: year // Add year to the request
+        year: year,
+        type: "tv",
+        auto_download: true,
+        max_results: 5
       },
       { headers: this.requestHeaders }
     );
@@ -351,11 +357,11 @@ export class TvShowService {
   /**
    * Make a request to download an anime show
    * @param query Show title
-   * @param seasons Array of episode counts per season
+   * @param seasons Array of seasons to download
    * @param quality Video quality (e.g., "1080p")
    * @param tmdb TMDb ID
    * @param description Show description
-   * @param year First air year (extracted from details if available)
+   * @param year First air year
    */
   makeAnimeShowDownloadRequest(
     query: string,
@@ -365,7 +371,8 @@ export class TvShowService {
     description: string,
     year?: number
   ): Observable<QueryRequest> {
-    const url = `${this.apiBaseUrl}/anime/show/query`;
+    // Use the new V2 endpoint
+    const url = `${this.apiBaseUrl}/v2/download/anime`;
 
     // Extract year from query or description if not explicitly provided
     if (!year) {
@@ -375,15 +382,20 @@ export class TvShowService {
       }
     }
 
+    // Use the new API format while maintaining backward compatibility
     return this.http.post<QueryRequest>(
       url,
       {
         query,
         seasons,
         quality,
-        TMDb: tmdb,
+        tmdb_id: tmdb, // New API uses tmdb_id instead of TMDb
+        TMDb: tmdb,    // Keep for backward compatibility
         description,
-        year: year // Add year to the request
+        year: year,
+        type: "anime_tv",
+        auto_download: true,
+        max_results: 5
       },
       { headers: this.requestHeaders }
     );

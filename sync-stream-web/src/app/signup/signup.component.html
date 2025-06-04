@@ -1,0 +1,93 @@
+<!-- src/app/signup/signup.component.html -->
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Create Account</h1>
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+    </div>
+
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <label for="username">Email</label>
+        <div class="input-wrapper">
+          <span class="icon">email</span>
+          <input
+            type="email"
+            id="username"
+            formControlName="username"
+            placeholder="Enter your email"
+            autocomplete="email"
+          />
+        </div>
+        <div *ngIf="signupForm.get('username')?.errors?.['required'] &&
+                    signupForm.get('username')?.touched" class="error-text">
+          Email is required
+        </div>
+        <div *ngIf="signupForm.get('username')?.errors?.['email'] &&
+                    signupForm.get('username')?.touched" class="error-text">
+          Please enter a valid email
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <span class="icon">lock</span>
+          <input
+            [type]="hidePassword ? 'password' : 'text'"
+            id="password"
+            formControlName="password"
+            placeholder="Create a password"
+            autocomplete="new-password"
+          />
+          <button type="button" class="toggle-password" (click)="hidePassword = !hidePassword">
+            <span class="icon">{{hidePassword ? 'visibility_off' : 'visibility'}}</span>
+          </button>
+        </div>
+        <div *ngIf="signupForm.get('password')?.errors?.['required'] &&
+                    signupForm.get('password')?.touched" class="error-text">
+          Password is required
+        </div>
+        <div *ngIf="signupForm.get('password')?.errors?.['minlength'] &&
+                    signupForm.get('password')?.touched" class="error-text">
+          Password must be at least 4 characters
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="input-wrapper">
+          <span class="icon">lock</span>
+          <input
+            [type]="hidePassword ? 'password' : 'text'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="Confirm your password"
+            autocomplete="new-password"
+          />
+        </div>
+        <div *ngIf="signupForm.get('confirmPassword')?.errors?.['required'] &&
+                    signupForm.get('confirmPassword')?.touched" class="error-text">
+          Please confirm your password
+        </div>
+        <div *ngIf="signupForm.hasError('passwordMismatch') &&
+                    signupForm.get('confirmPassword')?.touched" class="error-text">
+          Passwords do not match
+        </div>
+      </div>
+
+      <div class="login-actions">
+        <button type="submit" [disabled]="signupForm.invalid || isLoading" class="login-button">
+          <span *ngIf="isLoading" class="spinner">refresh</span>
+          <span *ngIf="!isLoading">Sign Up</span>
+        </button>
+      </div>
+
+      <div class="login-footer">
+        Already have an account? <a routerLink="/login">Sign In</a>
+      </div>
+    </form>
+  </div>
+</div>

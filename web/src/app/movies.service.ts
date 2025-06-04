@@ -322,7 +322,7 @@ export class MovieService {
    * @param quality Video quality (e.g., "1080p")
    * @param tmdb TMDb ID
    * @param description Movie description
-   * @param year Release year (extracted from details if available)
+   * @param year Release year
    */
   makeMovieDownloadRequest(
     query: string,
@@ -331,7 +331,8 @@ export class MovieService {
     description: string,
     year?: number
   ): Observable<QueryRequest> {
-    const url = `${this.apiBaseUrl}/movie/query`;
+    // Use the new V2 endpoint
+    const url = `${this.apiBaseUrl}/v2/download/movie`;
 
     // Extract year from query or description if not explicitly provided
     if (!year) {
@@ -341,14 +342,19 @@ export class MovieService {
       }
     }
 
+    // Use the new API format while maintaining backward compatibility
     return this.http.post<QueryRequest>(
       url,
       {
         query,
         quality,
-        TMDb: tmdb,
+        tmdb_id: tmdb, // New API uses tmdb_id instead of TMDb
+        TMDb: tmdb,    // Keep for backward compatibility
         description,
-        year: year // Add year to the request
+        year: year,
+        type: "movie",
+        auto_download: true,
+        max_results: 5
       },
       { headers: this.requestHeaders }
     );
@@ -383,7 +389,8 @@ export class MovieService {
     tmdb: number,
     description: string
   ): Observable<QueryRequest> {
-    const url = `${this.apiBaseUrl}/anime/movie/query`;
+    // Use the new V2 endpoint
+    const url = `${this.apiBaseUrl}/v2/download/anime`;
 
     // Extract release year if it's a full date
     let releaseYear: number | undefined;
@@ -394,15 +401,20 @@ export class MovieService {
       }
     }
 
+    // Use the new API format while maintaining backward compatibility
     return this.http.post<QueryRequest>(
       url,
       {
         query,
         name,
         quality,
-        TMDb: tmdb,
+        tmdb_id: tmdb, // New API uses tmdb_id instead of TMDb
+        TMDb: tmdb,    // Keep for backward compatibility
         description,
-        year: releaseYear
+        year: releaseYear,
+        type: "anime_movie",
+        auto_download: true,
+        max_results: 5
       },
       { headers: this.requestHeaders }
     );

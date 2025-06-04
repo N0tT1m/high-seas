@@ -1,1 +1,0 @@
-/opt/homebrew/Caskroom/vlc/3.0.21/VLC.app/Contents/MacOS/include/vlc/libvlc_version.h

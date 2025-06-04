@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"high-seas/src/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type LogSeverity int
@@ -93,6 +94,17 @@ func GetSeverityString(logType LogSeverity) string {
 	default:
 		return "INFO"
 	}
+}
+
+func WriteInfoWithData(message string, data map[string]interface{}) {
+	var parts []string
+	parts = append(parts, message)
+
+	for key, value := range data {
+		parts = append(parts, fmt.Sprintf("%s: %v", key, value))
+	}
+
+	WriteInfo(strings.Join(parts, " - "))
 }
 
 // Maps our severity to logrus levels

@@ -1,3 +1,9 @@
+# High-Seas
+
+![Code Assistant Banner](https://github.com/n0tt1m/code-assistant/raw/main/images/the-girls3.png)
+![Code Assistant Gif](https://github.com/n0tt1m/code-assistant/raw/main/images/tits-out.gif)
+![Code Assistant tongue](https://github.com/n0tt1m/code-assistant/raw/main/images/tongue.jpg)
+
 # High Seas
 
 A web application for searching and downloading shows/movies including anime.
