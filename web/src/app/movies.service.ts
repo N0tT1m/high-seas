@@ -222,6 +222,8 @@ export class MovieService {
       'Access-Control-Allow-Methods': 'POST,DELETE'
     };
 
+    console.log(`[Movie Download] Starting download request for: ${query} (Quality: ${quality}, TMDb: ${tmdb})`);
+
     return this.http.post<QueryRequest>(url, {
       query,
       quality,
@@ -243,12 +245,12 @@ export class MovieService {
       'Access-Control-Allow-Methods': 'POST,DELETE'
     };
 
+    console.log(`[Anime Movie Download] Starting download request for: ${query} (Quality: ${quality}, TMDb: ${tmdb})`);
+
     return this.http.post<QueryRequest>(url, {
       query,
-      name,
-      year,
       quality,
-      Imdb: tmdb,
+      TMDb: tmdb,  // Fixed: was incorrectly named 'Imdb'
       description
     }, { headers });
   }

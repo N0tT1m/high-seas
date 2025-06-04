@@ -227,6 +227,8 @@ export class TvShowService {
       'Access-Control-Allow-Methods': 'POST,DELETE'
     };
 
+    console.log(`[TV Show Download] Starting download request for: ${query} (Quality: ${quality}, Seasons: [${seasons.join(', ')}], TMDb: ${tmdb})`);
+
     return this.http.post<QueryRequest>(url, {
       query,
       seasons,
@@ -248,6 +250,8 @@ export class TvShowService {
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Allow-Methods': 'POST,DELETE'
     };
+
+    console.log(`[Anime Show Download] Starting download request for: ${query} (Quality: ${quality}, Seasons: [${seasons.join(', ')}], TMDb: ${tmdb})`);
 
     return this.http.post<QueryRequest>(url, {
       query,

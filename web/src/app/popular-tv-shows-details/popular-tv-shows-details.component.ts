@@ -4,6 +4,8 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { TvShow, TvShowResult } from '../http-service/http-service.component';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, NgModel } from '@angular/forms';
 import { TvShowService } from '../tv-service.service';
+import { EnhancedDownloadService, DownloadRequest } from '../services/enhanced-download.service';
+import { DownloadNotificationsComponent } from '../components/download-notifications/download-notifications.component';
 
 @Component({
   selector: 'app-top-rated-tv-show-details',
@@ -13,8 +15,9 @@ import { TvShowService } from '../tv-service.service';
     RouterModule,
     ReactiveFormsModule,
     FormsModule,
+    DownloadNotificationsComponent,
   ],
-  providers: [TvShowService, NgModel],
+  providers: [TvShowService, NgModel, EnhancedDownloadService],
   template: `
   <article class="show-details" *ngFor="let show of this.fetchedShow?.results; index as i;">
     <div class="show-header">
@@ -130,10 +133,20 @@ import { TvShowService } from '../tv-service.service';
           <option value="240p">240p</option>
         </select>
       </div>
-      <button class="show-download-button" (click)="downloadShow(show.name, show.original_language, this.quality)">Download Show</button>
+      <button 
+        class="show-download-button" 
+        [disabled]="isDownloadActive(show.id)"
+        (click)="downloadShow(show.name, show.original_language, this.quality)"
+      >
+        <span *ngIf="!isDownloadActive(show.id)">Download Show</span>
+        <span *ngIf="isDownloadActive(show.id)">Downloading...</span>
+      </button>
       <button class="show-download-button" (click)="getPlexDetailsOfTheShow()">Get Plex Details</button>
     </div>
   </article>
+  
+  <!-- Add notification component -->
+  <app-download-notifications></app-download-notifications>
     `,
   styleUrls: ['./popular-tv-shows-details.component.sass', '../../styles.sass'],
 })
@@ -142,6 +155,7 @@ export class PopularTvShowsDetailsComponent {
   public baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public tvShowService = inject(TvShowService);
+  public enhancedDownloadService = inject(EnhancedDownloadService);
   public fetchedData: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
   public fetchedShow: TvShow | undefined;
   public tvShowList: TvShow[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, name: "", first_air_date: "", original_language: "", original_name: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
@@ -266,23 +280,28 @@ export class PopularTvShowsDetailsComponent {
   }
 
   downloadShow(title: string, lang: string, quality: string) {
-    if (lang === 'ja') {
-      console.log('ANIME');
-      this.tvShowService.makeAnimeShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(request => console.log(request))
-    } else {
-      console.log('Movie');
-      this.tvShowService.makeTvShowDownloadRequest(title, this.seasonEpisodeNumbers, this.quality, this.tmdbId, this.overview).subscribe(
-        request => {
-          console.log(request);
-          // Show the pop-up when the request is successful
-          alert('Download request submitted successfully!');
-        },
-        error => {
-          console.error(error);
-          // Show an error message if the request fails
-          alert('An error occurred while submitting the download request.');
-        }
-      );
-    }
+    const downloadRequest: DownloadRequest = {
+      title: title,
+      tmdbId: this.tmdbId,
+      quality: quality,
+      description: this.overview,
+      contentType: 'show',
+      originalLanguage: lang,
+      seasons: this.seasonEpisodeNumbers
+    };
+
+    this.enhancedDownloadService.downloadContent(downloadRequest).subscribe({
+      next: (result) => {
+        console.log('Download result:', result);
+      },
+      error: (error) => {
+        console.error('Download error:', error);
+        // Error handling is managed by the enhanced download service
+      }
+    });
+  }
+
+  isDownloadActive(tmdbId: number): boolean {
+    return this.enhancedDownloadService.isDownloadActive(tmdbId, 'show');
   }
 }

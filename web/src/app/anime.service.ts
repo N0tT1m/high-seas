@@ -80,51 +80,46 @@ export class AnimeService {
     return this.http.get<ShowDetails>(url, { headers: this.headers });
   }
 
-  // Download request methods
-  makeAnimeMovieDownloadRequest(query: string, name: string, year: string, description: string) {
-    const queryApiHeaders = {
+  // Download request methods (Updated to match improved backend)
+  makeAnimeMovieDownloadRequest(query: string, quality: string, tmdb: number, description: string) {
+    const url = `${environment.envVar.transport}${environment.envVar.ip}:${environment.envVar.port}/anime/movie/query`;
+    const headers = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'POST,DELETE',
+      'Access-Control-Allow-Methods': 'POST,DELETE'
     };
 
-    const url = `${environment.envVar.transport}${environment.envVar.ip}:${environment.envVar.port}/anime/movie/query`;
-
-    const options = {
-      headers: queryApiHeaders,
-      rejectUnauthorized: false,
-    };
+    console.log(`[Anime Movie Download] Starting download request for: ${query} (Quality: ${quality}, TMDb: ${tmdb})`);
 
     return this.http.post<QueryRequest>(url, {
       query,
-      name,
-      year,
+      quality,
+      TMDb: tmdb,
       description
-    }, options);
+    }, { headers });
   }
 
-  makeAnimeSeriesDownloadRequest(query: string, episodes: number) {
-    const queryApiHeaders = {
+  makeAnimeSeriesDownloadRequest(query: string, seasons: Array<number>, quality: string, tmdb: number, description: string) {
+    const url = `${environment.envVar.transport}${environment.envVar.ip}:${environment.envVar.port}/anime/show/query`;
+    const headers = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'POST,DELETE',
+      'Access-Control-Allow-Methods': 'POST,DELETE'
     };
 
-    const url = `${environment.envVar.transport}${environment.envVar.ip}:${environment.envVar.port}/anime/query`;
-
-    const options = {
-      headers: queryApiHeaders,
-      rejectUnauthorized: false,
-    };
+    console.log(`[Anime Series Download] Starting download request for: ${query} (Quality: ${quality}, Seasons: [${seasons.join(', ')}], TMDb: ${tmdb})`);
 
     return this.http.post<QueryRequest>(url, {
       query,
-      episodes
-    }, options);
+      seasons,
+      quality,
+      TMDb: tmdb,
+      description
+    }, { headers });
   }
 
   // Helper method to filter anime by date range
@@ -134,6 +129,6 @@ export class AnimeService {
 
     const url = `${baseUrl}?with_genres=${this.animeGenreId}&with_original_language=ja&page=${page}&${dateField}.gte=${startDate}&${dateField}.lte=${endDate}&sort_by=popularity.desc`;
 
-    return this.http.get<isMovie extends true ? Movie : TvShow>(url, { headers: this.headers });
+    return this.http.get<Movie | TvShow>(url, { headers: this.headers });
   }
 }

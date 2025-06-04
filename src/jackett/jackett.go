@@ -50,27 +50,123 @@ func MakeMovieQuery(query string, tmdbID int, quality string) error {
 		ApiKey: fmt.Sprintf("%s", apiKey),
 	})
 
-	queryString := fmt.Sprintf("%s %s", query, quality)
-	logger.WriteInfo(fmt.Sprintf("Searching for movie: %s", queryString))
-
-	resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-		Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080}, // Movie categories
-		Query:      queryString,
-	})
-	if err != nil {
-		logger.WriteFatal("Failed to fetch from Jackett.", err)
-		return err
+	// Try multiple search strategies for better results
+	searchStrategies := []string{
+		fmt.Sprintf("\"%s\" %s", query, quality), // Exact title with quotes
+		fmt.Sprintf("%s %s", query, quality),      // Regular search
+		query, // Title only as fallback
 	}
 
-	results := processResults(resp.Results, tmdbID, quality, query)
-	if len(results) > 0 {
-		if addTorrentToDeluge(results[0].result) {
-			return nil
+	logger.WriteInfo(fmt.Sprintf("Searching for movie: %s", query))
+
+	for i, queryString := range searchStrategies {
+		logger.WriteInfo(fmt.Sprintf("Movie search strategy %d: %s", i+1, queryString))
+		
+		resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+			Categories: []uint{2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080}, // Movie categories
+			Query:      queryString,
+		})
+		if err != nil {
+			logger.WriteError(fmt.Sprintf("Strategy %d failed", i+1), err)
+			continue
 		}
-		return fmt.Errorf("failed to add movie torrent to Deluge")
+
+		results := processMovieResults(resp.Results, tmdbID, quality, query)
+		if len(results) > 0 {
+			if addTorrentToDeluge(results[0].result) {
+				return nil
+			}
+		}
+		
+		// Add delay between strategies
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	return fmt.Errorf("no suitable matches found for movie: %s", query)
+}
+
+// Specialized function for processing movie results with better validation
+func processMovieResults(results []jackett.Result, tmdbID int, quality string, exactTitle string) []searchResult {
+	var scoredResults []searchResult
+
+	logger.WriteInfo(fmt.Sprintf("Processing %d movie results", len(results)))
+
+	for _, result := range results {
+		// Skip results that don't match the exact movie title
+		if !isExactMovieMatch(result.Title, exactTitle) {
+			logger.WriteInfo(fmt.Sprintf("Skipping non-matching movie title: %s", result.Title))
+			continue
+		}
+
+		score := calculateScore(&result, tmdbID, quality)
+		if score >= MIN_ACCEPTABLE_SCORE {
+			scoredResults = append(scoredResults, searchResult{
+				result: &result,
+				score:  score,
+			})
+			logger.WriteInfo(fmt.Sprintf("Added movie candidate: %s (Score: %.2f)", result.Title, score))
+		}
+	}
+
+	// Sort by score first, then by seeders
+	sort.Slice(scoredResults, func(i, j int) bool {
+		if scoredResults[i].score == scoredResults[j].score {
+			return scoredResults[i].result.Seeders > scoredResults[j].result.Seeders
+		}
+		return scoredResults[i].score > scoredResults[j].score
+	})
+
+	if len(scoredResults) > 0 {
+		logger.WriteInfo(fmt.Sprintf("Selected best movie match: %s (Score: %.2f, Size: %.2f GB)",
+			scoredResults[0].result.Title,
+			scoredResults[0].score,
+			float64(scoredResults[0].result.Size)/1024/1024/1024))
+	}
+
+	return scoredResults
+}
+
+// Specialized function for movie title matching
+func isExactMovieMatch(resultTitle, exactTitle string) bool {
+	// Clean both titles for comparison
+	cleanResultTitle := cleanTitleForComparison(resultTitle)
+	cleanExactTitle := cleanExactTitle(exactTitle)
+
+	// Exact match check first
+	if cleanResultTitle == cleanExactTitle {
+		return true
+	}
+
+	// For movies, we're more strict about exact matches
+	// The result title should start with the exact title we're looking for
+	if !strings.HasPrefix(cleanResultTitle, cleanExactTitle) {
+		return false
+	}
+
+	// Check remainder for movie-specific exclusions
+	remainder := strings.TrimSpace(strings.TrimPrefix(cleanResultTitle, cleanExactTitle))
+	
+	if remainder != "" {
+		// Movie-specific spinoff/sequel indicators
+		movieSpinoffIndicators := []string{
+			"ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x",
+			"2", "3", "4", "5", "6", "7", "8", "9",
+			"part 2", "part 3", "part ii", "part iii",
+			"sequel", "prequel", "origins", "begins", "returns",
+			"reloaded", "revolution", "resurrection", "redemption",
+			"extended cut", "director cut", "unrated", "theatrical",
+			"special edition", "ultimate edition", "collectors edition",
+		}
+		
+		lowerRemainder := strings.ToLower(remainder)
+		for _, indicator := range movieSpinoffIndicators {
+			if strings.Contains(lowerRemainder, indicator) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func MakeShowQuery(query string, seasons []int, tmdbID int, quality string) error {
@@ -289,8 +385,67 @@ func isExactShowMatch(resultTitle, exactTitle string) bool {
 	cleanResultTitle := cleanTitleForComparison(resultTitle)
 	cleanExactTitle := cleanExactTitle(exactTitle)
 
+	// Exact match check first
+	if cleanResultTitle == cleanExactTitle {
+		return true
+	}
+
 	// The result title should start with the exact title we're looking for
-	return strings.HasPrefix(cleanResultTitle, cleanExactTitle)
+	if !strings.HasPrefix(cleanResultTitle, cleanExactTitle) {
+		return false
+	}
+
+	// Additional validation to avoid spinoffs/sequels
+	remainder := strings.TrimSpace(strings.TrimPrefix(cleanResultTitle, cleanExactTitle))
+	
+	// If there's a remainder, check if it's likely a spinoff/sequel
+	if remainder != "" {
+		// Common indicators of spinoffs/sequels/prequels that we want to avoid
+		spinoffIndicators := []string{
+			"origins", "legacy", "reloaded", "returns", "begins", "reborn",
+			"resurrection", "revolution", "evolution", "redemption", "revenge",
+			"rise of", "fall of", "war", "battle", "saga", "chronicles",
+			"extended", "director", "special", "ultimate", "definitive",
+			"prequel", "sequel", "spinoff", "spin off", "origins", "zero",
+			"infinity", "unlimited", "maximum", "extreme", "deluxe",
+		}
+		
+		lowerRemainder := strings.ToLower(remainder)
+		for _, indicator := range spinoffIndicators {
+			if strings.Contains(lowerRemainder, indicator) {
+				return false
+			}
+		}
+		
+		// If remainder contains numbers (like "2", "3", "II", "III"), likely a sequel
+		if containsSequelNumbers(remainder) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Helper function to detect sequel numbering
+func containsSequelNumbers(text string) bool {
+	text = strings.ToLower(text)
+	
+	// Roman numerals and common sequel patterns
+	sequelPatterns := []string{
+		" ii", " iii", " iv", " v", " vi", " vii", " viii", " ix", " x",
+		" 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9",
+		"part 2", "part 3", "part 4", "part ii", "part iii",
+		"volume 2", "volume 3", "vol 2", "vol 3",
+		"season 2", "season 3", "season 4", // For different seasons being treated as sequels
+	}
+	
+	for _, pattern := range sequelPatterns {
+		if strings.Contains(text, pattern) {
+			return true
+		}
+	}
+	
+	return false
 }
 
 func cleanTitleForComparison(title string) string {
@@ -665,76 +820,52 @@ func calculateAnimeSize(size uint, quality string) float64 {
 }
 
 func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query string, tmdbID int, quality string, seasons []int) error {
-	episodeTotal := 0
-	for _, count := range seasons {
-		episodeTotal += count
-	}
+	logger.WriteInfo(fmt.Sprintf("Starting season-based anime search for %d seasons", len(seasons)))
 
-	for episode := 1; episode <= episodeTotal; episode++ {
-		// Anime Time episode patterns matching their format
-		animeTimePatterns := []string{
-			`[Anime Time] %s - %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
-			`[Anime Time] %s - Episode %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
-		}
+	// Search by season and episode instead of sequential episodes
+	for seasonNum := 1; seasonNum <= len(seasons); seasonNum++ {
+		episodeCount := seasons[seasonNum-1]
+		logger.WriteInfo(fmt.Sprintf("Searching season %d with %d episodes", seasonNum, episodeCount))
 
-		// Fallback patterns
-		fallbackPatterns := []string{
-			`[AnimeSkulls] %s (2011) Episode %d [1080p] [Dual.Audio] [x265] [RD]`,
-			`%s Episode %d`,
-		}
+		for episode := 1; episode <= episodeCount; episode++ {
+			// Anime Time episode patterns with proper season formatting
+			animeTimePatterns := []string{
+				`[Anime Time] %s S%02dE%02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+				`[Anime Time] %s - S%02dE%02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+				`[Anime Time] %s Season %d Episode %02d [Dual Audio][BD][1080p][HEVC 10bit x265][AAC][Eng Sub]`,
+			}
 
-		var foundEpisode bool
+			// Fallback patterns with season support
+			fallbackPatterns := []string{
+				`[AnimeSkulls] %s S%02dE%02d [1080p] [Dual.Audio] [x265] [RD]`,
+				`%s S%02dE%02d`,
+				`%s Season %d Episode %d`,
+			}
 
-		// Try Anime Time patterns first
-		for _, pattern := range animeTimePatterns {
-			queryString := fmt.Sprintf(pattern, query, episode)
-			logger.WriteInfo(fmt.Sprintf("Searching Anime Time for episode %d/%d using query: %s",
-				episode, episodeTotal, queryString))
+			var foundEpisode bool
 
-			resp, err := j.Fetch(ctx, &jackett.FetchRequest{
-				Categories: animeSeriesCategories,
-				Query:      queryString,
-			})
-
-			if err == nil {
-				results := processAnimeResults(resp.Results, tmdbID, quality, query)
-				for _, result := range results {
-					if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
-						logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time episode %d: %s",
-							episode, result.result.Title))
-						foundEpisode = true
-						break
-					}
+			// Try Anime Time patterns first
+			for _, pattern := range animeTimePatterns {
+				var queryString string
+				if strings.Contains(pattern, "Season %d Episode") {
+					queryString = fmt.Sprintf(pattern, query, seasonNum, episode)
+				} else {
+					queryString = fmt.Sprintf(pattern, query, seasonNum, episode)
 				}
-			}
-
-			if foundEpisode {
-				break
-			}
-			time.Sleep(searchDelay)
-		}
-		// If Anime Time release not found, try fallback patterns
-		if !foundEpisode {
-			for _, pattern := range fallbackPatterns {
-				queryString := fmt.Sprintf(pattern, query, episode)
-				logger.WriteInfo(fmt.Sprintf("Searching fallback for episode %d/%d using query: %s",
-					episode, episodeTotal, queryString))
+				logger.WriteInfo(fmt.Sprintf("Searching Anime Time for S%02dE%02d using query: %s",
+					seasonNum, episode, queryString))
 
 				resp, err := j.Fetch(ctx, &jackett.FetchRequest{
 					Categories: animeSeriesCategories,
 					Query:      queryString,
 				})
 
-				if err != nil {
-					continue
-				}
-
-				results := processAnimeResults(resp.Results, tmdbID, quality, query)
-				if len(results) > 0 {
+				if err == nil {
+					results := processAnimeResults(resp.Results, tmdbID, quality, query)
 					for _, result := range results {
-						if addTorrentMagnetToDeluge(result.result) {
-							logger.WriteInfo(fmt.Sprintf("Successfully added episode %d: %s",
-								episode, result.result.Title))
+						if isAnimeTimeRelease(result.result.Title) && addTorrentMagnetToDeluge(result.result) {
+							logger.WriteInfo(fmt.Sprintf("Successfully added Anime Time S%02dE%02d: %s",
+								seasonNum, episode, result.result.Title))
 							foundEpisode = true
 							break
 						}
@@ -746,10 +877,49 @@ func searchAnimeEpisodesByOne(ctx context.Context, j *jackett.Jackett, query str
 				}
 				time.Sleep(searchDelay)
 			}
-		}
+			// If Anime Time release not found, try fallback patterns
+			if !foundEpisode {
+				for _, pattern := range fallbackPatterns {
+					var queryString string
+					if strings.Contains(pattern, "Season %d Episode") {
+						queryString = fmt.Sprintf(pattern, query, seasonNum, episode)
+					} else {
+						queryString = fmt.Sprintf(pattern, query, seasonNum, episode)
+					}
+					logger.WriteInfo(fmt.Sprintf("Searching fallback for S%02dE%02d using query: %s",
+						seasonNum, episode, queryString))
 
-		if !foundEpisode {
-			logger.WriteWarning(fmt.Sprintf("No valid results found for episode %d", episode))
+					resp, err := j.Fetch(ctx, &jackett.FetchRequest{
+						Categories: animeSeriesCategories,
+						Query:      queryString,
+					})
+
+					if err != nil {
+						continue
+					}
+
+					results := processAnimeResults(resp.Results, tmdbID, quality, query)
+					if len(results) > 0 {
+						for _, result := range results {
+							if addTorrentMagnetToDeluge(result.result) {
+								logger.WriteInfo(fmt.Sprintf("Successfully added S%02dE%02d: %s",
+									seasonNum, episode, result.result.Title))
+								foundEpisode = true
+								break
+							}
+						}
+					}
+
+					if foundEpisode {
+						break
+					}
+					time.Sleep(searchDelay)
+				}
+			}
+
+			if !foundEpisode {
+				logger.WriteWarning(fmt.Sprintf("No valid results found for S%02dE%02d", seasonNum, episode))
+			}
 		}
 	}
 

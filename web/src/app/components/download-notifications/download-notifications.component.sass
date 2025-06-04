@@ -1,0 +1,118 @@
+.notifications-container
+  position: fixed
+  top: 20px
+  right: 20px
+  z-index: 9999
+  max-width: 400px
+
+.notification
+  display: flex
+  align-items: flex-start
+  padding: 12px 16px
+  margin-bottom: 12px
+  border-radius: 8px
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+  cursor: pointer
+  transition: transform 0.2s ease, opacity 0.3s ease
+  position: relative
+  overflow: hidden
+  animation: slideIn 0.3s ease-out
+
+  &:hover
+    transform: translateX(-4px)
+
+  &-loading
+    background: linear-gradient(135deg, #3b82f6, #1e40af)
+    color: white
+    border-left: 4px solid #60a5fa
+
+  &-success
+    background: linear-gradient(135deg, #10b981, #059669)
+    color: white
+    border-left: 4px solid #34d399
+
+  &-error
+    background: linear-gradient(135deg, #ef4444, #dc2626)
+    color: white
+    border-left: 4px solid #f87171
+
+  &-info
+    background: linear-gradient(135deg, #6366f1, #4f46e5)
+    color: white
+    border-left: 4px solid #818cf8
+
+  &-icon
+    font-size: 20px
+    margin-right: 12px
+    flex-shrink: 0
+
+  &-content
+    flex-grow: 1
+    min-width: 0
+
+  &-title
+    font-weight: 600
+    font-size: 14px
+    margin-bottom: 4px
+
+  &-message
+    font-size: 13px
+    opacity: 0.9
+    line-height: 1.4
+    word-wrap: break-word
+
+  &-time
+    font-size: 11px
+    opacity: 0.7
+    margin-top: 4px
+
+  &-close
+    font-size: 20px
+    margin-left: 8px
+    opacity: 0.7
+    flex-shrink: 0
+    cursor: pointer
+
+    &:hover
+      opacity: 1
+
+  &-progress
+    position: absolute
+    bottom: 0
+    left: 0
+    height: 3px
+    background: rgba(255, 255, 255, 0.3)
+    animation: loading-progress 2s ease-in-out infinite
+
+@keyframes loading-progress
+  0%
+    width: 0%
+  50%
+    width: 70%
+  100%
+    width: 100%
+
+@keyframes slideIn
+  from
+    transform: translateX(100%)
+    opacity: 0
+  to
+    transform: translateX(0)
+    opacity: 1
+
+@media (max-width: 768px)
+  .notifications-container
+    top: 10px
+    right: 10px
+    left: 10px
+    max-width: none
+
+  .notification
+    padding: 10px 12px
+    margin-bottom: 8px
+
+    &-title
+      font-size: 13px
+
+    &-message
+      font-size: 12px

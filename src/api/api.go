@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,21 +37,81 @@ func CheckPlexStatus(title string) bool {
 
 	fmt.Println(fmt.Sprintf("Checking Plex Status: %s", title))
 
-	searchResults, err := plex.Search(title)
-	if err != nil {
-		logger.WriteError("search failed for title: ", err)
+	// Try multiple search approaches for better matching
+	searchQueries := []string{
+		title,                           // Exact title
+		cleanTitleForPlexSearch(title), // Cleaned title
 	}
 
-	for _, v := range searchResults.MediaContainer.Metadata {
-		if v.ParentTitle == "" && v.GrandparentTitle == "" {
-			return true
+	for _, query := range searchQueries {
+		searchResults, err := plex.Search(query)
+		if err != nil {
+			logger.WriteError("search failed for title: ", err)
+			continue
+		}
+
+		for _, v := range searchResults.MediaContainer.Metadata {
+			// Check for exact matches (movies and shows)
+			if isPlexTitleMatch(v.Title, title) {
+				return true
+			}
 		}
 	}
 
-	//results := shows.search(title=name, year=firstAirDate[:4])
-	//return len(results) > 0
-
 	return false
+}
+
+// Helper function to clean title for Plex search
+func cleanTitleForPlexSearch(title string) string {
+	// Remove common suffixes that might interfere with search
+	suffixes := []string{
+		" (US)", " (UK)", " (2024)", " (2023)", " (2022)", " (2021)", " (2020)",
+		" - Season 1", " - Season 2", " - Season 3", " - Season 4", " - Season 5",
+	}
+	
+	cleaned := title
+	for _, suffix := range suffixes {
+		cleaned = strings.ReplaceAll(cleaned, suffix, "")
+	}
+	
+	return strings.TrimSpace(cleaned)
+}
+
+// Helper function to check if Plex title matches our search title
+func isPlexTitleMatch(plexTitle, searchTitle string) bool {
+	// Normalize both titles for comparison
+	normalizedPlex := normalizeTitle(plexTitle)
+	normalizedSearch := normalizeTitle(searchTitle)
+	
+	// Exact match
+	if normalizedPlex == normalizedSearch {
+		return true
+	}
+	
+	// Check if one contains the other (useful for series with year suffixes)
+	if strings.Contains(normalizedPlex, normalizedSearch) || strings.Contains(normalizedSearch, normalizedPlex) {
+		// Additional validation: make sure it's not just a partial word match
+		if len(normalizedPlex) > 3 && len(normalizedSearch) > 3 {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// Helper function to normalize titles for comparison
+func normalizeTitle(title string) string {
+	// Convert to lowercase
+	normalized := strings.ToLower(title)
+	
+	// Remove special characters except spaces and alphanumeric
+	normalized = regexp.MustCompile(`[^\w\s]`).ReplaceAllString(normalized, "")
+	
+	// Replace multiple spaces with single space
+	normalized = regexp.MustCompile(`\s+`).ReplaceAllString(normalized, " ")
+	
+	// Trim spaces
+	return strings.TrimSpace(normalized)
 }
 
 func QueryMovieRequest(c *gin.Context) {

@@ -4,6 +4,8 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Movie, MovieResult } from '../http-service/http-service.component';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, NgModel } from '@angular/forms';
 import { MovieService } from '../movies.service';
+import { EnhancedDownloadService, DownloadRequest } from '../services/enhanced-download.service';
+import { DownloadNotificationsComponent } from '../components/download-notifications/download-notifications.component';
 
 @Component({
   selector: 'app-now-playing-details',
@@ -13,8 +15,9 @@ import { MovieService } from '../movies.service';
     RouterModule,
     ReactiveFormsModule,
     FormsModule,
+    DownloadNotificationsComponent,
   ],
-  providers: [MovieService, NgModel],
+  providers: [MovieService, NgModel, EnhancedDownloadService],
   template: `
   <article class="movie-details" *ngFor="let movie of this.fetchedMovie?.results; index as i;">
     <div class="movie-header">
@@ -87,9 +90,19 @@ import { MovieService } from '../movies.service';
           <option value="240p">240p</option>
         </select>
       </div>
-      <button class="movie-download-button" (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality, movie.original_language)">Download Movie</button>
+      <button 
+        class="movie-download-button" 
+        [disabled]="isDownloadActive(movie.id)"
+        (click)="downloadMovie(movie.title, movie.title, movie.release_date, this.quality, movie.original_language)"
+      >
+        <span *ngIf="!isDownloadActive(movie.id)">Download Movie</span>
+        <span *ngIf="isDownloadActive(movie.id)">Downloading...</span>
+      </button>
     </div>
   </article>
+  
+  <!-- Add notification component -->
+  <app-download-notifications></app-download-notifications>
     `,
   styleUrls: ['./popular-movies-details.component.sass', '../../styles.sass'],
 })
@@ -98,6 +111,7 @@ export class PopularMoviesDetailsComponent {
   private baseUrl = 'https://image.tmdb.org/t/p/w300_and_h450_bestv2/';
   public route: ActivatedRoute = inject(ActivatedRoute);
   public movieService = inject(MovieService);
+  public enhancedDownloadService = inject(EnhancedDownloadService);
   // public fetchedMovie: MovieResult[] = [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}]
   public fetchedMovie: Movie | undefined;
   public movieList: Movie[] = [{page: 0, results: [{adult: false, backdrop_path: "", genre_ids: [], id: 0, title: "", release_date: "", original_language: "", original_title: "", overview: "", popularity: 0, poster_path: "", vote_average: 0, vote_count: 0, video: false}], total_pages: 0, total_result: 0}]
@@ -170,23 +184,28 @@ export class PopularMoviesDetailsComponent {
   }
 
   downloadMovie(title: string, name: string, year: string, quality: string, lang: string) {
-    if (lang === 'ja') {
-      console.log('ANIME');
-      this.movieService.makeAnimeMovieDownloadRequest(title, name, this.releaseDate, this.quality, Number(this.tmdbId), this.overview).subscribe(request => console.log(request))
-    } else {
-      console.log('Movie');
-      this.movieService.makeMovieDownloadRequest(title, this.quality, Number(this.tmdbId), this.overview).subscribe(
-        request => {
-          console.log(request);
-          // Show the pop-up when the request is successful
-          alert('Download request submitted successfully!');
-        },
-        error => {
-          console.error(error);
-          // Show an error message if the request fails
-          alert('An error occurred while submitting the download request.');
-        }
-      );
-    }
+    const downloadRequest: DownloadRequest = {
+      title: title,
+      tmdbId: this.tmdbId,
+      quality: quality,
+      description: this.overview,
+      contentType: 'movie',
+      originalLanguage: lang,
+      year: year
+    };
+
+    this.enhancedDownloadService.downloadContent(downloadRequest).subscribe({
+      next: (result) => {
+        console.log('Download result:', result);
+      },
+      error: (error) => {
+        console.error('Download error:', error);
+        // Error handling is managed by the enhanced download service
+      }
+    });
+  }
+
+  isDownloadActive(tmdbId: number): boolean {
+    return this.enhancedDownloadService.isDownloadActive(tmdbId, 'movie');
   }
 }
